@@ -119,7 +119,11 @@ app.post("/api/check-deck", async (req, res) => {
     console.log('Checking DeckShop URL:', url);
 
     // Use new Headless mode
-    browser = await puppeteer.launch({ headless: "new" });
+    // Use new Headless mode
+    browser = await puppeteer.launch({
+      headless: "new",
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
     const page = await browser.newPage();
 
     // Set User Agent to avoid bot detection
