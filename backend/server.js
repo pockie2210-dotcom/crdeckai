@@ -220,7 +220,10 @@ app.get("/api/meta-snapshot", async (req, res) => {
   console.log('Scraping live meta from DeckShop...');
   let browser;
   try {
-    browser = await puppeteer.launch({ headless: "new" });
+    browser = await puppeteer.launch({
+      headless: "new",
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
     const page = await browser.newPage();
 
     // Optimizations
