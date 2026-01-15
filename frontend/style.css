@@ -1,0 +1,411 @@
+:root {
+  --black: #0B0B0F;
+  --gold: #D4AF37;
+  --purple: #7B3FE4;
+}
+
+body {
+  border-top: 10px solid var(--purple);
+  margin: 0;
+  background: var(--black);
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+h1 {
+  color: var(--gold);
+}
+
+.card {
+  margin: 40px auto;
+  width: 90%;
+  max-width: 1200px;
+  padding: 40px;
+  border: 2px solid var(--gold);
+  border-radius: 20px;
+  box-shadow: 0 0 30px rgba(123, 63, 228, 0.5), 0 8px 32px rgba(0, 0, 0, 0.7);
+  background: linear-gradient(135deg, rgba(11, 11, 15, 0.95), rgba(20, 20, 30, 0.95));
+}
+
+input {
+  padding: 15px;
+  width: 100%;
+  max-width: 600px;
+  border-radius: 8px;
+  font-size: 16px;
+  border: 1px solid var(--gold);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+}
+
+/* ... buttons ... */
+button {
+  padding: 12px 24px;
+  background: var(--purple);
+  color: white;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 8px;
+  margin: 5px;
+  transition: transform 0.1s;
+}
+
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px var(--purple);
+}
+
+.deck {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  align-items: flex-start;
+  /* Align top */
+  margin-top: 30px;
+  flex-wrap: wrap;
+  /* responsive wrap */
+}
+
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  max-width: 800px;
+}
+
+/* Scale cards up slightly for desktop */
+.card-item {
+  width: 100px;
+  /* Bigger cards */
+  height: 140px;
+  /* ... rest same ... */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  font-weight: bold;
+  transform: translateY(10px) scale(0.98);
+  opacity: 0;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+  animation: fadeUp 360ms forwards;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Badges for hero/evolution/star */
+.badge {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
+}
+
+.badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.hero-badge {
+  left: 6px;
+  top: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  overflow: hidden;
+}
+
+.evo-badge {
+  right: 6px;
+  top: 6px;
+  background: var(--purple);
+  color: var(--gold);
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.star-badge {
+  right: 6px;
+  bottom: 36px;
+  background: rgba(11, 11, 15, 0.95);
+  color: var(--gold);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+@keyframes fadeUp {
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.stats-card {
+  width: 100%;
+  max-width: 800px;
+  /* constrain max width slightly for readability */
+  margin: 0 auto;
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+  padding: 20px;
+  border-radius: 10px;
+  color: var(--gold);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  /* Fluid columns */
+  gap: 20px;
+}
+
+/* Improve Deck Button */
+#improveBtn {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: white;
+  margin-left: 10px;
+}
+
+/* Modal Styling */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 100;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background-color: var(--black);
+  margin: 10% auto;
+  padding: 24px;
+  border: 2px solid var(--gold);
+  width: 90%;
+  max-width: 600px;
+  border-radius: 16px;
+  box-shadow: 0 0 50px rgba(123, 63, 228, 0.4);
+  text-align: left;
+  position: relative;
+  color: white;
+}
+
+.close {
+  color: var(--gold);
+  float: right;
+  font-size: 32px;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 20px;
+}
+
+.close:hover {
+  text-shadow: 0 0 10px var(--gold);
+}
+
+.modal-section {
+  margin-bottom: 24px;
+}
+
+.modal-section h3 {
+  color: var(--gold);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+.copy-area {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 12px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  color: #ecf0f1;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.action-btn {
+  background: var(--purple);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #8e54e9;
+  transform: translateY(-2px);
+}
+
+.warning-text {
+  color: #ff6b6b;
+  font-size: 14px;
+  margin-top: 5px;
+  display: block;
+}
+
+/* Card Picker for Builder
+/* Picker */
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #333;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  margin-top: 10px;
+}
+
+.picker-card {
+  width: 100%;
+  aspect-ratio: 0.8;
+  object-fit: contain;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.picker-card:hover {
+  transform: scale(1.1);
+}
+
+.picker-card.selected {
+  opacity: 0.3;
+  filter: grayscale(100%);
+  pointer-events: none;
+}
+
+/* Stats Panel - Enhanced */
+.stats-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  background: linear-gradient(135deg, rgba(123, 63, 228, 0.15), rgba(0, 0, 0, 0.6));
+  padding: 25px;
+  border-radius: 12px;
+  margin-top: 25px;
+  color: #fff;
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.stat-bar-bg {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stat-bar-fill {
+  height: 100%;
+  background: #3498db;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px currentColor;
+}
+
+.stat-score {
+  font-weight: bold;
+  color: var(--gold);
+  font-size: 16px;
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+}
+
+.badge-score {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: #2ecc71;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(46, 204, 113, 0.1));
+  padding: 15px;
+  border-radius: 10px;
+  border: 2px solid #2ecc71;
+  grid-column: span 2;
+  box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+  letter-spacing: 1px;
+}
+
+/* Empty slot in builder grid */
+.empty-slot {
+  width: 80px;
+  height: 110px;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.empty-slot:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* --- FUNCTIONAL FIX STYLES (Deckshop) --- */
+.deck-grade-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.grade-box {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.grade-label {
+  font-size: 12px;
+  color: #bdc3c7;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+}
+
+.grade-val {
+  font-size: 18px;
+  font-weight: bold;
+}
