@@ -1474,7 +1474,14 @@
         // Utility
         ['Tornado', 'Executioner'], ['Tornado', 'Ice Wizard'], ['Tornado', 'Baby Dragon'],
         ['Tornado', 'Magic Archer'], ['Tornado', 'Sparky'],
-        ['Miner', 'Poison'], ['Miner', 'Magic Archer']
+        ['Miner', 'Poison'], ['Miner', 'Magic Archer'],
+        // Added Meta Synergies (Genius Mode)
+        ['Lava Hound', 'Flying Machine'], ['Lava Hound', 'Skeleton Dragons'],
+        ['Golem', 'Elite Barbarians'], ['Golem', 'Dark Prince'],
+        ['Royal Giant', 'Executioner'], ['Royal Giant', 'Zappies'],
+        ['Goblin Giant', 'Prince'], ['Goblin Giant', 'Rage'],
+        ['Electro Giant', 'Bowler'], ['Electro Giant', 'Bomber'],
+        ['Hog Rider', 'Firecracker'], ['Hog Rider', 'Bomb Tower']
       ];
 
       const ARCHETYPES = [
@@ -1815,6 +1822,16 @@
           const roles = getDeckRoles(builderDeck); // Current state
 
           let score = (Math.random() * 100) - 50; // GOD MODE: Minimal Jitter (+/- 50)
+
+          // -------------------------------------------------------------
+          // 0. EVOLUTION & CHAMPION PRIORITY (GENIUS MODE)
+          // -------------------------------------------------------------
+          if ((card.evolutionLevel || 0) > 0) {
+            score += 3000; // MASSIVE BONUS: Always pick owned Evolutions
+          }
+          if (card.rarity === 'champion') {
+            score += 1000; // Priority for Champions
+          }
 
           // -------------------------------------------------------------
           // 1. STRICT ROLE TEMPLATE ENFORCEMENT
