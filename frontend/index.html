@@ -564,7 +564,7 @@
       // FETCH LIVE META
       async function fetchLiveMeta() {
         try {
-          const res = await fetch('http://localhost:3000/api/meta-snapshot');
+          const res = await fetch('/api/meta-snapshot');
           if (res.ok) {
             const decks = await res.json();
             if (window.addLiveDecks) {
@@ -2200,7 +2200,7 @@
 
             try {
               const names = builderDeck.map(c => c.name);
-              const res = await fetch(`http://localhost:3000/api/check-deck?t=${Date.now()}`, {
+              const res = await fetch(`/api/check-deck?t=${Date.now()}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ deck: names })
