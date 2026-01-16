@@ -441,6 +441,7 @@
 
 
   <script src="meta_decks.js"></script>
+  <script src="smart_ai.js"></script>
   <script type="module">
     import { WIN_CONDITION_GUIDES } from './win_conditions.js';
 
@@ -721,7 +722,6 @@
             log('scan start', tag, 'attempt', attempts);
             const controller = new AbortController();
             const id = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
             log('fetch', url);
             const res = await fetch(url, { signal: controller.signal });
             clearTimeout(id);
@@ -2313,106 +2313,89 @@
         });
       }
 
+      // CHECK FOR IMPROVE VIEW
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('view') === 'improve') {
+        // HIDE MAIN ACTIONS to focus on improvement
+        if (input && input.parentElement) input.parentElement.style.display = 'none';
+
+        // Change Header
+        const h1 = document.querySelector('h1');
+        if (h1) {
+          h1.textContent = "AI Deck Improver";
+          h1.style.color = '#2ecc71';
+        }
+
+        // Wait for script to init then run logic
+        setTimeout(() => {
+          const savedDeck = JSON.parse(localStorage.getItem('improveDeckData') || '[]');
+          if (savedDeck.length > 0) {
+            console.log('Loading deck for improvement:', savedDeck);
+            builderDeck = savedDeck;
+            toggleBuilderMode(true);
+            runImprovementLogic(builderDeck);
+          } else {
+            if (output) {
+              output.style.display = 'block';
+              output.textContent = "No deck found to improve. Please go back and scan a player first.";
+            }
+          }
+        }, 800);
+      }
+
+      // NEW HELPER: Logic to optimize the deck (Keep best 4-8 cards)
+      function runImprovementLogic(sourceDeck) {
+        console.log("Improve: Optimizing deck with SmartAI...");
+        // Ensure we have a deck to work with
+        if (!sourceDeck || sourceDeck.length === 0) return;
+
+        // USE THE NEW SMART AI MODULE
+        // We need the full collection to pick from.
+        // currentPlayerData.cards is the full collection usually.
+        // If we haven't scanned, we might need a fallback, but sourceDeck comes from scan.
+        let collection = [];
+        if (currentPlayerData && currentPlayerData.cards) {
+          collection = currentPlayerData.cards;
+        } else {
+          // Fallback: Use the meta deck pool or extracted cards?
+          // Actually, if we don't have collection, we can't really "Pro" improve it easily except with what we have.
+          // But let's try to assume currentPlayerData exists if sourceDeck exists.
+          collection = extractCards(currentPlayerData);
+        }
+
+        // Run Optimization
+        const optimized = SmartAI.optimize(sourceDeck, collection);
+
+        console.log("SmartAI Result:", optimized.map(c => c.name));
+
+        builderDeck = optimized; // Update global
+        renderBuilderUI();
+
+        if (document.getElementById('aiStatus')) {
+          const captain = builderDeck.find(c => getCardRole(c.name).includes('winCon'));
+          const archetype = captain ? (SmartAI.SYNERGY_MAP && SmartAI.SYNERGY_MAP[captain.name] ? SmartAI.SYNERGY_MAP[captain.name].archetype : 'Custom') : 'Balanced';
+          document.getElementById('aiStatus').textContent = `✨ Pro Mode: Optimized for ${captain ? captain.name : 'Cycle'} (${archetype})`;
+          document.getElementById('aiStatus').style.color = '#2ecc71';
+        }
+      }
+
       // 2. IMPROVE LOGIC (Keep 4-8 Cards)
       if (improveBtn) {
         improveBtn.addEventListener('click', () => {
           if (!ensureBuilderMode()) return;
 
-          // Load current deck if builder is empty (shouldn't happen if ensureBuilder loads it, but extractCards needed?)
-          // actually toggleBuilderMode loads deck into builderDeck if entering.
-          // IF we are already in builder mode, we use builderDeck.
+          // Ensure builderDeck is populated
           if (builderDeck.length === 0 && currentPlayerData) {
             builderDeck = [...extractCards(currentPlayerData)];
           }
 
-          console.log("Improve: Optimizing partial deck...");
+          console.log("Improve: Saving deck and opening new tab...");
 
-          // Score Cards to decide who stays
-          const scored = builderDeck.map(c => {
-            // Use internal scoreCard if possible, or heuristic
-            // We can't access `scoreCard` easily if it's inside runExpertAutofill scope?
-            // Ah, `scoreCard` IS inside `runExpertAutofill`. I need to extract it or use a simplified version.
-            // I'll use a simplified version here.
-            let s = META_QUALITY[c.name] || 50;
-            const role = getCardRole(c.name);
+          // Save to LocalStorage for the new tab to pick up
+          localStorage.setItem('improveDeckData', JSON.stringify(builderDeck));
 
-            // PRIORITIZE KEEPING CORE IDENTITIES, DROP GENERIC SUPPORT
-            if (role.includes('winCon')) s += 200; // MUST KEEP WIN CON
-            if (role.includes('miniTank')) s += 100; // MUST KEEP TANK
-            if ((c.evolutionLevel || 0) > 0) s += 150; // MUST KEEP EVO
-            if (c.rarity === 'champion') s += 120; // MUST KEEP CHAMPION
-            if (c.level >= 14) s += 50;
-
-            // Generic support (Archers, Goblins, etc) get NO BONUS here.
-            // This ensures they are the first to be dropped if we need to make space.
-
-            return { c, s };
-          });
-
-          // Sort by Score
-          scored.sort((a, b) => b.s - a.s);
-
-          // Keep 4 to 8 cards (Random)
-          // Keep STRICTLY 4 best cards (With Interaction/Role Rules)
-          const keepCount = 4;
-          const kept = [];
-
-          // Smart Keep Logic (Prevent 3 Mini Tanks)
-          let counts = { miniTank: 0, winCon: 0, building: 0, spell: 0 };
-
-          for (const item of scored) {
-            if (kept.length >= keepCount) break;
-            const c = item.c;
-            const roles = getCardRole(c.name); // Global helper
-
-            let skip = false;
-
-            // TANK RULE: Max 1 Core Tank
-            if (roles.includes('miniTank') || ['Mega Knight', 'P.E.K.K.A', 'Giant Skeleton'].includes(c.name)) {
-              if (counts.miniTank >= 1) skip = true;
-            }
-
-            // WINCON RULE: Max 1 Core WinCon (unless synergy)
-            if (roles.includes('winCon')) {
-              if (counts.winCon >= 1) skip = true;
-            }
-
-            // BUILDING RULE: Max 1 Core Building
-            if (roles.includes('building')) {
-              if (counts.building >= 1) skip = true;
-            }
-
-            // SPELL RULE: Max 1 Core Spell (let AI fill the rest)
-            // (Archers are support, so they pass this check, but maybe user hates them?)
-            if (roles.includes('spellBig') || roles.includes('spellSmall')) {
-              if (counts.spell >= 1) skip = true;
-            }
-
-            if (!skip) {
-              kept.push(c);
-              if (roles.includes('miniTank')) counts.miniTank++;
-              if (['Mega Knight', 'P.E.K.K.A', 'Giant Skeleton'].includes(c.name)) counts.miniTank++; // Double count heavy tanks
-              if (roles.includes('winCon')) counts.winCon++;
-              if (roles.includes('building')) counts.building++;
-              if (roles.includes('spellBig') || roles.includes('spellSmall')) counts.spell++;
-            }
-          }
-
-          // Fallback if we filtered too many
-          if (kept.length < 4) {
-            for (const item of scored) {
-              if (kept.length >= 4) break;
-              if (!kept.includes(item.c)) kept.push(item.c);
-            }
-          }
-
-          console.log(`Keeping ${keepCount} cards:`, kept.map(c => c.name));
-
-          builderDeck = kept;
-          renderBuilderUI();
-          aiStatus.textContent = ` improving... Kept ${keepCount} cards.`;
-
-          setTimeout(() => runExpertAutofill(), 500);
+          // Open New Tab
+          window.open('?view=improve', '_blank');
         });
       }
 
