@@ -2924,27 +2924,48 @@
     })();
   </script>
 
-  <!-- MATCHUP CONTROLLER SCRIPT -->
+  <!-- MATCHUP CONTROLLER SCRIPT (Dual Manual Mode) -->
   <script>
     (function () {
       // STATE
       let enemyDeck = [];
-      let allCardsCache = [];
+      // 'mine' or 'enemy'. Defaults to 'enemy' unless user explicitly clicks 'mine'
+      let activeTarget = 'enemy';
 
       // DOM ELEMENTS
       const modal = document.getElementById('matchupModal');
       const openBtn = document.getElementById('matchupBtn');
       const closeBtn = document.getElementById('closeMatchup');
+
       const myDeckPreview = document.getElementById('myDeckPreview');
       const enemyDeckWrapper = document.getElementById('enemyDeckWrapper');
+
       const enemyPicker = document.getElementById('enemyCardPicker');
-      const clearEnemyBtn = document.getElementById('clearEnemyBtn');
+      const clearEnemyBtn = document.getElementById('clearEnemyBtn'); // Now clears ACTIVE deck
       const analyzeBtn = document.getElementById('analyzeBtn');
       const resultArea = document.getElementById('analysisResult');
+
+      // MODE SWITCHER UI (Dynamic)
+      const modeHeader = document.createElement('div');
+      modeHeader.style.cssText = 'grid-column: span 2; display: flex; gap: 10px; margin-bottom: 5px; justify-content: center;';
+
+      // We will inject this mode switcher above the picker if we can locate options container?
+      // Actually, let's just use click-to-edit logic on the decks themselves.
+      // But explicit buttons are clearer.
 
       // OPEN MODAL
       if (openBtn) openBtn.onclick = async () => {
         modal.style.display = 'flex';
+
+        // Ensure globals
+        if (!window.builderDeck) window.builderDeck = [];
+
+        // Default: If My Deck is empty, set focus to 'mine' first? No, usually 'enemy'.
+        // Let's stick to 'enemy' default, but if My Deck is empty, user can click it.
+
+        activeTarget = 'enemy';
+        updateModeUI();
+
         renderMyDeck();
         renderEnemyDeck();
 
@@ -2962,7 +2983,6 @@
               const res = await fetch('/api/cards');
               if (res.ok) {
                 const cards = await res.json();
-                // Initialize global if missing so render helper works
                 if (!window.currentPlayerData) window.currentPlayerData = {};
                 window.currentPlayerData.cards = cards;
                 renderEnemyPicker();
@@ -2984,96 +3004,205 @@
         modal.style.display = 'none';
       };
 
-      // RENDER YOUR DECK (Read-only view of builderDeck)
+      // HELPER: Visual Focus
+      function updateModeUI() {
+        // Highlight the active area
+        if (activeTarget === 'mine') {
+          myDeckPreview.style.borderColor = '#D4AF37'; // Gold
+          myDeckPreview.style.boxShadow = '0 0 15px rgba(212,175,55, 0.4)';
+          enemyDeckWrapper.style.borderColor = 'transparent';
+          enemyDeckWrapper.style.boxShadow = 'none';
+          // Update Clear Button Text
+          clearEnemyBtn.textContent = 'Clear My Deck';
+          // Picker Header
+          // (Optional)
+        } else {
+          enemyDeckWrapper.style.borderColor = '#e74c3c'; // Red
+          enemyDeckWrapper.style.boxShadow = '0 0 15px rgba(231, 76, 60, 0.4)';
+          myDeckPreview.style.borderColor = 'transparent';
+          myDeckPreview.style.boxShadow = 'none';
+          clearEnemyBtn.textContent = 'Clear Enemy Deck';
+        }
+        // Re-render decks to update 'x' buttons
+        renderMyDeck();
+        renderEnemyDeck();
+        updatePickerState();
+      }
+
+      // RENDER YOUR DECK
       function renderMyDeck() {
         myDeckPreview.innerHTML = '';
-        // builderDeck is global from the main script
-        // If it's undefined, we handle it
+        myDeckPreview.className = 'deck-grid'; // Use shared 4x2 grid class
+        // Add border styling for focus indication
+        myDeckPreview.style.border = '2px solid transparent';
+        myDeckPreview.style.borderRadius = '8px';
+        myDeckPreview.style.padding = '5px';
+        myDeckPreview.style.cursor = 'pointer';
+        myDeckPreview.onclick = () => { activeTarget = 'mine'; updateModeUI(); };
+
         const currentDeck = window.builderDeck || [];
 
-        if (currentDeck.length === 0) {
-          myDeckPreview.innerHTML = '<div style="color:#aaa; grid-column:span 4; text-align:center;">Your deck is empty</div>';
-          return;
-        }
+        // If empty, fill with placeholders
+        for (let i = 0; i < 8; i++) {
+          const card = currentDeck[i];
+          const div = document.createElement('div');
+          div.style.position = 'relative';
 
-        currentDeck.forEach(c => {
-          const img = document.createElement('img');
-          img.src = c.iconUrl;
-          img.style.width = '100%';
-          img.style.borderRadius = '4px';
-          myDeckPreview.appendChild(img);
-        });
+          if (card) {
+            const img = document.createElement('img');
+            img.src = card.iconUrls?.medium || card.iconUrl || '';
+            img.style.width = '100%';
+            img.style.borderRadius = '4px';
+            img.title = "Click deck to edit";
+            div.appendChild(img);
+
+            // Remove X button (only if active?)
+            if (activeTarget === 'mine') {
+              const xBtn = document.createElement('div');
+              xBtn.innerHTML = '×';
+              xBtn.style.cssText = 'position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:18px; height:18px; text-align:center; line-height:16px; cursor:pointer; font-weight:bold; font-size:14px; box-shadow:0 2px 5px black;';
+              xBtn.onclick = (e) => {
+                e.stopPropagation();
+                window.builderDeck.splice(i, 1);
+                renderMyDeck();
+                updatePickerState(); // Update picker after removing
+                if (window.renderDeck) window.renderDeck({ currentDeck: window.builderDeck }); // Update main UI
+              };
+              div.appendChild(xBtn);
+            }
+          } else {
+            // Empty Slot
+            div.className = 'empty-slot';
+            div.style.width = '100%'; // Fit grid
+            div.style.height = 'auto'; // Aspect ratio handled by grid/content
+            div.style.aspectRatio = '0.7';
+            div.innerHTML = '+';
+            div.style.fontSize = '24px';
+            div.style.border = '2px dashed #444';
+            div.style.borderRadius = '6px';
+            div.style.display = 'flex';
+            div.style.alignItems = 'center';
+            div.style.justifyContent = 'center';
+            div.style.color = '#666';
+          }
+          myDeckPreview.appendChild(div);
+        }
       }
 
       // RENDER ENEMY DECK
       function renderEnemyDeck() {
         enemyDeckWrapper.innerHTML = '';
-        if (enemyDeck.length === 0) {
-          enemyDeckWrapper.innerHTML = '<div style="color:#666; font-style:italic; grid-column:span 4; text-align:center; padding-top:20px;">Select cards below...</div>';
-        }
 
-        enemyDeck.forEach((c, idx) => {
+        // CSS Grid Layout applied inline here or via class
+        enemyDeckWrapper.className = 'deck-grid'; // Use shared 4x2 grid class
+
+        enemyDeckWrapper.style.border = '2px solid transparent';
+        enemyDeckWrapper.style.borderRadius = '8px';
+        enemyDeckWrapper.style.padding = '5px';
+        enemyDeckWrapper.style.cursor = 'pointer';
+        enemyDeckWrapper.onclick = () => { activeTarget = 'enemy'; updateModeUI(); };
+
+        for (let i = 0; i < 8; i++) {
+          const c = enemyDeck[i];
           const div = document.createElement('div');
           div.style.position = 'relative';
 
-          const img = document.createElement('img');
-          img.src = c.iconUrl;
-          img.style.width = '100%';
-          img.style.borderRadius = '4px';
-          img.style.cursor = 'pointer';
-          img.title = 'Remove';
-          img.onclick = () => {
-            enemyDeck.splice(idx, 1);
-            renderEnemyDeck();
-            updatePickerState();
-          };
+          if (c) {
+            const img = document.createElement('img');
+            img.src = c.iconUrls?.medium || c.iconUrl || '';
+            img.style.width = '100%';
+            img.style.borderRadius = '4px';
+            img.style.cursor = 'pointer';
+            div.appendChild(img);
 
-          div.appendChild(img);
+            // Remove logic
+            if (activeTarget === 'enemy') {
+              const xBtn = document.createElement('div');
+              xBtn.innerHTML = '×';
+              xBtn.style.cssText = 'position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:18px; height:18px; text-align:center; line-height:16px; cursor:pointer; font-weight:bold; font-size:14px; box-shadow:0 2px 5px black;';
+              xBtn.onclick = (e) => {
+                e.stopPropagation();
+                enemyDeck.splice(i, 1);
+                renderEnemyDeck();
+                updatePickerState();
+              };
+              div.appendChild(xBtn);
+            }
+          } else {
+            // Empty
+            div.className = 'empty-slot';
+            div.style.width = '100%';
+            div.style.height = 'auto';
+            div.style.aspectRatio = '0.7';
+            div.innerHTML = '+';
+            div.style.border = '2px dashed #444';
+            div.style.borderRadius = '6px';
+            div.style.display = 'flex';
+            div.style.alignItems = 'center';
+            div.style.justifyContent = 'center';
+            div.style.color = '#666';
+          }
           enemyDeckWrapper.appendChild(div);
-        });
+        }
       }
 
-      // RENDER ENEMY PICKER
+      // RENDER PICKER
       function renderEnemyPicker() {
         enemyPicker.innerHTML = '';
-
-
-        // Source: Window.currentPlayerData (from Scan/Demo)
         const sourceCards = window.currentPlayerData?.cards || [];
 
         if (sourceCards.length === 0) {
-          // Should not happen if check above passes, but just in case
           enemyPicker.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px;">No cards found.</div>';
           return;
         }
 
-        // Copy and sort
         const cards = [...sourceCards].sort((a, b) => (a.elixirCost || 0) - (b.elixirCost || 0));
 
         cards.forEach(c => {
           const img = document.createElement('img');
-          img.src = c.iconUrl;
+          img.src = c.iconUrls?.medium || c.iconUrl || '';
           img.className = 'picker-card';
           img.title = c.name;
-          img.id = `enemy-picker-${c.name.replace(/\s+/g, '')}`;
           img.loading = 'lazy';
 
           img.onclick = () => {
-            if (enemyDeck.length < 8 && !enemyDeck.find(x => x.name === c.name)) {
-              enemyDeck.push(c);
-              renderEnemyDeck();
-              updatePickerState();
+            // Logic depends on activeTarget
+            if (activeTarget === 'mine') {
+              if (window.builderDeck.length < 8 && !window.builderDeck.find(x => x.name === c.name)) {
+                window.builderDeck.push(c);
+                renderMyDeck();
+                updatePickerState();
+                // Also notify global script? We are mutating direct global reference.
+                // Might need to update main UI? 
+                // Since modal is open, we can defer main UI update or trigger it.
+                if (window.renderDeck) window.renderDeck({ currentDeck: window.builderDeck });
+              }
+            } else {
+              if (enemyDeck.length < 8 && !enemyDeck.find(x => x.name === c.name)) {
+                enemyDeck.push(c);
+                renderEnemyDeck();
+                updatePickerState();
+              }
             }
           };
           enemyPicker.appendChild(img);
         });
+
+        updatePickerState();
       }
 
       function updatePickerState() {
-        // Dim selected cards
+        // Dim selected cards based on ACTIVE TARGET
+        const targetDeck = (activeTarget === 'mine') ? window.builderDeck : enemyDeck;
+
         Array.from(enemyPicker.children).forEach(img => {
           const cardName = img.title;
-          if (enemyDeck.find(c => c.name === cardName)) {
+          // Check if card is in the active target deck
+          const isInActiveDeck = targetDeck.find(c => c.name === cardName);
+          // Check if card is in the OTHER deck (to prevent adding same card to both)
+          const isInOtherDeck = (activeTarget === 'mine' ? enemyDeck : window.builderDeck).find(c => c.name === cardName);
+
+          if (isInActiveDeck || isInOtherDeck || targetDeck.length >= 8) {
             img.style.opacity = '0.3';
             img.style.pointerEvents = 'none';
           } else {
@@ -3083,12 +3212,18 @@
         });
       }
 
-      // CLEAR
+      // CLEAR BUTTON
       clearEnemyBtn.onclick = () => {
-        enemyDeck = [];
-        renderEnemyDeck();
+        if (activeTarget === 'mine') {
+          window.builderDeck = [];
+          renderMyDeck();
+          if (window.renderDeck) window.renderDeck({ currentDeck: [] });
+        } else {
+          enemyDeck = [];
+          renderEnemyDeck();
+        }
         updatePickerState();
-        resultArea.style.display = 'none'; // Hide results
+        resultArea.style.display = 'none';
       };
 
       // ANALYZE
@@ -3097,66 +3232,69 @@
           alert("Matchup Analyzer not loaded yet!");
           return;
         }
-        if (enemyDeck.length === 0) {
-          alert("Please add at least 1 card to the Enemy Deck.");
-          return;
-        }
-
+        // Use Global builderDeck directly
         const myDeck = window.builderDeck || [];
-        if (myDeck.length === 0) {
-          alert("Please build your own deck first!");
+
+        if (myDeck.length < 8) {
+          alert("Your deck is incomplete! Please select 8 cards.");
+          return;
+        }
+        if (enemyDeck.length < 8) {
+          alert("Enemy deck is incomplete! Please select 8 cards.");
           return;
         }
 
-        // RUN ANALYSIS
-        const report = window.MatchupAnalyzer.analyzeMatchup(myDeck, enemyDeck);
-        renderResults(report);
+        const result = window.MatchupAnalyzer.analyzeMatchup(myDeck, enemyDeck);
+
+        // RENDER RESULT
+        const advantage = result.advantage; // -10 to +10 roughly
+        // ... (rest of result rendering same as before, essentially) ...
+
+        let barColor = '#3498db'; // blue
+        let advText = "Even";
+        if (advantage > 2) { barColor = '#2ecc71'; advText = "Advantage: YOU"; }
+        if (advantage < -2) { barColor = '#e74c3c'; advText = "Advantage: ENEMY"; }
+
+        // Clamp for bar display (50% is 0)
+        // Range +/- 10. 
+        // 50 + (adv * 5)
+        let pct = 50 + (advantage * 4);
+        if (pct < 10) pct = 10;
+        if (pct > 90) pct = 90;
+
+        resultArea.innerHTML = `
+           <div style="font-size:24px; font-weight:bold; margin-bottom:15px; text-align:center; color:${barColor}">
+              ${advText} (${advantage > 0 ? '+' : ''}${advantage})
+           </div>
+           
+           <div style="background:#444; height:20px; border-radius:10px; width:100%; position:relative; overflow:hidden; margin-bottom:20px;">
+              <div style="position:absolute; left:50%; top:0; bottom:0; width:2px; background:white; z-index:2; opacity:0.5;"></div>
+              <div style="background:${barColor}; width:${pct}%; height:100%; transition: width 0.5s;"></div>
+           </div>
+
+           <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+              <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
+                 <h4 style="color:#e74c3c; margin-top:0;">⚠️ Threats to You</h4>
+                 <ul style="padding-left:20px; margin:0; color:#ddd;">
+                    ${result.details.threats.length ? result.details.threats.map(t => `<li>${t}</li>`).join('') : '<li style="color:#888">None detected</li>'}
+                 </ul>
+              </div>
+              <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
+                 <h4 style="color:#2ecc71; margin-top:0;">💡 Strategy Tips</h4>
+                 <ul style="padding-left:20px; margin:0; color:#ddd;">
+                    ${result.details.tips.length ? result.details.tips.map(t => `<li>${t}</li>`).join('') : '<li style="color:#888">Play smart!</li>'}
+                 </ul>
+              </div>
+           </div>
+           
+           <div style="margin-top:20px; font-size:14px; color:#aaa; text-align:center;">
+             Avg Elixir: You <b>${result.details.myAvg}</b> vs Enemy <b>${result.details.enemyAvg}</b>
+           </div>
+        `;
+        resultArea.style.display = 'block';
       };
 
-      function renderResults(report) {
-        resultArea.style.display = 'block';
-        const title = document.getElementById('resultTitle');
-        const bar = document.getElementById('advantageBar');
-        const threatList = document.getElementById('threatList');
-        const tipList = document.getElementById('tipList');
-
-        // Set Title & Bar
-        title.textContent = report.advantageText;
-        title.style.color = report.score > 55 ? '#2ecc71' : (report.score < 45 ? '#e74c3c' : '#f1c40f');
-
-        bar.style.width = `${report.score}%`;
-        bar.style.background = report.score > 55 ? '#2ecc71' : (report.score < 45 ? '#e74c3c' : '#f1c40f');
-
-        // Threats
-        threatList.innerHTML = '';
-        if (report.keyInteractions.length === 0 && report.threats.length === 0) {
-          threatList.innerHTML = '<li>No major key threats identified.</li>';
-        } else {
-          report.keyInteractions.forEach(item => {
-            const li = document.createElement('li');
-            li.style.marginTop = '8px';
-            if (item.status === 'CHECKED') {
-              li.innerHTML = `✅ <strong>${item.threat}</strong> handled by <span style="color:#2ecc71">${item.counters.join(', ')}</span>`;
-            } else {
-              li.innerHTML = `❌ <strong>${item.threat}</strong> is a <span style="color:#e74c3c">PROBLEM</span>!`;
-            }
-            threatList.appendChild(li);
-          });
-        }
-
-        // Tips
-        tipList.innerHTML = '';
-        report.tips.forEach(tip => {
-          const li = document.createElement('li');
-          li.style.marginBottom = '10px';
-          li.textContent = tip; // It already has emojis
-          tipList.appendChild(li);
-        });
-
-        // Scroll to results
-        resultArea.scrollIntoView({ behavior: 'smooth' });
-      }
-
+      console.log('Matchup Analyzer Script Loaded (Dual Manual Mode)');
     })();
   </script>
 </body>
