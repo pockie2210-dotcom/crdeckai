@@ -2950,13 +2950,32 @@
 
         // Load picker if empty
         if (enemyPicker.children.length === 0) {
-          if (allCardsCache.length === 0) {
+          // Check if we have data, if not, fetch FULL LIST
+          if (!window.currentPlayerData || !window.currentPlayerData.cards) {
+            const status = document.createElement('div');
+            status.textContent = 'Loading all cards...';
+            status.style.textAlign = 'center';
+            status.style.color = '#ccc';
+            enemyPicker.appendChild(status);
+
             try {
-              const res = await fetch('/api/cards'); // Get full card list
-              if (res.ok) allCardsCache = await res.json();
-            } catch (e) { console.error("Failed to load cards", e); }
+              const res = await fetch('/api/cards');
+              if (res.ok) {
+                const cards = await res.json();
+                // Initialize global if missing so render helper works
+                if (!window.currentPlayerData) window.currentPlayerData = {};
+                window.currentPlayerData.cards = cards;
+                renderEnemyPicker();
+              } else {
+                enemyPicker.innerHTML = 'Failed to load cards.';
+              }
+            } catch (e) {
+              console.error(e);
+              enemyPicker.innerHTML = 'Error loading cards.';
+            }
+          } else {
+            renderEnemyPicker();
           }
-          renderEnemyPicker();
         }
       };
 
@@ -3018,11 +3037,13 @@
       function renderEnemyPicker() {
         enemyPicker.innerHTML = '';
 
+
         // Source: Window.currentPlayerData (from Scan/Demo)
         const sourceCards = window.currentPlayerData?.cards || [];
 
         if (sourceCards.length === 0) {
-          enemyPicker.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px;">Please "Scan Player" or "Show Demo Deck" first to load cards.</div>';
+          // Should not happen if check above passes, but just in case
+          enemyPicker.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px;">No cards found.</div>';
           return;
         }
 

@@ -59,6 +59,31 @@ app.get("/player/:tag", async (req, res) => {
   }
 });
 
+// NEW: Proxy for getting ALL Cards (for Matchup Analyzer Manual Mode)
+app.get("/api/cards", async (req, res) => {
+  if (!API_TOKEN) {
+    return res.status(500).json({ error: 'Server misconfigured: CLASH_API_TOKEN not set' });
+  }
+
+  try {
+    const response = await fetch('https://api.clashroyale.com/v1/cards', {
+      headers: { Authorization: `Bearer ${API_TOKEN}` }
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      return res.status(response.status).send(text);
+    }
+
+    const data = await response.json();
+    // API returns { items: [...] }
+    res.json(data.items || []);
+  } catch (err) {
+    console.error("Failed to fetch cards:", err);
+    res.status(500).json({ error: "Failed to fetch cards" });
+  }
+});
+
 import puppeteer from 'puppeteer';
 
 app.post("/api/check-deck", async (req, res) => {
