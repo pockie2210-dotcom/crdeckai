@@ -41,7 +41,7 @@ export const WIN_CONDITION_GUIDES = {
                 abbr: 'AD',
                 color: '#e74c3c', // Red
                 needed: true,
-                examples: ['Magic Archer', 'Musketeer', 'Marcher'],
+                examples: ['Magic Archer', 'Musketeer'],
                 reason: 'Your main ranged damage dealer. Protect this alignment!'
             },
             {
@@ -698,52 +698,5 @@ export const WIN_CONDITION_GUIDES = {
         ],
         strategy: ['**Explosion:** The death damage kills bats/skeletons. Use it to clear swarms!', '**Miner Timing:** Send Miner so he arrives exactly when the Barrel pops.']
     },
-    'Mega Knight': {
-        role: 'Bridge Spam / Mid-Ladder',
-        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/mega-knight.png',
-        description: 'The stomper. Use his spawn damage to kill a push, then counter-attack. Not a true win condition alone, but creates one.',
-        composition: [
-            { role: 'The Boss', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Mega Knight'], reason: 'Defensive juggernaut.' },
-            { role: 'Actual Win Con', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Wall Breakers', 'Ram Rider', 'Hog Rider', 'Miner'], reason: 'MK needs a partner to actually take towers.' },
-            { role: 'Zap Bait', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Bats', 'Inferno Dragon'], reason: 'MK decks often run double dragon or bats.' },
-            { role: 'Support', abbr: 'UT', color: '#f1c40f', needed: true, examples: ['Bandit', 'Prince'], reason: 'Bridge spam pressure.' },
-            { role: 'Reaction', abbr: 'TK', color: '#e74c3c', needed: true, examples: ['Mini PEKKA', 'Hunter'], reason: 'If MK is out of cycle.' },
-            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Zap', 'Snowball'], reason: 'Reset infernos.' },
-            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Lightning', 'Fireball'], reason: 'Kill Queen/Witch.' },
-            { role: 'Cycle', abbr: 'CC', color: '#2ecc71', needed: true, examples: ['Goblins', 'Skeletons'], reason: 'Cheap defense.' }
-        ],
-        strategy: ['**Spawn Damage:** Treat him like a 7-elixir Fireball + Knight. Drop him ON TOP of troops.', '**Jump:** Don\'t place him at the bridge. Place him back so he jumps.']
-    },
-    'P.E.K.K.A': {
-        role: 'Control / Bridge Spam',
-        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/pekka.png',
-        description: 'The momma. Highest damage in the game. Kills Golems and E-Giants for breakfast.',
-        composition: [
-            { role: 'Tank Killer', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['P.E.K.K.A'], reason: 'Defense -> Offense.' },
-            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Battle Ram', 'Ram Rider', 'Hog Rider'], reason: 'PEKKA is easily distracted; she needs a lane partner.' },
-            { role: 'Sniper', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Magic Archer', 'Marcher'], reason: 'Pierces through units blocking PEKKA.' },
-            { role: 'Stun/Control', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Electro Wizard'], reason: 'Stuns infernos.' },
-            { role: 'Pressure', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Bandit', 'Royal Ghost'], reason: 'Force mistakes.' },
-            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Poison', 'Fireball'], reason: 'Poison protects PEKKA from graveyard/swarms.' },
-            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Zap'], reason: 'Instant reset.' },
-            { role: 'Air Check', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Minions', 'Mega Minion'], reason: 'Extra air defense.' }
-        ],
-        strategy: ['**Patience:** Rarely play PEKKA in the back (unless fighting Golem). Wait for them to cross the bridge.', '**The Counter:** Defend their push, then put a Battle Ram behind your healthy PEKKA.']
-    },
-    'Sparky': {
-        role: 'Beatdown / Glass Cannon',
-        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/sparky.png',
-        description: 'Trash can on wheels? No, a nuclear bomb. One shot obliterates almost anything.',
-        composition: [
-            { role: 'The Nuke', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Sparky'], reason: 'Protect her.' },
-            { role: 'The Tank', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Goblin Giant', 'Giant'], reason: 'Best partners. They move at medium speed.' },
-            { role: 'Rage', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Rage'], reason: 'Makes Sparky charge and move faster.' },
-            { role: 'Zap Bait', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Minion Horde', 'Skeleton Army'], reason: 'If they Zap Sparky, punish with Horde.' },
-            { role: 'Anti-Air', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Hunter', 'Electro Wizard'], reason: 'Sparky cannot hit air.' },
-            { role: 'Mini Tank', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Dark Prince', 'Mini PEKKA'], reason: 'Splash and additional pressure.' },
-            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Zap', 'Arrows'], reason: 'Clear distractions.' },
-            { role: 'Support', abbr: 'UT', color: '#95a5a6', needed: true, examples: ['Mega Minion', 'Heal Spirit'], reason: 'Utility.' }
-        ],
-        strategy: ['**Sparky in Back:** Play her in the back. By the time she reaches the bridge, you have elixir for a Giant.', '**Defense:** She stops E-Giant and Golem pushes single-handedly.']
-    }
+}
 };
