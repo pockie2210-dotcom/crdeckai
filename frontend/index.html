@@ -3017,13 +3017,22 @@
       // RENDER ENEMY PICKER
       function renderEnemyPicker() {
         enemyPicker.innerHTML = '';
-        // Sort roughly by rarity or elixir
-        allCardsCache.sort((a, b) => (a.elixirCost || 0) - (b.elixirCost || 0));
 
-        allCardsCache.forEach(c => {
+        // Source: Window.currentPlayerData (from Scan/Demo)
+        const sourceCards = window.currentPlayerData?.cards || [];
+
+        if (sourceCards.length === 0) {
+          enemyPicker.innerHTML = '<div style="color:#aaa; text-align:center; padding:20px;">Please "Scan Player" or "Show Demo Deck" first to load cards.</div>';
+          return;
+        }
+
+        // Copy and sort
+        const cards = [...sourceCards].sort((a, b) => (a.elixirCost || 0) - (b.elixirCost || 0));
+
+        cards.forEach(c => {
           const img = document.createElement('img');
           img.src = c.iconUrl;
-          img.className = 'picker-card'; // Re-use styling
+          img.className = 'picker-card';
           img.title = c.name;
           img.id = `enemy-picker-${c.name.replace(/\s+/g, '')}`;
           img.loading = 'lazy';
