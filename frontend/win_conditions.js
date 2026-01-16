@@ -601,5 +601,149 @@ export const WIN_CONDITION_GUIDES = {
             { role: 'Champion', abbr: 'UT', color: '#f1c40f', needed: true, examples: ['Mighty Miner', 'Knight'], reason: 'Lane control and tankiness.' }
         ],
         strategy: ['**Split:** You can split them, but usually they are best sent together behind a Miner.']
+    },
+    'Balloon': {
+        role: 'Loon Cycle / Beatdown',
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/balloon.png',
+        description: 'A floating terror that deals massive damage. Usually paired with a fast tank (Lumberjack/Miner) or a big tank (Lava Hound).',
+        composition: [
+            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Balloon'], reason: 'Get it to the tower!' },
+            { role: 'Tank/Rage', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Lumberjack', 'Miner'], reason: 'Lumberjack rages the Loon; Miner tanks for it.' },
+            { role: 'Air Defense', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Musketeer', 'Electro Dragon'], reason: 'Kill opposing minions.' },
+            { role: 'Building', abbr: 'BD', color: '#95a5a6', needed: true, examples: ['Bomb Tower', 'Tesla', 'Inferno Tower'], reason: 'Reliable defense.' },
+            { role: 'Freeze/Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Freeze', 'Fireball'], reason: 'Freeze is the classic surprise tactic.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Snowball', 'Zap', 'Barbarian Barrel'], reason: 'Knockback loon counters.' },
+            { role: 'Cycle Card', abbr: 'CC', color: '#2ecc71', needed: true, examples: ['Ice Spirit', 'Skeletons'], reason: 'Cycle fast.' },
+            { role: 'Ground Defense', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Ice Golem', 'Valkyrie'], reason: 'Distract ground troops.' }
+        ],
+        strategy: ['**LumberLoon:** Place Lumberjack at the bridge, then Balloon immediately behind him. If Lumberjack dies, Balloon gets raged.', '**Miner Loon:** Send Miner to the back of the tower, then Balloon at the bridge.']
+    },
+    'Mortar': {
+        role: 'Siege / Bait',
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/mortar.png',
+        description: 'A 4-elixir siege building. It can play defense or offense. Often paired with bait cards.',
+        composition: [
+            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Mortar'], reason: 'Defensive rock, offensive pressure.' },
+            { role: 'Secondary Win Con', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Miner', 'Skeleton King', 'Hog Rider'], reason: 'Mortar barely takes towers alone.' },
+            { role: 'Bait Element', abbr: 'UT', color: '#f1c40f', needed: true, examples: ['Goblin Gang', 'Spear Goblins', 'Minion Horde'], reason: 'Protect the blind spot.' },
+            { role: 'Tank Killer', abbr: 'TK', color: '#e74c3c', needed: true, examples: ['Cannon Cart', 'Prince', 'Hunter'], reason: 'Defend big pushes.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Fireball', 'Rocket'], reason: 'Burn damage.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['The Log', 'Tornado'], reason: 'Knockback into Mortar range.' },
+            { role: 'Champion', abbr: 'UT', color: '#f1c40f', needed: true, examples: ['Skeleton King', 'Mighty Miner'], reason: 'Counter-push threat.' },
+            { role: 'Cycle/Air', abbr: 'AD', color: '#2ecc71', needed: true, examples: ['Bats', 'Dart Goblin'], reason: 'High DPS glass cannons.' }
+        ],
+        strategy: ['**Defensive Mortar:** Place high in the center to pull Hogs and Giants.', '**The Lock:** If Mortar locks onto a tower, protect it with gang/knights!']
+    },
+    'Goblin Barrel': {
+        role: 'Log Bait',
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/goblin-barrel.png',
+        description: 'Spawns 3 Goblins on the tower. If they used their Log, they are in trouble.',
+        composition: [
+            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Goblin Barrel'], reason: 'The damage dealer.' },
+            { role: 'Bait Card 1', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Princess', 'Dart Goblin'], reason: 'Force them to Log this.' },
+            { role: 'Bait Card 2', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Goblin Gang', 'Skeleton Barrel'], reason: 'More Log bait.' },
+            { role: 'The Wall', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Knight', 'Valkyrie', 'Mighty Miner'], reason: 'Tank hits while you throw barrels.' },
+            { role: 'Building', abbr: 'BD', color: '#95a5a6', needed: true, examples: ['Inferno Tower', 'Tesla', 'Cannon'], reason: 'Stop tanks.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Rocket', 'Fireball'], reason: 'Finish the game when damage is low.' },
+            { role: 'Spirit', abbr: 'CC', color: '#2ecc71', needed: true, examples: ['Ice Spirit', 'Electro Spirit'], reason: 'Cycle/Stun.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['The Log'], reason: 'Standard defense.' }
+        ],
+        strategy: ['**Juke Barrel:** If they keep logging it perfectly, throw a "tricky barrel" deep behind the tower.', '**Princess Defense:** Place Princess in the opposite lane so they can\'t Log her AND the Barrel easily.']
+    },
+    'Goblin Drill': {
+        role: 'Cycle / Control',
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/goblin-drill.png',
+        description: 'Like a miner, but spawns a building that spawns goblins. Deadly if ignored.',
+        composition: [
+            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Goblin Drill'], reason: 'Pressure card.' },
+            { role: 'Wall Breakers', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Wall Breakers', 'Bomber'], reason: 'Synergy: Drill tanks for WBs.' },
+            { role: 'Control Building', abbr: 'BD', color: '#95a5a6', needed: true, examples: ['Tesla', 'Bomb Tower'], reason: 'Solid defense.' },
+            { role: 'Mini Tank', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Knight', 'Valkyrie', 'Golden Knight'], reason: 'Bridge blocker.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Fireball', 'Poison'], reason: 'Kills wizard/witch defending drill.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['The Log', 'Tornado'], reason: 'Defense.' },
+            { role: 'Cycle/Air', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Magic Archer', 'Skeletons'], reason: 'Geometric damage.' },
+            { role: 'Disruptor', abbr: 'UT', color: '#f1c40f', needed: true, examples: ['Tornado', 'E-Spirit'], reason: 'Control.' }
+        ],
+        strategy: ['**Tanking:** Drill can tank tower shots for Wall Breakers.', '**Defense:** You can use Drill defensively to pull a Golem to the center!']
+    },
+    'Three Musketeers': {
+        role: 'Split Lane / Fireball Bait',
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/three-musketeers.png',
+        description: '9 Elixir for massive firepower. Split them behind the King Tower to attack both lanes.',
+        composition: [
+            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Three Musketeers'], reason: 'High risk, high reward.' },
+            { role: 'Pump', abbr: 'UT', color: '#f1c40f', needed: true, examples: ['Elixir Collector'], reason: 'MANDATORY. Force out their big spell.' },
+            { role: 'Tank 1', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Royal Ghost', 'Bandit'], reason: 'Bridge spam pressure.' },
+            { role: 'Tank 2', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Ice Golem', 'Golden Knight'], reason: 'Kiting and tanking.' },
+            { role: 'Hogs/Ram', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Royal Hogs', 'Battle Ram'], reason: 'Something to tank for the muskies.' },
+            { role: 'Baity Unit', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Minion Horde', 'Hunters'], reason: 'More fireball bait.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Zap', 'Barbarian Barrel'], reason: 'Cheap defense.' },
+            { role: 'Heal/Rage', abbr: 'SS', color: '#d456fd', needed: false, examples: ['Heal Spirit'], reason: 'Keep them alive.' }
+        ],
+        strategy: ['**The Split:** Almost always split them. 2 in one lane, 1 in the other.', '**Pump Up:** Play pump first. If they fireball it, your 3M are safe.']
+    },
+    'Skeleton Barrel': {
+        role: 'Zap Bait / Speed',
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/skeleton-barrel.png',
+        description: 'A poor man\'s balloon. Pops on the tower for massive skeleton damage. Great synergy with Mega Knight.',
+        composition: [
+            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Skeleton Barrel'], reason: 'The annoyance.' },
+            { role: 'The Tank', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Mega Knight', 'Miner'], reason: 'MK is the classic partner.' },
+            { role: 'Bait 1', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Spear Goblins', 'Goblin Gang'], reason: 'Bait Zap.' },
+            { role: 'Bait 2', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Bats', 'Inferno Dragon'], reason: 'Bait Snowball.' },
+            { role: 'Tank Killer', abbr: 'TK', color: '#e74c3c', needed: true, examples: ['Prince', 'Mini PEKKA'], reason: 'Destroy Golems.' },
+            { role: 'Miner', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Miner'], reason: 'Tanks for the pop.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Zap', 'Snowball'], reason: 'Standard.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: false, examples: ['Fireball'], reason: 'Area control.' }
+        ],
+        strategy: ['**Explosion:** The death damage kills bats/skeletons. Use it to clear swarms!', '**Miner Timing:** Send Miner so he arrives exactly when the Barrel pops.']
+    },
+    'Mega Knight': {
+        role: 'Bridge Spam / Mid-Ladder',
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/mega-knight.png',
+        description: 'The stomper. Use his spawn damage to kill a push, then counter-attack. Not a true win condition alone, but creates one.',
+        composition: [
+            { role: 'The Boss', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Mega Knight'], reason: 'Defensive juggernaut.' },
+            { role: 'Actual Win Con', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Wall Breakers', 'Ram Rider', 'Hog Rider', 'Miner'], reason: 'MK needs a partner to actually take towers.' },
+            { role: 'Zap Bait', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Bats', 'Inferno Dragon'], reason: 'MK decks often run double dragon or bats.' },
+            { role: 'Support', abbr: 'UT', color: '#f1c40f', needed: true, examples: ['Bandit', 'Prince'], reason: 'Bridge spam pressure.' },
+            { role: 'Reaction', abbr: 'TK', color: '#e74c3c', needed: true, examples: ['Mini PEKKA', 'Hunter'], reason: 'If MK is out of cycle.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Zap', 'Snowball'], reason: 'Reset infernos.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Lightning', 'Fireball'], reason: 'Kill Queen/Witch.' },
+            { role: 'Cycle', abbr: 'CC', color: '#2ecc71', needed: true, examples: ['Goblins', 'Skeletons'], reason: 'Cheap defense.' }
+        ],
+        strategy: ['**Spawn Damage:** Treat him like a 7-elixir Fireball + Knight. Drop him ON TOP of troops.', '**Jump:** Don\'t place him at the bridge. Place him back so he jumps.']
+    },
+    'P.E.K.K.A': {
+        role: 'Control / Bridge Spam',
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/pekka.png',
+        description: 'The momma. Highest damage in the game. Kills Golems and E-Giants for breakfast.',
+        composition: [
+            { role: 'Tank Killer', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['P.E.K.K.A'], reason: 'Defense -> Offense.' },
+            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Battle Ram', 'Ram Rider', 'Hog Rider'], reason: 'PEKKA is easily distracted; she needs a lane partner.' },
+            { role: 'Sniper', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Magic Archer', 'Marcher'], reason: 'Pierces through units blocking PEKKA.' },
+            { role: 'Stun/Control', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Electro Wizard'], reason: 'Stuns infernos.' },
+            { role: 'Pressure', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Bandit', 'Royal Ghost'], reason: 'Force mistakes.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Poison', 'Fireball'], reason: 'Poison protects PEKKA from graveyard/swarms.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Zap'], reason: 'Instant reset.' },
+            { role: 'Air Check', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Minions', 'Mega Minion'], reason: 'Extra air defense.' }
+        ],
+        strategy: ['**Patience:** Rarely play PEKKA in the back (unless fighting Golem). Wait for them to cross the bridge.', '**The Counter:** Defend their push, then put a Battle Ram behind your healthy PEKKA.']
+    },
+    'Sparky': {
+        role: 'Beatdown / Glass Cannon',
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/sparky.png',
+        description: 'Trash can on wheels? No, a nuclear bomb. One shot obliterates almost anything.',
+        composition: [
+            { role: 'The Nuke', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Sparky'], reason: 'Protect her.' },
+            { role: 'The Tank', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Goblin Giant', 'Giant'], reason: 'Best partners. They move at medium speed.' },
+            { role: 'Rage', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Rage'], reason: 'Makes Sparky charge and move faster.' },
+            { role: 'Zap Bait', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Minion Horde', 'Skeleton Army'], reason: 'If they Zap Sparky, punish with Horde.' },
+            { role: 'Anti-Air', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Hunter', 'Electro Wizard'], reason: 'Sparky cannot hit air.' },
+            { role: 'Mini Tank', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Dark Prince', 'Mini PEKKA'], reason: 'Splash and additional pressure.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Zap', 'Arrows'], reason: 'Clear distractions.' },
+            { role: 'Support', abbr: 'UT', color: '#95a5a6', needed: true, examples: ['Mega Minion', 'Heal Spirit'], reason: 'Utility.' }
+        ],
+        strategy: ['**Sparky in Back:** Play her in the back. By the time she reaches the bridge, you have elixir for a Giant.', '**Defense:** She stops E-Giant and Golem pushes single-handedly.']
     }
 };
