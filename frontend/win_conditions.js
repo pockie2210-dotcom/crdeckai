@@ -697,6 +697,5 @@ export const WIN_CONDITION_GUIDES = {
             { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: false, examples: ['Fireball'], reason: 'Area control.' }
         ],
         strategy: ['**Explosion:** The death damage kills bats/skeletons. Use it to clear swarms!', '**Miner Timing:** Send Miner so he arrives exactly when the Barrel pops.']
-    },
-}
+    }
 };
