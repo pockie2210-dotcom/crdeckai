@@ -2948,9 +2948,105 @@
           e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
           if (!ensureBuilderMode()) return;
           if (builderDeck.length === 0 && currentPlayerData) builderDeck = [...extractCards(currentPlayerData)];
-          const weaknessBtn = document.getElementById('weaknessBtn');
-          if (weaknessBtn) weaknessBtn.click();
+
+          // AUTO-IMPROVE LOGIC: Swap 2-5 weak cards automatically
+          try {
+            const swaps = [];
+            const currentDeckNames = new Set(builderDeck.map(c => c.name));
+
+            // Get player's available cards (not in current deck)
+            const availableCards = (currentPlayerData?.cards || []).filter(c => !currentDeckNames.has(c.name));
+
+            // Score each card in the current deck
+            const scoredCards = builderDeck.map(card => {
+              const metaScore = (window.META_QUALITY && window.META_QUALITY[card.name]) || 50;
+              const role = window.getCardRole ? window.getCardRole(card.name) : [];
+              const hasEvo = (card.evolutionLevel || 0) > 0;
+              const isWinCon = role.includes('winCon');
+              // Protect evos and win cons
+              const protectionBonus = (hasEvo ? 50 : 0) + (isWinCon ? 30 : 0);
+              return { card, score: metaScore + protectionBonus, role };
+            });
+
+            // Sort by score (lowest = weakest)
+            scoredCards.sort((a, b) => a.score - b.score);
+
+            // Get roles currently in deck for balance checking
+            const deckRoles = new Set();
+            builderDeck.forEach(c => {
+              const roles = window.getCardRole ? window.getCardRole(c.name) : [];
+              roles.forEach(r => deckRoles.add(r));
+            });
+
+            // Find 2-5 weakest cards to replace
+            const numToReplace = Math.min(5, Math.max(2, Math.floor(scoredCards.filter(c => c.score < 70).length)));
+            const weakest = scoredCards.slice(0, numToReplace);
+
+            for (const weak of weakest) {
+              // Find a better replacement that fills a similar role or improves the deck
+              const weakRoles = weak.role;
+              let bestReplacement = null;
+              let bestScore = weak.score;
+
+              for (const candidate of availableCards) {
+                if (swaps.find(s => s.add.name === candidate.name)) continue; // Already using this
+                const candMeta = (window.META_QUALITY && window.META_QUALITY[candidate.name]) || 50;
+                const candRole = window.getCardRole ? window.getCardRole(candidate.name) : [];
+
+                // Prefer cards that share a role with the removed card
+                const roleMatch = weakRoles.some(r => candRole.includes(r));
+                const roleBonus = roleMatch ? 15 : 0;
+                const finalScore = candMeta + roleBonus;
+
+                if (finalScore > bestScore) {
+                  bestScore = finalScore;
+                  bestReplacement = candidate;
+                }
+              }
+
+              if (bestReplacement) {
+                swaps.push({
+                  remove: weak.card,
+                  add: bestReplacement,
+                  reason: `${weak.card.name} (meta score: ${weak.score}) → ${bestReplacement.name} (meta score: ${bestScore})`
+                });
+                // Remove from available pool
+                const idx = availableCards.findIndex(c => c.name === bestReplacement.name);
+                if (idx > -1) availableCards.splice(idx, 1);
+              }
+            }
+
+            if (swaps.length === 0) {
+              alert("Your deck is already optimized! No improvements found.");
+              return;
+            }
+
+            // Apply swaps
+            for (const swap of swaps) {
+              const idx = builderDeck.findIndex(c => c.name === swap.remove.name);
+              if (idx > -1) {
+                builderDeck[idx] = swap.add;
+              }
+            }
+
+            // Update globals
+            window.builderDeck = builderDeck;
+            window.currentAppDeck = builderDeck;
+            if (currentPlayerData) currentPlayerData.currentDeck = builderDeck;
+
+            // Re-render deck
+            renderDeck(currentPlayerData || { currentDeck: builderDeck });
+
+            // Show summary
+            const swapSummary = swaps.map(s => `• ${s.remove.name} → ${s.add.name}`).join('\n');
+            alert(`🔧 Improved ${swaps.length} cards:\n\n${swapSummary}`);
+
+          } catch (err) {
+            console.error("Improve Deck error:", err);
+            alert("Error improving deck: " + err.message);
+          }
         };
+
       }
       const createNewBtn = document.getElementById('createNewBtn');
 
