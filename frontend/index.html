@@ -1650,8 +1650,8 @@
         stats.innerHTML = html;
         const improveBtn = document.getElementById('improveDeckActionBtn');
         if (improveBtn) improveBtn.style.display = 'inline-block';
-        const weaknessBtnEl = document.getElementById('weaknessBtn');
-        if (weaknessBtnEl) weaknessBtnEl.style.display = 'inline-block';
+        // weaknessBtn is kept hidden - triggered programmatically by improveDeckActionBtn
+
         const createNewBtn = document.getElementById('createNewBtn');
         if (createNewBtn) createNewBtn.style.display = 'inline-block';
         const buildBtn = document.getElementById('buildBtn');
