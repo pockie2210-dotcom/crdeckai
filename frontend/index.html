@@ -3057,6 +3057,22 @@
           // 2. Check Elixir Cost (keep average similar)
           // 3. Check Meta Quality (remove lowest quality)
 
+          // FIX: Robustly ensure builderDeck is populated
+          if (!builderDeck || builderDeck.length === 0) {
+            // Attempt 1: Use window.currentAppDeck (set by renderDeck)
+            if (window.currentAppDeck && window.currentAppDeck.length > 0) {
+              console.log("SuggestRemoval: Recovering deck from currentAppDeck...");
+              builderDeck = [...window.currentAppDeck];
+              renderBuilderUI();
+            }
+            // Attempt 2: Use currentPlayerData.currentDeck
+            else if (currentPlayerData && currentPlayerData.currentDeck) {
+              console.log("SuggestRemoval: Recovering deck from player profile...");
+              builderDeck = [...currentPlayerData.currentDeck];
+              renderBuilderUI();
+            }
+          }
+
           if (!builderDeck || builderDeck.length === 0) {
             alert("Your deck is empty! Just adding the card.");
             builderDeck.push(newCard);
