@@ -567,6 +567,56 @@
     window.getCardRole = getCardRole;
     window.ROLES = ROLES;
 
+    // META QUALITY TIER LIST (Global)
+    const META_QUALITY = {
+      // S+ Tier Spells (Meta Staples) - BOOSTED
+      'The Log': 150, 'Fireball': 140, 'Poison': 130, 'Tornado': 140,
+      'Zap': 145, 'Arrows': 110, 'Lightning': 125, 'Earthquake': 120,
+      'Barbarian Barrel': 125, 'Snowball': 120, 'Giant Snowball': 120,
+
+      // S Tier Win Conditions (Reliable Damage Dealers) - BOOSTED
+      'Hog Rider': 135, 'Miner': 140, 'Royal Giant': 120, 'Goblin Barrel': 130,
+      'Wall Breakers': 125, 'Graveyard': 130, 'X-Bow': 120, 'Mortar': 110,
+      'Goblin Drill': 125, 'Ram Rider': 115, 'Battle Ram': 105,
+
+      // S Tier Support (Universal Utility) - BOOSTED
+      'Knight': 150, 'Musketeer': 140, 'Ice Spirit': 145, 'Skeletons': 150,
+      'Electro Spirit': 140, 'Valkyrie': 130, 'Baby Dragon': 130,
+      'Electro Wizard': 140, 'Mega Minion': 125, 'Bats': 135,
+      'Ice Golem': 120, 'Archers': 125, 'Flying Machine': 115,
+
+      // A Tier (Strong Meta Picks)
+      'Goblin Gang': 100, 'Cannon': 115, 'Tesla': 125,
+      'Inferno Tower': 120, 'Lumberjack': 105, 'Magic Archer': 110,
+      'Dark Prince': 95, 'Hunter': 50, 'Firecracker': 115,
+      'Mini P.E.K.K.A': 120, 'Prince': 105, 'Bandit': 110,
+      'Fisherman': 100, 'Mother Witch': 110, 'Royal Delivery': 100,
+      'Dart Goblin': 110, 'Princess': 105, 'Minions': 105,
+
+      // B Tier (Archetype-Specific Strong)
+      'Giant': 80, 'Golem': 75, 'Lava Hound': 75, 'Balloon': 90,
+      'Royal Hogs': 85, 'P.E.K.K.A': 85, 'Mega Knight': 75,
+      'Sparky': 65, 'Executioner': 75, 'Bowler': 75,
+      'Phoenix': 85, 'Electro Giant': 70, 'Goblin Giant': 75,
+      'Night Witch': 90, 'Witch': 30, 'Royal Ghost': 85,
+      'Inferno Dragon': 100, 'Skeleton Dragons': 85,
+
+      // C Tier (Needs Specific Synergy)
+      'Bomber': 50, 'Giant Skeleton': 35, 'Skeleton Army': 55,
+      'Minion Horde': 50, 'Tombstone': 65, 'Rocket': 75,
+      'Barbarians': 65, 'Elite Barbarians': 40, 'Royal Recruits': 75,
+      'Rascals': 65, 'Guards': 70, 'Spear Goblins': 55,
+      'Zappies': 50, 'Bomb Tower': 70, 'Goblin Cage': 80,
+
+      // D/F Tier
+      'Wizard': -80, 'Goblin Hut': -100, 'Furnace': -80,
+      'Barbarian Hut': -200, 'Mirror': -220, 'Clone': -240,
+      'Elixir Golem': -300, 'Battle Healer': -200, 'Three Musketeers': -180,
+      'Rage': -100, 'Freeze': 50, 'Heal Spirit': 80,
+      'Elixir Collector': 35, 'Void': 100
+    };
+    window.META_QUALITY = META_QUALITY; // Expose explicit
+
     const DeckWeakness = {
       /**
        * Analyzes a deck and returns a health report.
@@ -1067,54 +1117,8 @@
       const demoBtn = document.getElementById('demoBtn');
       const output = document.getElementById('output');
 
-      // --- META QUALITY TIER LIST (MOVED TO GLOBAL SCOPE FOR SUBSTITUTIONS) ---
-      const META_QUALITY = {
-        // S+ Tier Spells (Meta Staples) - BOOSTED
-        'The Log': 150, 'Fireball': 140, 'Poison': 130, 'Tornado': 140,
-        'Zap': 145, 'Arrows': 110, 'Lightning': 125, 'Earthquake': 120,
-        'Barbarian Barrel': 125, 'Snowball': 120, 'Giant Snowball': 120,
-
-        // S Tier Win Conditions (Reliable Damage Dealers) - BOOSTED
-        'Hog Rider': 135, 'Miner': 140, 'Royal Giant': 120, 'Goblin Barrel': 130,
-        'Wall Breakers': 125, 'Graveyard': 130, 'X-Bow': 120, 'Mortar': 110,
-        'Goblin Drill': 125, 'Ram Rider': 115, 'Battle Ram': 105,
-
-        // S Tier Support (Universal Utility) - BOOSTED
-        'Knight': 150, 'Musketeer': 140, 'Ice Spirit': 145, 'Skeletons': 150,
-        'Electro Spirit': 140, 'Valkyrie': 130, 'Baby Dragon': 130,
-        'Electro Wizard': 140, 'Mega Minion': 125, 'Bats': 135,
-        'Ice Golem': 120, 'Archers': 125, 'Flying Machine': 115,
-
-        // A Tier (Strong Meta Picks)
-        'Goblin Gang': 100, 'Cannon': 115, 'Tesla': 125,
-        'Inferno Tower': 120, 'Lumberjack': 105, 'Magic Archer': 110,
-        'Dark Prince': 95, 'Hunter': 50, 'Firecracker': 115,
-        'Mini P.E.K.K.A': 120, 'Prince': 105, 'Bandit': 110,
-        'Fisherman': 100, 'Mother Witch': 110, 'Royal Delivery': 100,
-        'Dart Goblin': 110, 'Princess': 105, 'Minions': 105,
-
-        // B Tier (Archetype-Specific Strong)
-        'Giant': 80, 'Golem': 75, 'Lava Hound': 75, 'Balloon': 90,
-        'Royal Hogs': 85, 'P.E.K.K.A': 85, 'Mega Knight': 75,
-        'Sparky': 65, 'Executioner': 75, 'Bowler': 75,
-        'Phoenix': 85, 'Electro Giant': 70, 'Goblin Giant': 75,
-        'Night Witch': 90, 'Witch': 30, 'Royal Ghost': 85,
-        'Inferno Dragon': 100, 'Skeleton Dragons': 85,
-
-        // C Tier (Needs Specific Synergy)
-        'Bomber': 50, 'Giant Skeleton': 35, 'Skeleton Army': 55,
-        'Minion Horde': 50, 'Tombstone': 65, 'Rocket': 75,
-        'Barbarians': 65, 'Elite Barbarians': 40, 'Royal Recruits': 75,
-        'Rascals': 65, 'Guards': 70, 'Spear Goblins': 55,
-        'Zappies': 50, 'Bomb Tower': 70, 'Goblin Cage': 80,
-
-        // D/F Tier
-        'Wizard': -80, 'Goblin Hut': -100, 'Furnace': -80,
-        'Barbarian Hut': -200, 'Mirror': -220, 'Clone': -240,
-        'Elixir Golem': -300, 'Battle Healer': -200, 'Three Musketeers': -180,
-        'Rage': -100, 'Freeze': 50, 'Heal Spirit': 80,
-        'Elixir Collector': 35, 'Void': 100
-      };
+      // --- META QUALITY TIER LIST (Using Global Scope Version) ---
+      // Removed local duplicate to ensure consistency with DeckWeakness
 
       const DEMO_DECK = [
         { name: 'Knight', level: 13, elixirCost: 3, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/jAj1Q5rclXxU9kVImGqSJxa4wEMfEhvwKQnmpY31TvU.png' } },
