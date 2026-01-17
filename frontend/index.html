@@ -526,15 +526,17 @@
   <!-- WEAKNESS MODAL -->
   <div id="weaknessModal" class="modal-overlay"
     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2100; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
-    <div class="guide-content" style="text-align:center;">
-      <h2 style="color:var(--gold);">Deck Weakness Report</h2>
+    <div class="guide-content" style="text-align:center; display:flex; flex-direction:column; max-height:80vh;">
+      <h2 style="color:var(--gold); margin-top:0;">Deck Weakness Report</h2>
       <div id="weaknessScore" style="font-size:40px; font-weight:bold; margin-bottom:15px;">100%</div>
       <div id="weaknessBody"
-        style="text-align:left; color:#ddd; margin-bottom:20px; max-height: 400px; overflow-y: auto;">
+        style="text-align:left; color:#ddd; margin-bottom:20px; flex:1; overflow-y: auto; padding:10px;">
         <!-- Results here -->
       </div>
-      <button onclick="document.getElementById('weaknessModal').style.display='none'" class="action-btn"
-        style="background:#555;">Close</button>
+      <div id="weaknessFooter" style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
+        <button onclick="document.getElementById('weaknessModal').style.display='none'" class="action-btn"
+          style="background:#555;">Close</button>
+      </div>
     </div>
   </div>
 
@@ -1165,21 +1167,99 @@
         if (result.health < 60) color = '#e74c3c';
         else if (result.health < 85) color = '#f1c40f';
 
+        // 1. Render Score
         scoreEl.textContent = `Health: ${result.health}%`;
         scoreEl.style.color = color;
 
+        // 2. Render Weakness Body HTML
+        let html = '';
         if (result.issues.length === 0) {
-          bodyEl.innerHTML = `<h3 style="color:#2ecc71">✅ Solid Deck!</h3><p>Your deck has all the standard roles covered.</p>`;
+          html = `<h3 style="color:#2ecc71">✅ Solid Deck!</h3><p>Your deck has all the standard roles covered.</p>`;
         } else {
-          let html = `<h3 style="color:#e74c3c; border-bottom:1px solid #444; padding-bottom:5px;">⚠️ Issues Found</h3><ul>`;
+          html = `<h3 style="color:#e74c3c; border-bottom:1px solid #444; padding-bottom:5px;">⚠️ Issues Found</h3><ul>`;
           result.issues.forEach((issue, idx) => {
             html += `<li style="margin-bottom:8px; font-size:1.1em;">${issue}
                       <div style="font-size:0.8em; color:#aaa; margin-top:2px;">💡 ${result.suggestions[idx]}</div>
                   </li>`;
           });
           html += `</ul>`;
-          bodyEl.innerHTML = html;
+
+          // SUGGEST FIX BUTTON logic will be in footer
         }
+        bodyEl.innerHTML = html;
+
+        // 3. Render Footer Buttons
+        const footer = document.getElementById('weaknessFooter');
+        // Reset Footer
+        footer.innerHTML = '';
+
+        // "Close" Button
+        const closeBtn = document.createElement('button');
+        closeBtn.innerText = "Close";
+        closeBtn.className = "action-btn";
+        closeBtn.style.background = "#555";
+        closeBtn.onclick = () => document.getElementById('weaknessModal').style.display = 'none';
+
+        // "Fix Weaknesses" Button (if issues)
+        if (result.issues.length > 0) {
+          const fixBtn = document.createElement('button');
+          fixBtn.innerHTML = "🔧 Fix Weaknesses";
+          fixBtn.className = "action-btn";
+          fixBtn.style.background = "linear-gradient(135deg, #2ecc71, #27ae60)";
+          fixBtn.style.marginRight = "10px"; // Spacing
+
+          fixBtn.onclick = () => {
+            // ... PROPOSE FIX LOGIC ...
+            try {
+              const fix = window.DeckWeakness.proposeFix(deckToAnalyze);
+              if (fix) {
+                bodyEl.innerHTML = `
+                            <div style="background:rgba(39, 174, 96, 0.2); padding:15px; border-radius:8px; border:1px solid #27ae60;">
+                                <h3 style="color:#2ecc71; margin-top:0;">Recommended Fix</h3>
+                                <div style="display:flex; align-items:center; justify-content:center; gap:20px; margin:15px 0;">
+                                    <div style="text-align:center;">
+                                        <div style="color:#e74c3c; font-weight:bold; font-size:12px;">REMOVE</div>
+                                        <img src="${fix.remove.iconUrls?.medium || fix.remove.iconUrls || fix.remove.iconUrl}" style="width:60px;">
+                                        <div style="font-size:12px;">${fix.remove.name}</div>
+                                    </div>
+                                    <div style="font-size:24px; color:#aaa;">➝</div>
+                                    <div style="text-align:center;">
+                                        <div style="color:#2ecc71; font-weight:bold; font-size:12px;">ADD</div>
+                                        <img src="${fix.add.iconUrls?.medium || fix.add.iconUrls || fix.add.iconUrl}" style="width:60px;">
+                                        <div style="font-size:12px;">${fix.add.name}</div>
+                                    </div>
+                                </div>
+                                <p style="font-style:italic; color:#ddd; margin-bottom:10px;">${fix.reason}</p>
+                                <button id="confirmFixBtn" class="action-btn" style="background:#27ae60; width:100%;">✅ Apply Fix</button>
+                                <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin-top:10px; cursor:pointer; font-size:12px;">Cancel</button>
+                            </div>
+                        `;
+
+                document.getElementById('confirmFixBtn').onclick = () => {
+                  const newDeck = window.currentAppDeck.filter(c => c.name !== fix.remove.name);
+                  newDeck.push(fix.add);
+                  window.currentAppDeck = newDeck;
+                  window.builderDeck = newDeck;
+                  if (window.currentPlayerData) window.currentPlayerData.currentDeck = newDeck;
+                  renderDeck(window.currentPlayerData || { currentDeck: newDeck });
+                  document.getElementById('weaknessModal').style.display = 'none';
+                  alert(`Swapped ${fix.remove.name} with ${fix.add.name}!`);
+                };
+                // Hide the Fix button after clicking
+                fixBtn.style.display = 'none';
+              } else {
+                alert("No specific weakness fix found.");
+              }
+            } catch (e) {
+              console.error(e);
+              alert("Error finding fix: " + e.message);
+            }
+          };
+          footer.appendChild(fixBtn);
+        }
+
+        footer.appendChild(closeBtn);
+
 
         modal.style.display = 'flex';
       });
@@ -2812,7 +2892,19 @@
 
 
 
-      const improveBtn = document.getElementById('improveBtn');
+      let improveBtn = document.getElementById('improveBtn');
+      if (improveBtn) {
+        const newBtn = improveBtn.cloneNode(true);
+        improveBtn.parentNode.replaceChild(newBtn, improveBtn);
+        improveBtn = newBtn;
+        improveBtn.onclick = (e) => {
+          e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+          if (!ensureBuilderMode()) return;
+          if (builderDeck.length === 0 && currentPlayerData) builderDeck = [...extractCards(currentPlayerData)];
+          const weaknessBtn = document.getElementById('weaknessBtn');
+          if (weaknessBtn) weaknessBtn.click();
+        };
+      }
       const createNewBtn = document.getElementById('createNewBtn');
 
       // Shared Helper to prepare Builder Mode
@@ -2851,89 +2943,6 @@
         });
       }
 
-      // CHECK FOR IMPROVE VIEW
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('view') === 'improve') {
-        // HIDE MAIN ACTIONS to focus on improvement
-        if (input && input.parentElement) input.parentElement.style.display = 'none';
-
-        // Change Header
-        const h1 = document.querySelector('h1');
-        if (h1) {
-          h1.textContent = "AI Deck Improver";
-          h1.style.color = '#2ecc71';
-        }
-
-        // Wait for script to init then run logic
-        setTimeout(() => {
-          const savedDeck = JSON.parse(localStorage.getItem('improveDeckData') || '[]');
-          if (savedDeck.length > 0) {
-            console.log('Loading deck for improvement:', savedDeck);
-            builderDeck = savedDeck;
-            toggleBuilderMode(true);
-            runImprovementLogic(builderDeck);
-          } else {
-            if (output) {
-              output.style.display = 'block';
-              output.textContent = "No deck found to improve. Please go back and scan a player first.";
-            }
-          }
-        }, 800);
-      }
-
-      // NEW HELPER: Logic to optimize the deck (Keep best 4-8 cards)
-      function runImprovementLogic(sourceDeck) {
-        console.log("Improve: Optimizing deck with SmartAI...");
-        // Ensure we have a deck to work with
-        if (!sourceDeck || sourceDeck.length === 0) return;
-
-        // USE THE NEW SMART AI MODULE
-        // We need the full collection to pick from.
-        // currentPlayerData.cards is the full collection usually.
-        // If we haven't scanned, we might need a fallback, but sourceDeck comes from scan.
-        let collection = [];
-        if (currentPlayerData && currentPlayerData.cards) {
-          collection = currentPlayerData.cards;
-        } else {
-          // Fallback: Use the meta deck pool or extracted cards?
-          // Actually, if we don't have collection, we can't really "Pro" improve it easily except with what we have.
-          // But let's try to assume currentPlayerData exists if sourceDeck exists.
-          collection = extractCards(currentPlayerData);
-        }
-
-        // Run Optimization
-        const optimized = SmartAI.optimize(sourceDeck, collection);
-
-        console.log("SmartAI Result:", optimized.map(c => c.name));
-
-        builderDeck = optimized; // Update global
-        renderBuilderUI();
-
-        if (document.getElementById('aiStatus')) {
-          const captain = builderDeck.find(c => getCardRole(c.name).includes('winCon'));
-          const archetype = captain ? (SmartAI.SYNERGY_MAP && SmartAI.SYNERGY_MAP[captain.name] ? SmartAI.SYNERGY_MAP[captain.name].archetype : 'Custom') : 'Balanced';
-          document.getElementById('aiStatus').textContent = `✨ Pro Mode: Optimized for ${captain ? captain.name : 'Cycle'} (${archetype})`;
-          document.getElementById('aiStatus').style.color = '#2ecc71';
-        }
-      }
-
-      // 2. IMPROVE LOGIC (Keep 4-8 Cards)
-      if (improveBtn) {
-        improveBtn.addEventListener('click', () => {
-          if (!ensureBuilderMode()) return;
-
-          // Ensure builderDeck is populated
-          if (builderDeck.length === 0 && currentPlayerData) {
-            builderDeck = [...extractCards(currentPlayerData)];
-          }
-
-          console.log("Improve: Triggering Weakness Check...");
-
-          // Redirect to Weakness/Fix flow
-          const weaknessBtn = document.getElementById('weaknessBtn');
-          if (weaknessBtn) weaknessBtn.click();
-        });
-      }
 
       // SUBSTITUTIONS LOGIC
       const subBtn = document.getElementById('substitutionsBtn');
