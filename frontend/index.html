@@ -891,50 +891,55 @@
       btnFix.style.fontSize = "14px";
       btnFix.style.padding = "8px 16px";
       btnFix.onclick = () => {
-        const fix = DeckWeakness.proposeFix(window.currentAppDeck);
-        if (fix) {
-          area.innerHTML = `
-                <div style="background:rgba(39, 174, 96, 0.2); padding:15px; border-radius:8px; margin-top:10px; border:1px solid #27ae60; width:100%;">
-                    <div style="font-weight:bold; color:#2ecc71; margin-bottom:10px; font-size:1.1em;">Recommended Fix:</div>
-                    <div style="display:flex; align-items:center; justify-content:center; gap:15px; margin-bottom:10px;">
-                        <div style="text-align:center;">
-                            <div style="color:#e74c3c; font-size:12px; font-weight:bold;">REMOVE</div>
-                            <img src="${fix.remove.iconUrls?.medium || fix.remove.iconUrls || fix.remove.iconUrl}" style="width:50px;">
-                            <div style="font-size:12px;">${fix.remove.name}</div>
+        try {
+          const fix = DeckWeakness.proposeFix(window.currentAppDeck);
+          if (fix) {
+            area.innerHTML = `
+                    <div style="background:rgba(39, 174, 96, 0.2); padding:15px; border-radius:8px; margin-top:10px; border:1px solid #27ae60; width:100%;">
+                        <div style="font-weight:bold; color:#2ecc71; margin-bottom:10px; font-size:1.1em;">Recommended Fix:</div>
+                        <div style="display:flex; align-items:center; justify-content:center; gap:15px; margin-bottom:10px;">
+                            <div style="text-align:center;">
+                                <div style="color:#e74c3c; font-size:12px; font-weight:bold;">REMOVE</div>
+                                <img src="${fix.remove.iconUrls?.medium || fix.remove.iconUrls || fix.remove.iconUrl}" style="width:50px;">
+                                <div style="font-size:12px;">${fix.remove.name}</div>
+                            </div>
+                            <div style="font-size:24px; color:#aaa;">➝</div>
+                            <div style="text-align:center;">
+                                <div style="color:#2ecc71; font-size:12px; font-weight:bold;">ADD</div>
+                                <img src="${fix.add.iconUrls?.medium || fix.add.iconUrls || fix.add.iconUrl}" style="width:50px;">
+                                <div style="font-size:12px;">${fix.add.name}</div>
+                            </div>
                         </div>
-                        <div style="font-size:24px; color:#aaa;">➝</div>
-                        <div style="text-align:center;">
-                            <div style="color:#2ecc71; font-size:12px; font-weight:bold;">ADD</div>
-                            <img src="${fix.add.iconUrls?.medium || fix.add.iconUrls || fix.add.iconUrl}" style="width:50px;">
-                            <div style="font-size:12px;">${fix.add.name}</div>
-                        </div>
+                        <div style="font-size:0.9em; color:#ddd; margin-bottom:15px; font-style:italic;">"${fix.reason}"</div>
+                        <button id="applyFixBtn" class="action-btn" style="background:#27ae60; width:100%;">✅ Apply Fix</button>
+                        <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin-top:10px; cursor:pointer;">Cancel</button>
                     </div>
-                    <div style="font-size:0.9em; color:#ddd; margin-bottom:15px; font-style:italic;">"${fix.reason}"</div>
-                    <button id="applyFixBtn" class="action-btn" style="background:#27ae60; width:100%;">✅ Apply Fix</button>
-                    <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin-top:10px; cursor:pointer;">Cancel</button>
-                </div>
-             `;
+                `;
 
-          document.getElementById('applyFixBtn').onclick = () => {
-            // Update Deck
-            const newDeck = window.currentAppDeck.filter(c => c.name !== fix.remove.name);
-            newDeck.push(fix.add);
+            document.getElementById('applyFixBtn').onclick = () => {
+              // Update Deck
+              const newDeck = window.currentAppDeck.filter(c => c.name !== fix.remove.name);
+              newDeck.push(fix.add);
 
-            // Update Globals
-            window.currentAppDeck = newDeck;
-            window.builderDeck = newDeck; // Sync builder too
-            if (window.currentPlayerData) window.currentPlayerData.currentDeck = newDeck;
+              // Update Globals
+              window.currentAppDeck = newDeck;
+              window.builderDeck = newDeck; // Sync builder too
+              if (window.currentPlayerData) window.currentPlayerData.currentDeck = newDeck;
 
-            // Render
-            renderDeck(window.currentPlayerData || { currentDeck: newDeck }); // Hacky but works for UI update
+              // Render
+              renderDeck(window.currentPlayerData || { currentDeck: newDeck }); // Hacky but works for UI update
 
-            // Close Modal
-            document.getElementById('weaknessModal').style.display = 'none';
-            alert(`Swapped ${fix.remove.name} with ${fix.add.name}!`);
-          };
+              // Close Modal
+              document.getElementById('weaknessModal').style.display = 'none';
+              alert(`Swapped ${fix.remove.name} with ${fix.add.name}!`);
+            };
 
-        } else {
-          area.innerHTML = `<div style="color:#aaa; margin-top:10px;">No clear fix found. Try manual adjustments.</div>`;
+          } else {
+            area.innerHTML = `<div style="color:#aaa; margin-top:10px;">No clear fix found. Try manual adjustments.</div>`;
+          }
+        } catch (e) {
+          console.error("Suggest Fix Error:", e);
+          area.innerHTML = `<div style="color:#e74c3c; margin-top:10px;">Error finding fix: ${e.message}</div>`;
         }
       };
 
@@ -2777,7 +2782,13 @@
                       </div>`;
                 }
                 html += `</div>`;
-                html += `<a href="${data.url}" target="_blank" style="display:block; margin-top:20px; text-align:center; background:rgba(52, 152, 219, 0.2); padding:10px; border-radius:8px; color:#3498db; text-decoration:none; font-weight:bold;">View Report ↗</a>`;
+                // NEW: Open Report Explicitly Button (Prevents auto-tab unwanted behavior)
+                html += `<div style="margin-top:20px; text-align:center;">
+                    <a href="${data.url}" target="_blank" class="action-btn" style="background:#2980b9; color:white; text-decoration:none; display:inline-block; padding:8px 16px; border-radius:4px;">
+                      📄 Open Full Report (External)
+                    </a>
+                    <div style="font-size:10px; color:#aaa; margin-top:5px;">Opens validation on DeckShop.pro</div>
+                </div>`;
                 checkResult.innerHTML = html;
               }
             } catch (e) {
@@ -2916,13 +2927,11 @@
             builderDeck = [...extractCards(currentPlayerData)];
           }
 
-          console.log("Improve: Saving deck and opening new tab...");
+          console.log("Improve: Triggering Weakness Check...");
 
-          // Save to LocalStorage for the new tab to pick up
-          localStorage.setItem('improveDeckData', JSON.stringify(builderDeck));
-
-          // Open New Tab
-          window.open('?view=improve', '_blank');
+          // Redirect to Weakness/Fix flow
+          const weaknessBtn = document.getElementById('weaknessBtn');
+          if (weaknessBtn) weaknessBtn.click();
         });
       }
 
