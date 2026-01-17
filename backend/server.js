@@ -84,6 +84,27 @@ app.get("/api/cards", async (req, res) => {
   }
 });
 
+// NEW: Image Proxy to bypass CORS/Hotlink protection
+app.get("/api/proxy-image", async (req, res) => {
+  const { src } = req.query;
+  if (!src) return res.status(400).send("No src provided");
+
+  try {
+    const response = await fetch(src);
+    if (!response.ok) return res.status(response.status).send("Failed to fetch image");
+
+    // Forward Headers
+    res.setHeader("Content-Type", response.headers.get("content-type"));
+    res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 1 day
+
+    // Pipe
+    response.body.pipe(res);
+  } catch (err) {
+    console.error("Proxy Image Error:", err);
+    res.status(500).send("Proxy error");
+  }
+});
+
 import puppeteer from 'puppeteer';
 
 app.post("/api/check-deck", async (req, res) => {

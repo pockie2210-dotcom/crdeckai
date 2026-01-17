@@ -334,9 +334,7 @@
     <div class="actions">
       <button id="scanBtn">Scan Player</button>
       <button id="improveBtn" style="display:none;">Improve Deck</button>
-      <button id="createNewBtn" style="display:none; background: #e74c3c;">Create New</button>
       <button id="substitutionsBtn" style="display:none; background: #9b59b6;">Substitutions</button>
-      <button id="smartRefreshBtn" style="display:none; background: #3498db;">Keep Core 4</button>
       <button id="buildBtn" style="display:none; background: linear-gradient(135deg, #e67e22, #d35400);">Build
         Deck</button>
       <button id="demoBtn">Show Demo Deck</button>
@@ -440,6 +438,10 @@
         style="background: linear-gradient(135deg, #e74c3c, #c0392b); padding: 15px 30px; font-size: 18px; border: 2px solid #e74c3c;">
         ⚔️ Matchup Analyzer
       </button>
+      <button id="weaknessBtn" class="action-btn"
+        style="background: linear-gradient(135deg, #f39c12, #d35400); padding: 15px 30px; font-size: 18px; border: 2px solid #e67e22;">
+        ⚠️ Weakness Check
+      </button>
     </div>
 
   </div>
@@ -458,7 +460,7 @@
         <div style="flex:1; min-width:300px;">
           <h3 style="color:#2ecc71;">Your Deck</h3>
           <div id="myDeckPreview"
-            style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; pointer-events:none; opacity:0.8;">
+            style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; pointer-events:auto; opacity:1;">
             <!-- Filled via JS -->
           </div>
         </div>
@@ -521,12 +523,174 @@
     </div>
   </div>
 
+  <!-- WEAKNESS MODAL -->
+  <div id="weaknessModal" class="modal-overlay"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2100; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
+    <div class="guide-content" style="text-align:center;">
+      <h2 style="color:var(--gold);">Deck Weakness Report</h2>
+      <div id="weaknessScore" style="font-size:40px; font-weight:bold; margin-bottom:15px;">100%</div>
+      <div id="weaknessBody"
+        style="text-align:left; color:#ddd; margin-bottom:20px; max-height: 400px; overflow-y: auto;">
+        <!-- Results here -->
+      </div>
+      <button onclick="document.getElementById('weaknessModal').style.display='none'" class="action-btn"
+        style="background:#555;">Close</button>
+    </div>
+  </div>
+
 
   <script src="meta_decks.js?v=4"></script>
   <script src="smart_ai.js?v=4"></script>
+  <script>
+    const DeckWeakness = {
+      /**
+       * Analyzes a deck and returns a health report.
+       * @param {Array} deck - Array of card objects {name, ...}
+       * @returns {Object} { health: number, issues: [], suggestions: [] }
+       */
+      detect: function (deck) {
+        if (!deck || deck.length !== 8) {
+          return {
+            health: 0,
+            issues: ["Deck must have exactly 8 cards."],
+            suggestions: ["Finish building your deck first!"]
+          };
+        }
+
+        const report = {
+          health: 100,
+          issues: [],
+          suggestions: []
+        };
+
+        const cardNames = deck.map(c => c.name);
+
+        // --- ROLE DEFINITIONS (Simplified for Analysis) ---
+        const ROLES = {
+          winConditions: [
+            'Hog Rider', 'Royal Giant', 'Golem', 'Lava Hound', 'Balloon', 'Goblin Barrel',
+            'Miner', 'Graveyard', 'X-Bow', 'Mortar', 'Electro Giant', 'Goblin Giant',
+            'Ram Rider', 'Battle Ram', 'Wall Breakers', 'Elixir Golem', 'Skeleton Barrel', 'Three Musketeers'
+          ],
+          smallSpells: [
+            'The Log', 'Zap', 'Giant Snowball', 'Arrows', 'Barbarian Barrel', 'Tornado', 'Royal Delivery', 'Rage'
+          ],
+          bigSpells: [
+            'Fireball', 'Poison', 'Rocket', 'Lightning', 'Earthquake', 'Void', 'Freeze'
+          ],
+          airDefense: [
+            'Musketeer', 'Electro Wizard', 'Wizard', 'Witch', 'Executioner', 'Hunter',
+            'Baby Dragon', 'Inferno Dragon', 'Mega Minion', 'Minions', 'Minion Horde',
+            'Bats', 'Spear Goblins', 'Ice Wizard', 'Princess', 'Dart Goblin', 'Magic Archer',
+            'Flying Machine', 'Firecracker', 'Mother Witch', 'Skeleton Dragons', 'Phoenix',
+            'Archer Queen', 'Little Prince'
+          ],
+          buildings: [
+            'Cannon', 'Tesla', 'Inferno Tower', 'Bomb Tower', 'Tombstone', 'Goblin Cage',
+            'Furnace', 'Barbarian Hut', 'Goblin Hut', 'Elixir Collector', 'Mortar', 'X-Bow'
+          ],
+          tankKillers: [
+            'Mini P.E.K.K.A', 'P.E.K.K.A', 'Inferno Tower', 'Inferno Dragon', 'Hunter',
+            'Elite Barbarians', 'Prince', 'Lumberjack', 'Barperians', 'Skeleton Army', 'Guards'
+          ]
+        };
+
+        // --- CHECK 1: WIN CONDITION ---
+        const hasWinCon = cardNames.some(name => ROLES.winConditions.includes(name));
+        if (!hasWinCon) {
+          report.health -= 30;
+          report.issues.push("Missing Win Condition");
+          report.suggestions.push("Add a card that targets buildings (e.g., Hog Rider, Giant, Golem).");
+        }
+
+        // --- CHECK 2: SPELLS ---
+        const hasSmallSpell = cardNames.some(name => ROLES.smallSpells.includes(name));
+        const hasBigSpell = cardNames.some(name => ROLES.bigSpells.includes(name));
+
+        if (!hasSmallSpell) {
+          report.health -= 15;
+          report.issues.push("Missing Small Spell");
+          report.suggestions.push("Add a cheap spell (Zap, Log, Arrows) to clear swarms.");
+        }
+        if (!hasBigSpell) {
+          report.health -= 10;
+          report.issues.push("Missing Big Spell");
+          report.suggestions.push("Add a heavy spell (Fireball, Poison) to finish towers or kill medium troops.");
+        }
+
+        // --- CHECK 3: AIR DEFENSE ---
+        const airDefenseCount = cardNames.filter(name => ROLES.airDefense.includes(name) || ROLES.buildings.includes(name)).length;
+        // Note: Some buildings hit air (Tesla, Inferno), but simplifies to just checking units primarily.
+        // Let's refine: Count units that hit air vs buildings.
+        const antiAirUnits = cardNames.filter(name => ROLES.airDefense.includes(name)).length;
+
+        if (antiAirUnits < 2) {
+          report.health -= 20;
+          report.issues.push("Weak Air Defense");
+          report.suggestions.push("You need at least 2 troops that can target air units (e.g., Musketeer + Bats).");
+        }
+
+        // --- CHECK 4: AVERAGE ELIXIR ---
+        const avgElixir = deck.reduce((sum, c) => sum + (c.elixir || c.elixirCost || 0), 0) / 8;
+        if (avgElixir > 4.5) {
+          report.health -= 10;
+          report.issues.push("Deck Too Expensive");
+          report.suggestions.push("Your average elixir is very high. Try replacing a high-cost card with a cheaper cycle card.");
+        } else if (avgElixir < 2.6 && !hasWinCon) {
+          // If cycle is super fast but no win con, it's just spam
+          report.issues.push("Cycle Too Fast?");
+        }
+
+        // --- CHECK 5: BUILDING (Soft Check) ---
+        // Not strictly required for all decks (e.g. Beatdown), but good for defense
+        const hasBuilding = cardNames.some(name => ROLES.buildings.includes(name));
+        // We only penalize if it's not a beatdown deck (heuristic: avg elixir < 4.0 usually needs a building)
+        if (!hasBuilding && avgElixir < 4.0) {
+          report.health -= 5; // Minor penalty
+          report.issues.push("No Defensive Building");
+          report.suggestions.push("Control decks usually need a building (Cannon, Tesla) to distract tanks.");
+        }
+
+        // Final Clamp
+        report.health = Math.max(0, report.health);
+
+        return report;
+      }
+    };
+
+    // Expose to window immediately
+    window.DeckWeakness = DeckWeakness;
+  </script>
+
   <script type="module">
     import { MatchupAnalyzer } from './matchup_analyzer.js';
-    window.MatchupAnalyzer = MatchupAnalyzer; // Expose to global for UI
+    // DeckWeakness is now inlined above to fix local file loading
+
+    window.MatchupAnalyzer = MatchupAnalyzer;
+
+    // Weakness Button Logic
+    document.getElementById('weaknessBtn').onclick = () => {
+      // Find current deck
+      const deckContainer = document.getElementById('deckContainer');
+      // Extract names from current UI state (assuming 'deckContainer' has card-items)
+      // Actually, we need the global currentDeck or re-parse from DOM.
+      // Let's rely on the global CURRENT_DECK variable if it exists?
+      // Wait, index.html script usually has a local variable 'deck'. 
+      // We might need to hook into the main script logic.
+      // Quick Fix: Parse from deckContainer DOM which is reliable.
+
+      const cards = Array.from(deckContainer.querySelectorAll('.card-item')).map(el => {
+        // Extract name from inner text or some attribute? 
+        // The card-item usually has the name inside.
+        // But simpler: The global `renderDeck` function is called with a deck object.
+        // We can expose the current deck globally in the main script block.
+        return { name: el.title || el.getAttribute('title') || 'Unknown' }; // Assuming title attribute is set?
+      });
+
+      // Better way: Let the main script handle this click since it has 'currentDeck'.
+      // But since this is a module, we can dispatch an event or expose a global function.
+      window.dispatchEvent(new CustomEvent('TRIGGER_WEAKNESS_CHECK'));
+    };
   </script>
   <script type="module">
     import { WIN_CONDITION_GUIDES } from './win_conditions.js?v=6';
@@ -741,6 +905,48 @@
         supportCards: [{ name: 'Tower Princess', level: 13, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/NlU_6FQppMcgsjsxND4X5g2I14lDw4a3oX_197qj42s.png' } }]
       };
 
+      // GLOBAL DECK TRACKER
+      window.currentAppDeck = [];
+
+      // LISTENER FOR WEAKNESS CHECK
+      window.addEventListener('TRIGGER_WEAKNESS_CHECK', () => {
+        if (!window.DeckWeakness) { console.error('DeckWeakness module not loaded'); return; }
+
+        let deckToAnalyze = window.currentAppDeck;
+        // If empty, maybe try demo deck?
+        if (!deckToAnalyze || deckToAnalyze.length === 0) {
+          deckToAnalyze = DEMO_DECK; // Fallback for safety/testing
+        }
+
+        const result = window.DeckWeakness.detect(deckToAnalyze);
+
+        const modal = document.getElementById('weaknessModal');
+        const scoreEl = document.getElementById('weaknessScore');
+        const bodyEl = document.getElementById('weaknessBody');
+
+        let color = '#2ecc71';
+        if (result.health < 60) color = '#e74c3c';
+        else if (result.health < 85) color = '#f1c40f';
+
+        scoreEl.textContent = `Health: ${result.health}%`;
+        scoreEl.style.color = color;
+
+        if (result.issues.length === 0) {
+          bodyEl.innerHTML = `<h3 style="color:#2ecc71">✅ Solid Deck!</h3><p>Your deck has all the standard roles covered.</p>`;
+        } else {
+          let html = `<h3 style="color:#e74c3c; border-bottom:1px solid #444; padding-bottom:5px;">⚠️ Issues Found</h3><ul>`;
+          result.issues.forEach((issue, idx) => {
+            html += `<li style="margin-bottom:8px; font-size:1.1em;">${issue}
+                      <div style="font-size:0.8em; color:#aaa; margin-top:2px;">💡 ${result.suggestions[idx]}</div>
+                  </li>`;
+          });
+          html += `</ul>`;
+          bodyEl.innerHTML = html;
+        }
+
+        modal.style.display = 'flex';
+      });
+
       // HELPER: Normalize Level based on Rarity (Global Scope)
       // HELPER: Normalize Level based on Rarity (Global Scope)
       // HELPER: Normalize Level based on Rarity (Global Scope)
@@ -867,6 +1073,7 @@
 
       function renderDeck(data) {
         const deck = extractCards(data);
+        window.currentAppDeck = deck; // GLOBAL TRACKER FOR WEAKNESS CHECK
         const supportCards = data.currentDeckSupportCards || data.supportCards || [];
         const container = document.getElementById('deckContainer');
         container.innerHTML = '';
@@ -3039,6 +3246,15 @@
         updatePickerState();
       }
 
+      // PROXY HELPER
+      function getProxyImage(url) {
+        if (!url) return '';
+        if (url.startsWith('http')) {
+          return `/api/proxy-image?src=${encodeURIComponent(url)}`;
+        }
+        return url;
+      }
+
       // RENDER YOUR DECK
       function renderMyDeck() {
         myDeckPreview.innerHTML = '';
@@ -3060,7 +3276,7 @@
 
           if (card) {
             const img = document.createElement('img');
-            img.src = card.iconUrls?.medium || card.iconUrl || '';
+            img.src = getProxyImage(card.iconUrls?.medium || card.iconUrl);
             img.style.width = '100%';
             img.style.borderRadius = '4px';
             img.title = card.name || "Card";
@@ -3119,7 +3335,7 @@
 
           if (c) {
             const img = document.createElement('img');
-            img.src = c.iconUrls?.medium || c.iconUrl || '';
+            img.src = getProxyImage(c.iconUrls?.medium || c.iconUrl);
             img.style.width = '100%';
             img.style.borderRadius = '4px';
             img.style.cursor = 'pointer';
@@ -3170,7 +3386,7 @@
 
         cards.forEach(c => {
           const img = document.createElement('img');
-          img.src = c.iconUrls?.medium || c.iconUrl || '';
+          img.src = getProxyImage(c.iconUrls?.medium || c.iconUrl);
           img.className = 'picker-card';
           img.title = c.name;
           img.loading = 'lazy';
@@ -3209,10 +3425,10 @@
           const cardName = img.title;
           // Check if card is in the active target deck
           const isInActiveDeck = targetDeck.find(c => c.name === cardName);
-          // Check if card is in the OTHER deck (to prevent adding same card to both)
-          const isInOtherDeck = (activeTarget === 'mine' ? enemyDeck : window.builderDeck).find(c => c.name === cardName);
 
-          if (isInActiveDeck || isInOtherDeck || targetDeck.length >= 8) {
+          // We NO LONGER check isInOtherDeck, because user wants to allow same card in both decks.
+
+          if (isInActiveDeck || targetDeck.length >= 8) {
             img.style.opacity = '0.3';
             img.style.pointerEvents = 'none';
           } else {
@@ -3238,83 +3454,68 @@
 
       // ANALYZE
       analyzeBtn.onclick = () => {
-        console.log("Analyze Button Clicked");
-        try {
-          if (!window.MatchupAnalyzer) {
-            console.error("Matchup Analyzer missing");
-            alert("Matchup Analyzer not loaded yet!");
-            return;
-          }
-          // Use Global builderDeck directly
-          const myDeck = window.builderDeck || [];
-          console.log("My Deck:", myDeck.length, "Enemy Deck:", enemyDeck.length);
-
-          if (myDeck.length < 8) {
-            alert("Your deck is incomplete! Please select 8 cards.");
-            return;
-          }
-          if (enemyDeck.length < 8) {
-            alert("Enemy deck is incomplete! Please select 8 cards.");
-            return;
-          }
-
-          console.log("Running analysis...");
-          const result = window.MatchupAnalyzer.analyzeMatchup(myDeck, enemyDeck);
-          console.log("Analysis Result:", result);
-
-          // RENDER RESULT
-          const advantage = result.advantage; // -10 to +10 roughly
-          // ... (rest of result rendering same as before, essentially) ...
-
-          let barColor = '#3498db'; // blue
-          let advText = "Even";
-          if (advantage > 2) { barColor = '#2ecc71'; advText = "Advantage: YOU"; }
-          if (advantage < -2) { barColor = '#e74c3c'; advText = "Advantage: ENEMY"; }
-
-          // Clamp for bar display (50% is 0)
-          // Range +/- 10. 
-          // 50 + (adv * 5)
-          let pct = 50 + (advantage * 4);
-          if (pct < 10) pct = 10;
-          if (pct > 90) pct = 90;
-
-          resultArea.innerHTML = `
-               <div style="font-size:24px; font-weight:bold; margin-bottom:15px; text-align:center; color:${barColor}">
-                  ${advText} (${advantage > 0 ? '+' : ''}${advantage})
-               </div>
-               
-               <div style="background:#444; height:20px; border-radius:10px; width:100%; position:relative; overflow:hidden; margin-bottom:20px;">
-                  <div style="position:absolute; left:50%; top:0; bottom:0; width:2px; background:white; z-index:2; opacity:0.5;"></div>
-                  <div style="background:${barColor}; width:${pct}%; height:100%; transition: width 0.5s;"></div>
-               </div>
-
-               <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                  <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
-                     <h4 style="color:#e74c3c; margin-top:0;">⚠️ Threats to You</h4>
-                     <ul style="padding-left:20px; margin:0; color:#ddd;">
-                        ${result.details.threats.length ? result.details.threats.map(t => `<li>${t}</li>`).join('') : '<li style="color:#888">None detected</li>'}
-                     </ul>
-                  </div>
-                  <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
-                     <h4 style="color:#2ecc71; margin-top:0;">💡 Strategy Tips</h4>
-                     <ul style="padding-left:20px; margin:0; color:#ddd;">
-                        ${result.details.tips.length ? result.details.tips.map(t => `<li>${t}</li>`).join('') : '<li style="color:#888">Play smart!</li>'}
-                     </ul>
-                  </div>
-               </div>
-               
-               <div style="margin-top:20px; font-size:14px; color:#aaa; text-align:center;">
-                 Avg Elixir: You <b>${result.details.myAvg}</b> vs Enemy <b>${result.details.enemyAvg}</b>
-               </div>
-            `;
-          resultArea.style.display = 'block';
-          console.log("Result rendered");
-          resultArea.scrollIntoView({ behavior: 'smooth' });
-
-        } catch (err) {
-          console.error("ANALYSIS ERROR:", err);
-          alert("Error running analysis: " + err.message);
+        if (!window.MatchupAnalyzer) {
+          alert("Matchup Analyzer not loaded yet!");
+          return;
         }
+        // Use Global builderDeck directly
+        const myDeck = window.builderDeck || [];
+
+        if (myDeck.length < 8) {
+          alert("Your deck is incomplete! Please select 8 cards.");
+          return;
+        }
+        if (enemyDeck.length < 8) {
+          alert("Enemy deck is incomplete! Please select 8 cards.");
+          return;
+        }
+
+        const result = window.MatchupAnalyzer.analyzeMatchup(myDeck, enemyDeck);
+
+        // RENDER RESULT
+        const advantage = result.advantage; // -10 to +10 roughly
+
+        let barColor = '#3498db'; // blue
+        let advText = "Even";
+        if (advantage > 2) { barColor = '#2ecc71'; advText = "Advantage: YOU"; }
+        if (advantage < -2) { barColor = '#e74c3c'; advText = "Advantage: ENEMY"; }
+
+        // Clamp for bar display (50% is 0)
+        let pct = 50 + (advantage * 4);
+        if (pct < 10) pct = 10;
+        if (pct > 90) pct = 90;
+
+        resultArea.innerHTML = `
+           <div style="font-size:24px; font-weight:bold; margin-bottom:15px; text-align:center; color:${barColor}">
+              ${advText} (${advantage > 0 ? '+' : ''}${advantage})
+           </div>
+           
+           <div style="background:#444; height:20px; border-radius:10px; width:100%; position:relative; overflow:hidden; margin-bottom:20px;">
+              <div style="position:absolute; left:50%; top:0; bottom:0; width:2px; background:white; z-index:2; opacity:0.5;"></div>
+              <div style="background:${barColor}; width:${pct}%; height:100%; transition: width 0.5s;"></div>
+           </div>
+
+           <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+              <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
+                 <h4 style="color:#e74c3c; margin-top:0;">⚠️ Threats to You</h4>
+                 <ul style="padding-left:20px; margin:0; color:#ddd;">
+                    ${result.threats && result.threats.length ? result.threats.map(t => `<li>${t}</li>`).join('') : '<li style="color:#888">None detected</li>'}
+                 </ul>
+              </div>
+              <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
+                 <h4 style="color:#2ecc71; margin-top:0;">💡 Strategy Tips</h4>
+                 <ul style="padding-left:20px; margin:0; color:#ddd;">
+                    ${result.tips && result.tips.length ? result.tips.map(t => `<li>${t}</li>`).join('') : '<li style="color:#888">Play smart!</li>'}
+                 </ul>
+              </div>
+           </div>
+           
+           <div style="margin-top:20px; font-size:14px; color:#aaa; text-align:center;">
+             Avg Elixir: You <b>${result.myAvg}</b> vs Enemy <b>${result.enemyAvg}</b>
+           </div>
+        `;
+        resultArea.style.display = 'block';
+        resultArea.scrollIntoView({ behavior: 'smooth' });
       };
 
       console.log('Matchup Analyzer Script Loaded (Dual Manual Mode)');
