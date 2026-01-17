@@ -2823,40 +2823,53 @@
 
           // FIX: Populate builderDeck if empty (e.g. fresh scan)
           if (builderDeck.length === 0) {
-            // Attempt 1: From Data
-            const scannedDeck = extractCards(currentPlayerData);
-            if (scannedDeck.length > 0) {
-              builderDeck = [...scannedDeck];
+            console.log("Substitutions: builderDeck empty. Attempting recovery...");
+
+            // Attempt 1: From currentAppDeck (Set by renderDeck - Most Reliable)
+            if (window.currentAppDeck && window.currentAppDeck.length > 0) {
+              console.log("Substitutions: Recovering from currentAppDeck");
+              builderDeck = [...window.currentAppDeck];
             }
-            // Attempt 2: From DOM (Robust Fallback)
-            else if (document.querySelectorAll('#deckContainer .card-item').length > 0) {
-              console.log('Substitutions: Scraping deck from DOM before open...');
-              const cardItems = document.querySelectorAll('#deckContainer .card-item'); // Assuming .card-item class from deck render
-              const scrapedDeck = [];
-              cardItems.forEach(el => {
-                const nameEl = el.querySelector('.card-name');
-                const name = nameEl ? nameEl.textContent : (el.querySelector('img')?.alt || "");
-                if (name) {
-                  // Try to find full data from cards collection if possible
-                  let fullCard = null;
-                  if (currentPlayerData && currentPlayerData.cards) {
-                    fullCard = currentPlayerData.cards.find(c => c.name === name);
+            // Attempt 2: From currentPlayerData
+            else {
+              const scannedDeck = extractCards(currentPlayerData);
+              if (scannedDeck.length > 0) {
+                console.log("Substitutions: Recovering from extractCards");
+                builderDeck = [...scannedDeck];
+              }
+              // Attempt 3: From DOM (Robust Fallback)
+              else if (document.querySelectorAll('#deckContainer .card-item').length > 0) {
+                console.log('Substitutions: Scraping deck from DOM before open...');
+                const cardItems = document.querySelectorAll('#deckContainer .card-item');
+                const scrapedDeck = [];
+                cardItems.forEach(el => {
+                  const nameEl = el.querySelector('.card-name');
+                  const name = nameEl ? nameEl.textContent : (el.querySelector('img')?.alt || "");
+                  if (name) {
+                    let fullCard = null;
+                    if (currentPlayerData && currentPlayerData.cards) {
+                      fullCard = currentPlayerData.cards.find(c => c.name === name);
+                    }
+                    if (!fullCard) {
+                      fullCard = {
+                        name: name,
+                        elixirCost: 3,
+                        iconUrls: { medium: el.querySelector('img')?.src || '' }
+                      };
+                    }
+                    scrapedDeck.push(fullCard);
                   }
-                  if (!fullCard) {
-                    fullCard = {
-                      name: name,
-                      elixirCost: 3, // Default dummy
-                      iconUrls: { medium: el.querySelector('img')?.src || '' }
-                    };
-                  }
-                  scrapedDeck.push(fullCard);
-                }
-              });
-              if (scrapedDeck.length > 0) builderDeck = scrapedDeck;
+                });
+                if (scrapedDeck.length > 0) builderDeck = scrapedDeck;
+              }
             }
 
             if (builderDeck.length > 0) {
+              console.log("Substitutions: Deck successfully populated. Length:", builderDeck.length);
               renderBuilderUI();
+            } else {
+              console.error("Substitutions: Critical Error - Could not populate builderDeck");
+              alert("Error: Could not read deck. Please try scanning the player again.");
             }
           }
 
@@ -3099,9 +3112,9 @@
               builderDeck = [...currentPlayerData.currentDeck];
               renderBuilderUI();
             }
-            // Attempt 3: SCRAPE FROM DOM (Last Resort)
+            // Attempt 3: SCRAPE FROM DOM (Last Resort) - NOTE: Might be empty if modal is open unique-view
             else {
-              console.log("SuggestRemoval: Global state empty. Scraping from DOM...");
+              console.log("SuggestRemoval: Global state empty. DOM scraping might fail here if modal is open.");
               const cardItems = document.querySelectorAll('#deckContainer .card-item'); // Assuming .card-item class from deck render
               if (cardItems.length > 0) {
                 const scrapedDeck = [];
