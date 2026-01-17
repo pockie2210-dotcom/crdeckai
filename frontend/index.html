@@ -2715,6 +2715,18 @@
             alert("Scan player first!");
             return;
           }
+
+          // FIX: Populate builderDeck if empty (e.g. fresh scan)
+          if (builderDeck.length === 0) {
+            const scannedDeck = extractCards(currentPlayerData);
+            if (scannedDeck.length > 0) {
+              console.log("Substitutions: Boosting scanned deck into builder...");
+              builderDeck = [...scannedDeck];
+              // Update UI to reflect we are now editing
+              renderBuilderUI();
+            }
+          }
+
           subModal.style.display = 'flex';
           renderSubPicker();
         };
