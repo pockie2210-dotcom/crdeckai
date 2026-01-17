@@ -2823,11 +2823,39 @@
 
           // FIX: Populate builderDeck if empty (e.g. fresh scan)
           if (builderDeck.length === 0) {
+            // Attempt 1: From Data
             const scannedDeck = extractCards(currentPlayerData);
             if (scannedDeck.length > 0) {
-              console.log("Substitutions: Boosting scanned deck into builder...");
               builderDeck = [...scannedDeck];
-              // Update UI to reflect we are now editing
+            }
+            // Attempt 2: From DOM (Robust Fallback)
+            else if (document.querySelectorAll('#deckContainer .card-item').length > 0) {
+              console.log('Substitutions: Scraping deck from DOM before open...');
+              const cardItems = document.querySelectorAll('#deckContainer .card-item'); // Assuming .card-item class from deck render
+              const scrapedDeck = [];
+              cardItems.forEach(el => {
+                const nameEl = el.querySelector('.card-name');
+                const name = nameEl ? nameEl.textContent : (el.querySelector('img')?.alt || "");
+                if (name) {
+                  // Try to find full data from cards collection if possible
+                  let fullCard = null;
+                  if (currentPlayerData && currentPlayerData.cards) {
+                    fullCard = currentPlayerData.cards.find(c => c.name === name);
+                  }
+                  if (!fullCard) {
+                    fullCard = {
+                      name: name,
+                      elixirCost: 3, // Default dummy
+                      iconUrls: { medium: el.querySelector('img')?.src || '' }
+                    };
+                  }
+                  scrapedDeck.push(fullCard);
+                }
+              });
+              if (scrapedDeck.length > 0) builderDeck = scrapedDeck;
+            }
+
+            if (builderDeck.length > 0) {
               renderBuilderUI();
             }
           }
