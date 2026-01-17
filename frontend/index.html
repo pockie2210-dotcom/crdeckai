@@ -542,6 +542,31 @@
   <script src="meta_decks.js?v=4"></script>
   <script src="smart_ai.js?v=4"></script>
   <script>
+    // --- GLOBAL HELPERS FOR DECK WEAKNESS ---
+    // Moved here to ensure they are accessible by DeckWeakness logic
+
+    // Role Definitions
+    const ROLES = {
+      winCon: ['Hog Rider', 'Royal Giant', 'Golem', 'Lava Hound', 'Balloon', 'Goblin Barrel', 'Miner', 'Graveyard', 'X-Bow', 'Mortar', 'Electro Giant', 'Goblin Giant', 'Ram Rider', 'Battle Ram', 'Wall Breakers', 'Elixir Golem', 'Skeleton Barrel', 'Three Musketeers', 'Giant'],
+      spellSmall: ['The Log', 'Zap', 'Giant Snowball', 'Arrows', 'Barbarian Barrel', 'Tornado', 'Royal Delivery', 'Rage'],
+      spellBig: ['Fireball', 'Poison', 'Rocket', 'Lightning', 'Earthquake', 'Void', 'Freeze'],
+      airDefense: ['Musketeer', 'Electro Wizard', 'Wizard', 'Witch', 'Executioner', 'Hunter', 'Baby Dragon', 'Inferno Dragon', 'Mega Minion', 'Minions', 'Minion Horde', 'Bats', 'Spear Goblins', 'Ice Wizard', 'Princess', 'Dart Goblin', 'Magic Archer', 'Flying Machine', 'Firecracker', 'Mother Witch', 'Skeleton Dragons', 'Phoenix', 'Archer Queen', 'Little Prince'],
+      building: ['Cannon', 'Tesla', 'Inferno Tower', 'Bomb Tower', 'Tombstone', 'Goblin Cage', 'Furnace', 'Barbarian Hut', 'Goblin Hut', 'Elixir Collector', 'Mortar', 'X-Bow'],
+      miniTank: ['Mini P.E.K.K.A', 'P.E.K.K.A', 'Inferno Tower', 'Inferno Dragon', 'Hunter', 'Elite Barbarians', 'Prince', 'Lumberjack', 'Barperians', 'Skeleton Army', 'Guards']
+    };
+
+    function getCardRole(cardName) {
+      let foundRoles = [];
+      for (const [role, cards] of Object.entries(ROLES)) {
+        if (cards.includes(cardName)) foundRoles.push(role);
+      }
+      return foundRoles.length > 0 ? foundRoles : ['troop'];
+    }
+
+    // Expose helpers globally
+    window.getCardRole = getCardRole;
+    window.ROLES = ROLES;
+
     const DeckWeakness = {
       /**
        * Analyzes a deck and returns a health report.
@@ -679,7 +704,7 @@
           // Find worst small spell (lowest meta score)
           return {
             card: roles.smallSpells.sort((a, b) => (META_QUALITY[a.name] || 50) - (META_QUALITY[b.name] || 50))[0],
-            reason: "You have multiple small spells. Consolidating them frees up a slot for more support."
+            reason: "You have multiple small spells. Consolidating them frees up a slot, which allows you to fix other weaknesses."
           };
         }
 
@@ -692,12 +717,10 @@
         }
 
         // Rule C: Worst Card by Meta Score
-        // If no obvious structure flaw, remove the "worst" card stat-wise
         let worstCard = deck[0];
         let minScore = 200;
 
         deck.forEach(c => {
-          // Protect Win Condition slightly
           let score = META_QUALITY[c.name] || 50;
           if (getCardRole(c.name).includes('winCon')) score += 20;
           if ((c.evolutionLevel || 0) > 0) score += 30; // Protect Evo
@@ -711,6 +734,48 @@
         return {
           card: worstCard,
           reason: `This card has a lower win rate in the current meta compared to the rest of your deck.`
+        };
+      },
+
+      /**
+       * Suggests a complete fix: Add Card X, Remove Card Y.
+       */
+      proposeFix: function (deck) {
+        const report = this.detect(deck);
+        if (report.issues.length === 0) return null; // No fix needed
+
+        const issue = report.issues[0]; // Fix top priority issue
+        let fixRole = null;
+        let suggestionText = "";
+
+        if (issue.includes("Win Condition")) { fixRole = "winCon"; suggestionText = "Add a Win Condition"; }
+        else if (issue.includes("Small Spell")) { fixRole = "spellSmall"; suggestionText = "Add a Small Spell"; }
+        else if (issue.includes("Big Spell")) { fixRole = "spellBig"; suggestionText = "Add a Big Spell"; }
+        else if (issue.includes("Air Defense")) { fixRole = "airDefense"; suggestionText = "Add Air Defense"; }
+        else if (issue.includes("Building")) { fixRole = "building"; suggestionText = "Add a Building"; }
+
+        if (!fixRole) return null; // Can't fix generic issues like "Too Expensive" easily this way
+
+        // Find best candidate from player collection (or fallback to known good cards)
+        // Use global collections if available, else standard lists
+        let candidates = [];
+        if (window.currentPlayerData && window.currentPlayerData.cards) {
+          candidates = window.currentPlayerData.cards.filter(c => getCardRole(c.name).includes(fixRole));
+        }
+
+        // Sort by Meta Quality
+        candidates.sort((a, b) => (META_QUALITY[b.name] || 50) - (META_QUALITY[a.name] || 50));
+
+        let bestAdd = candidates.length > 0 ? candidates[0] : { name: "Hog Rider", iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/UbuVrj_tAFUulOpA_53oITt7yU8S_eG8wGqgJ8s-yv.png" } }; // Fallback
+
+        // Find removal candidate
+        const removal = this.proposeRemoval(deck);
+        if (!removal) return null;
+
+        return {
+          add: bestAdd,
+          remove: removal.card,
+          reason: `${suggestionText} (${bestAdd.name}) by removing ${removal.card.name}. ${removal.reason}`
         };
       }
     };
@@ -761,30 +826,87 @@
       }
 
       // INJECT SUGGEST DROP AREA
-      html += `<div id="suggestDropArea" style="margin-top:20px; text-align:center; padding-top:15px; border-top:1px solid #444;"></div>`;
+      html += `<div id="suggestDropArea" style="margin-top:20px; text-align:center; padding-top:15px; border-top:1px solid #444; display:flex; gap:10px; justify-content:center;"></div>`;
 
       bodyEl.innerHTML = html;
 
-      // Add Button
+      // Add Buttons
       const area = document.getElementById('suggestDropArea');
-      const btn = document.createElement('button');
-      btn.innerText = "📉 Suggest Drop";
-      btn.className = "action-btn";
-      btn.style.background = "#c0392b";
-      btn.style.fontSize = "14px";
-      btn.style.padding = "8px 16px";
 
-      btn.onclick = () => {
+      // 1. Suggest Fix Button (NEW)
+      const btnFix = document.createElement('button');
+      btnFix.innerText = "🔧 Suggest Fix";
+      btnFix.className = "action-btn";
+      btnFix.style.background = "linear-gradient(135deg, #2ecc71, #27ae60)";
+      btnFix.style.fontSize = "14px";
+      btnFix.style.padding = "8px 16px";
+      btnFix.onclick = () => {
+        const fix = DeckWeakness.proposeFix(window.currentAppDeck);
+        if (fix) {
+          area.innerHTML = `
+                <div style="background:rgba(39, 174, 96, 0.2); padding:15px; border-radius:8px; margin-top:10px; border:1px solid #27ae60; width:100%;">
+                    <div style="font-weight:bold; color:#2ecc71; margin-bottom:10px; font-size:1.1em;">Recommended Fix:</div>
+                    <div style="display:flex; align-items:center; justify-content:center; gap:15px; margin-bottom:10px;">
+                        <div style="text-align:center;">
+                            <div style="color:#e74c3c; font-size:12px; font-weight:bold;">REMOVE</div>
+                            <img src="${fix.remove.iconUrls?.medium || fix.remove.iconUrls || fix.remove.iconUrl}" style="width:50px;">
+                            <div style="font-size:12px;">${fix.remove.name}</div>
+                        </div>
+                        <div style="font-size:24px; color:#aaa;">➝</div>
+                        <div style="text-align:center;">
+                            <div style="color:#2ecc71; font-size:12px; font-weight:bold;">ADD</div>
+                            <img src="${fix.add.iconUrls?.medium || fix.add.iconUrls || fix.add.iconUrl}" style="width:50px;">
+                            <div style="font-size:12px;">${fix.add.name}</div>
+                        </div>
+                    </div>
+                    <div style="font-size:0.9em; color:#ddd; margin-bottom:15px; font-style:italic;">"${fix.reason}"</div>
+                    <button id="applyFixBtn" class="action-btn" style="background:#27ae60; width:100%;">✅ Apply Fix</button>
+                    <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin-top:10px; cursor:pointer;">Cancel</button>
+                </div>
+             `;
+
+          document.getElementById('applyFixBtn').onclick = () => {
+            // Update Deck
+            const newDeck = window.currentAppDeck.filter(c => c.name !== fix.remove.name);
+            newDeck.push(fix.add);
+
+            // Update Globals
+            window.currentAppDeck = newDeck;
+            window.builderDeck = newDeck; // Sync builder too
+            if (window.currentPlayerData) window.currentPlayerData.currentDeck = newDeck;
+
+            // Render
+            renderDeck(window.currentPlayerData || { currentDeck: newDeck }); // Hacky but works for UI update
+
+            // Close Modal
+            document.getElementById('weaknessModal').style.display = 'none';
+            alert(`Swapped ${fix.remove.name} with ${fix.add.name}!`);
+          };
+
+        } else {
+          area.innerHTML = `<div style="color:#aaa; margin-top:10px;">No clear fix found. Try manual adjustments.</div>`;
+        }
+      };
+
+      // 2. Suggest Drop Button (Legacy)
+      const btnDrop = document.createElement('button');
+      btnDrop.innerText = "📉 Suggest DropOnly";
+      btnDrop.className = "action-btn";
+      btnDrop.style.background = "#c0392b";
+      btnDrop.style.fontSize = "14px";
+      btnDrop.style.padding = "8px 16px";
+      btnDrop.onclick = () => {
         const suggestion = DeckWeakness.proposeRemoval(window.currentAppDeck);
         if (suggestion && suggestion.card) {
           area.innerHTML = `
-                    <div style="background:rgba(192, 57, 43, 0.2); padding:10px; border-radius:8px; margin-top:10px; border:1px solid #c0392b;">
+                    <div style="background:rgba(192, 57, 43, 0.2); padding:10px; border-radius:8px; margin-top:10px; border:1px solid #c0392b; width:100%;">
                         <div style="font-weight:bold; color:#e74c3c; margin-bottom:5px;">Recommended Cut:</div>
                         <div style="display:flex; align-items:center; gap:10px; justify-content:center;">
                             <img src="${suggestion.card.iconUrls?.medium || suggestion.card.iconUrls || suggestion.card.iconUrl}" style="width:40px;">
                             <span style="font-size:1.2em; font-weight:bold;">${suggestion.card.name}</span>
                         </div>
                         <div style="font-size:0.9em; color:#ddd; margin-top:5px; font-style:italic;">"${suggestion.reason}"</div>
+                        <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin-top:10px; cursor:pointer;">Reset</button>
                     </div>
                  `;
         } else {
@@ -792,7 +914,8 @@
         }
       };
 
-      area.appendChild(btn);
+      area.appendChild(btnFix);
+      area.appendChild(btnDrop);
 
       document.getElementById('weaknessModal').style.display = 'flex';
     };
