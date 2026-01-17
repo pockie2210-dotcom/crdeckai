@@ -655,6 +655,63 @@
         report.health = Math.max(0, report.health);
 
         return report;
+      },
+
+      /**
+       * Suggests a card to remove based on analysis.
+       * @param {Array} deck - Current deck
+       * @returns {Object} { card: CardObject, reason: string } or null
+       */
+      proposeRemoval: function (deck) {
+        if (!deck || deck.length === 0) return null;
+
+        // 1. Identify Redundancies
+        const roles = {
+          winCons: deck.filter(c => this.detect(deck).issues.find(i => i.includes('Win Condition')) ? false : getCardRole(c.name).includes('winCon')),
+          smallSpells: deck.filter(c => getCardRole(c.name).includes('spellSmall')),
+          bigSpells: deck.filter(c => getCardRole(c.name).includes('spellBig')),
+          miniTanks: deck.filter(c => getCardRole(c.name).includes('miniTank')),
+          buildings: deck.filter(c => getCardRole(c.name).includes('building'))
+        };
+
+        // Rule A: Too many small spells (>=2 is usually max, 3 is bad)
+        if (roles.smallSpells.length >= 2) {
+          // Find worst small spell (lowest meta score)
+          return {
+            card: roles.smallSpells.sort((a, b) => (META_QUALITY[a.name] || 50) - (META_QUALITY[b.name] || 50))[0],
+            reason: "You have multiple small spells. Consolidating them frees up a slot for more support."
+          };
+        }
+
+        // Rule B: Too many Mini Tanks (>=3)
+        if (roles.miniTanks.length >= 3) {
+          return {
+            card: roles.miniTanks[0], // Pick first found
+            reason: "Too many mini-tanks can make your deck clunky. Try swapping one for air defense or a spirit."
+          };
+        }
+
+        // Rule C: Worst Card by Meta Score
+        // If no obvious structure flaw, remove the "worst" card stat-wise
+        let worstCard = deck[0];
+        let minScore = 200;
+
+        deck.forEach(c => {
+          // Protect Win Condition slightly
+          let score = META_QUALITY[c.name] || 50;
+          if (getCardRole(c.name).includes('winCon')) score += 20;
+          if ((c.evolutionLevel || 0) > 0) score += 30; // Protect Evo
+
+          if (score < minScore) {
+            minScore = score;
+            worstCard = c;
+          }
+        });
+
+        return {
+          card: worstCard,
+          reason: `This card has a lower win rate in the current meta compared to the rest of your deck.`
+        };
       }
     };
 
@@ -670,26 +727,74 @@
 
     // Weakness Button Logic
     document.getElementById('weaknessBtn').onclick = () => {
-      // Find current deck
-      const deckContainer = document.getElementById('deckContainer');
-      // Extract names from current UI state (assuming 'deckContainer' has card-items)
-      // Actually, we need the global currentDeck or re-parse from DOM.
-      // Let's rely on the global CURRENT_DECK variable if it exists?
-      // Wait, index.html script usually has a local variable 'deck'. 
-      // We might need to hook into the main script logic.
-      // Quick Fix: Parse from deckContainer DOM which is reliable.
+      if (!window.currentAppDeck || window.currentAppDeck.length === 0) {
+        alert("Scan a deck first!");
+        return;
+      }
 
-      const cards = Array.from(deckContainer.querySelectorAll('.card-item')).map(el => {
-        // Extract name from inner text or some attribute? 
-        // The card-item usually has the name inside.
-        // But simpler: The global `renderDeck` function is called with a deck object.
-        // We can expose the current deck globally in the main script block.
-        return { name: el.title || el.getAttribute('title') || 'Unknown' }; // Assuming title attribute is set?
-      });
+      const report = DeckWeakness.detect(window.currentAppDeck);
+      const scoreEl = document.getElementById('weaknessScore');
+      const bodyEl = document.getElementById('weaknessBody');
 
-      // Better way: Let the main script handle this click since it has 'currentDeck'.
-      // But since this is a module, we can dispatch an event or expose a global function.
-      window.dispatchEvent(new CustomEvent('TRIGGER_WEAKNESS_CHECK'));
+      // Color Code Score
+      let color = '#e74c3c';
+      if (report.health > 80) color = '#2ecc71';
+      else if (report.health > 50) color = '#f1c40f';
+
+      scoreEl.innerText = `${report.health}% Health`;
+      scoreEl.style.color = color;
+
+      // Build HTML
+      let html = '';
+      if (report.issues.length === 0) {
+        html += `<div style="padding:10px; background:rgba(46, 204, 113, 0.2); border-radius:5px;">✅ Your deck is well balanced!</div>`;
+      } else {
+        html += `<h4 style="color:#e74c3c; margin-bottom:5px;">⚠️ Critical Issues:</h4><ul>`;
+        report.issues.forEach(i => html += `<li>${i}</li>`);
+        html += `</ul>`;
+      }
+
+      if (report.suggestions.length > 0) {
+        html += `<h4 style="color:#f1c40f; margin-bottom:5px;">💡 Suggestions:</h4><ul>`;
+        report.suggestions.forEach(s => html += `<li>${s}</li>`);
+        html += `</ul>`;
+      }
+
+      // INJECT SUGGEST DROP AREA
+      html += `<div id="suggestDropArea" style="margin-top:20px; text-align:center; padding-top:15px; border-top:1px solid #444;"></div>`;
+
+      bodyEl.innerHTML = html;
+
+      // Add Button
+      const area = document.getElementById('suggestDropArea');
+      const btn = document.createElement('button');
+      btn.innerText = "📉 Suggest Drop";
+      btn.className = "action-btn";
+      btn.style.background = "#c0392b";
+      btn.style.fontSize = "14px";
+      btn.style.padding = "8px 16px";
+
+      btn.onclick = () => {
+        const suggestion = DeckWeakness.proposeRemoval(window.currentAppDeck);
+        if (suggestion && suggestion.card) {
+          area.innerHTML = `
+                    <div style="background:rgba(192, 57, 43, 0.2); padding:10px; border-radius:8px; margin-top:10px; border:1px solid #c0392b;">
+                        <div style="font-weight:bold; color:#e74c3c; margin-bottom:5px;">Recommended Cut:</div>
+                        <div style="display:flex; align-items:center; gap:10px; justify-content:center;">
+                            <img src="${suggestion.card.iconUrls?.medium || suggestion.card.iconUrls || suggestion.card.iconUrl}" style="width:40px;">
+                            <span style="font-size:1.2em; font-weight:bold;">${suggestion.card.name}</span>
+                        </div>
+                        <div style="font-size:0.9em; color:#ddd; margin-top:5px; font-style:italic;">"${suggestion.reason}"</div>
+                    </div>
+                 `;
+        } else {
+          area.innerHTML = `<div style="color:#aaa; margin-top:10px;">No specific remove suggestions. Try standard substitutions.</div>`;
+        }
+      };
+
+      area.appendChild(btn);
+
+      document.getElementById('weaknessModal').style.display = 'flex';
     };
   </script>
   <script type="module">
