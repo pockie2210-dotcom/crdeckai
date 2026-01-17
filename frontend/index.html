@@ -333,8 +333,10 @@
     <br><br>
     <div class="actions">
       <button id="scanBtn">Scan Player</button>
-      <button id="improveBtn" style="display:none;">Improve Deck</button>
+      <button id="improveDeckActionBtn" style="display:none;">Improve Deck</button>
       <button id="substitutionsBtn" style="display:none; background: #9b59b6;">Substitutions</button>
+      <button id="weaknessBtn" style="display:none; background: linear-gradient(135deg, #e67e22, #d35400);">Weakness
+        Check</button>
       <button id="buildBtn" style="display:none; background: linear-gradient(135deg, #e67e22, #d35400);">Build
         Deck</button>
       <button id="demoBtn">Show Demo Deck</button>
@@ -1147,6 +1149,15 @@
       // GLOBAL DECK TRACKER
       window.currentAppDeck = [];
 
+      // WEAKNESS CHECK BUTTON HANDLER
+      const weaknessBtnSetup = document.getElementById('weaknessBtn');
+      if (weaknessBtnSetup) {
+        weaknessBtnSetup.onclick = () => {
+          console.log("Weakness Check Button Clicked");
+          window.dispatchEvent(new Event('TRIGGER_WEAKNESS_CHECK'));
+        };
+      }
+
       // LISTENER FOR WEAKNESS CHECK
       window.addEventListener('TRIGGER_WEAKNESS_CHECK', () => {
         if (!window.DeckWeakness) { console.error('DeckWeakness module not loaded'); return; }
@@ -1603,8 +1614,10 @@
         </div>`;
 
         stats.innerHTML = html;
-        const improveBtn = document.getElementById('improveBtn');
+        const improveBtn = document.getElementById('improveDeckActionBtn');
         if (improveBtn) improveBtn.style.display = 'inline-block';
+        const weaknessBtnEl = document.getElementById('weaknessBtn');
+        if (weaknessBtnEl) weaknessBtnEl.style.display = 'inline-block';
         const createNewBtn = document.getElementById('createNewBtn');
         if (createNewBtn) createNewBtn.style.display = 'inline-block';
         const buildBtn = document.getElementById('buildBtn');
@@ -1666,7 +1679,7 @@
           buildBtn.textContent = 'Cancel Build';
           buildBtn.style.background = '#e74c3c';
           builderControls.style.display = 'block';
-          document.getElementById('improveBtn').style.display = 'none';
+          document.getElementById('improveDeckActionBtn').style.display = 'none';
           document.getElementById('demoBtn').style.display = 'none';
           builderDeck = [];
           renderBuilderUI();
@@ -1674,7 +1687,7 @@
           buildBtn.textContent = 'Build Deck';
           buildBtn.style.background = 'linear-gradient(135deg, #e67e22, #d35400)';
           builderControls.style.display = 'none';
-          document.getElementById('improveBtn').style.display = 'inline-block';
+          document.getElementById('improveDeckActionBtn').style.display = 'inline-block';
           document.getElementById('demoBtn').style.display = 'inline-block';
           renderDeck(currentPlayerData);
         }
@@ -2892,7 +2905,7 @@
 
 
 
-      let improveBtn = document.getElementById('improveBtn');
+      let improveBtn = document.getElementById('improveDeckActionBtn');
       if (improveBtn) {
         const newBtn = improveBtn.cloneNode(true);
         improveBtn.parentNode.replaceChild(newBtn, improveBtn);
