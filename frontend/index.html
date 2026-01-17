@@ -2970,13 +2970,13 @@
             const currentDeckNames = new Set(currentDeck.map(c => c.name));
 
             // Get player's available cards (not in current deck)
-            // Fall back to using all cards from CARD_DATA if player cards not available
+            // Fall back to using all cards from META_QUALITY if player cards not available
             let availableCards = [];
             if (currentPlayerData?.cards && currentPlayerData.cards.length > 0) {
               availableCards = currentPlayerData.cards.filter(c => !currentDeckNames.has(c.name));
-            } else if (window.CARD_DATA) {
-              // Use all cards from CARD_DATA as fallback
-              availableCards = Object.keys(window.CARD_DATA).filter(name => !currentDeckNames.has(name)).map(name => ({ name, level: 13 }));
+            } else if (window.META_QUALITY) {
+              // Use all cards from META_QUALITY as fallback
+              availableCards = Object.keys(window.META_QUALITY).filter(name => !currentDeckNames.has(name)).map(name => ({ name, level: 13 }));
             }
 
             if (availableCards.length === 0) {
