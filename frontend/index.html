@@ -3066,10 +3066,51 @@
               renderBuilderUI();
             }
             // Attempt 2: Use currentPlayerData.currentDeck
-            else if (currentPlayerData && currentPlayerData.currentDeck) {
+            else if (currentPlayerData && currentPlayerData.currentDeck && currentPlayerData.currentDeck.length > 0) {
               console.log("SuggestRemoval: Recovering deck from player profile...");
               builderDeck = [...currentPlayerData.currentDeck];
               renderBuilderUI();
+            }
+            // Attempt 3: SCRAPE FROM DOM (Last Resort)
+            else {
+              console.log("SuggestRemoval: Global state empty. Scraping from DOM...");
+              const cardItems = document.querySelectorAll('#deckContainer .card-item'); // Assuming .card-item class from deck render
+              if (cardItems.length > 0) {
+                const scrapedDeck = [];
+                cardItems.forEach(el => {
+                  const nameEl = el.querySelector('.card-name'); // Assuming renderDeck creates this
+                  // Or try the title attribute/img alt
+                  let name = "";
+                  if (nameEl) name = nameEl.textContent;
+                  else {
+                    const img = el.querySelector('img');
+                    if (img) name = img.alt;
+                  }
+
+                  if (name) {
+                    // Create a skeletal card object
+                    // Try to find full data from cards collection if possible
+                    let fullCard = null;
+                    if (currentPlayerData && currentPlayerData.cards) {
+                      fullCard = currentPlayerData.cards.find(c => c.name === name);
+                    }
+                    if (!fullCard) {
+                      // Fallback skeleton
+                      fullCard = {
+                        name: name,
+                        elixirCost: 3, // Default dummy
+                        iconUrls: { medium: el.querySelector('img')?.src || '' }
+                      };
+                    }
+                    scrapedDeck.push(fullCard);
+                  }
+                });
+
+                if (scrapedDeck.length > 0) {
+                  builderDeck = scrapedDeck;
+                  renderBuilderUI(); // Should now be populated
+                }
+              }
             }
           }
 
