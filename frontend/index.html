@@ -334,10 +334,10 @@
     <br><br>
     <div class="actions">
       <button id="scanBtn">Scan Player</button>
-      <button id="improveDeckActionBtn" style="display:none;">Improve Deck</button>
+      <button id="canImproveDeckBtn" style="display:none;">Improve Deck</button>
       <button id="substitutionsBtn" style="display:none; background: #9b59b6;">Substitutions</button>
       <!-- weaknessBtn is hidden - triggered programmatically by improveDeckActionBtn -->
-      <button id="weaknessBtn" style="display:none !important;">Weakness Check</button>
+      <button id="weaknessReportBtn" style="display:none !important;">Weakness Check</button>
       <button id="buildBtn" style="display:none; background: linear-gradient(135deg, #e67e22, #d35400);">Build
         Deck</button>
       <button id="demoBtn">Show Demo Deck</button>
@@ -524,6 +524,10 @@
     </div>
   </div>
 
+
+
+
+
   <!-- WEAKNESS MODAL -->
   <div id="weaknessModal" class="modal-overlay"
     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2100; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
@@ -540,7 +544,6 @@
       </div>
     </div>
   </div>
-
 
   <script src="meta_decks.js?v=4"></script>
   <script src="smart_ai.js?v=4"></script>
@@ -872,7 +875,12 @@
 
     window.MatchupAnalyzer = MatchupAnalyzer;
 
-    // Weakness Button Logic
+    // Weakness Button Logic - DISABLED
+    const wBtn = document.getElementById('weaknessBtn');
+    if(wBtn) wBtn.onclick = () => {
+      console.log("Weakness Button Clicked - Disabled");
+    };
+    /*
     document.getElementById('weaknessBtn').onclick = () => {
       if (!window.currentAppDeck || window.currentAppDeck.length === 0) {
         alert("Scan a deck first!");
@@ -1004,7 +1012,8 @@
       area.appendChild(btnFix);
       area.appendChild(btnDrop);
 
-      document.getElementById('weaknessModal').style.display = 'flex';
+      // document.getElementById('weaknessModal').style.display = 'flex';
+      console.log('Weakness Modal suppressed by user request.');
     };
   </script>
   <script type="module">
@@ -1176,18 +1185,17 @@
 
       // GLOBAL DECK TRACKER
       window.currentAppDeck = [];
-
       // WEAKNESS CHECK BUTTON HANDLER
-      const weaknessBtnSetup = document.getElementById('weaknessBtn');
+      const weaknessBtnSetup = document.getElementById('weaknessReportBtn');
       if (weaknessBtnSetup) {
         weaknessBtnSetup.onclick = () => {
           console.log("Weakness Check Button Clicked");
-          window.dispatchEvent(new Event('TRIGGER_WEAKNESS_CHECK'));
+          window.dispatchEvent(new Event('SHOW_WEAKNESS_REPORT'));
         };
       }
 
       // LISTENER FOR WEAKNESS CHECK
-      window.addEventListener('TRIGGER_WEAKNESS_CHECK', () => {
+      window.addEventListener('SHOW_WEAKNESS_REPORT', () => {
         if (!window.DeckWeakness) { console.error('DeckWeakness module not loaded'); return; }
 
         let deckToAnalyze = window.currentAppDeck;
@@ -1222,8 +1230,6 @@
                   </li>`;
           });
           html += `</ul>`;
-
-          // SUGGEST FIX BUTTON logic will be in footer
         }
         bodyEl.innerHTML = html;
 
@@ -1248,10 +1254,10 @@
           fixBtn.style.marginRight = "10px"; // Spacing
 
           fixBtn.onclick = () => {
-            // ... PROPOSE FIX LOGIC ...
             try {
               const fix = window.DeckWeakness.proposeFix(deckToAnalyze);
               if (fix) {
+                // Show Fix UI in Body
                 bodyEl.innerHTML = `
                             <div style="background:rgba(39, 174, 96, 0.2); padding:15px; border-radius:8px; border:1px solid #27ae60;">
                                 <h3 style="color:#2ecc71; margin-top:0;">🔧 Recommended Card Swap</h3>
@@ -1275,22 +1281,19 @@
                                     <span style="color:#ddd;">${fix.reason}</span>
                                 </div>
                                 <button id="confirmFixBtn" class="action-btn" style="background:linear-gradient(135deg, #27ae60, #1e8449); width:100%; font-size:16px; padding:12px;">✅ Apply This Fix</button>
-                                <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin-top:10px; cursor:pointer; font-size:12px; display:block; width:100%; text-align:center;">← Back to Analysis</button>
+                                <button onclick="window.dispatchEvent(new Event('SHOW_WEAKNESS_REPORT'))" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin-top:10px; cursor:pointer; font-size:12px; display:block; width:100%; text-align:center;">← Back to Analysis</button>
                             </div>
                         `;
-
 
                 document.getElementById('confirmFixBtn').onclick = () => {
                   const newDeck = window.currentAppDeck.filter(c => c.name !== fix.remove.name);
                   newDeck.push(fix.add);
                   window.currentAppDeck = newDeck;
-                  window.builderDeck = newDeck;
                   if (window.currentPlayerData) window.currentPlayerData.currentDeck = newDeck;
                   renderDeck(window.currentPlayerData || { currentDeck: newDeck });
                   document.getElementById('weaknessModal').style.display = 'none';
                   alert(`Swapped ${fix.remove.name} with ${fix.add.name}!`);
                 };
-                // Hide the Fix button after clicking
                 fixBtn.style.display = 'none';
               } else {
                 alert("No specific weakness fix found.");
@@ -1304,10 +1307,10 @@
         }
 
         footer.appendChild(closeBtn);
-
-
         modal.style.display = 'flex';
       });
+
+
 
       // HELPER: Normalize Level based on Rarity (Global Scope)
       // HELPER: Normalize Level based on Rarity (Global Scope)
@@ -1648,7 +1651,7 @@
         </div>`;
 
         stats.innerHTML = html;
-        const improveBtn = document.getElementById('improveDeckActionBtn');
+        const improveBtn = document.getElementById('canImproveDeckBtn');
         if (improveBtn) improveBtn.style.display = 'inline-block';
         // weaknessBtn is kept hidden - triggered programmatically by improveDeckActionBtn
 
@@ -1713,7 +1716,7 @@
           buildBtn.textContent = 'Cancel Build';
           buildBtn.style.background = '#e74c3c';
           builderControls.style.display = 'block';
-          document.getElementById('improveDeckActionBtn').style.display = 'none';
+          document.getElementById('canImproveDeckBtn').style.display = 'none';
           document.getElementById('demoBtn').style.display = 'none';
           builderDeck = [];
           renderBuilderUI();
@@ -1721,7 +1724,7 @@
           buildBtn.textContent = 'Build Deck';
           buildBtn.style.background = 'linear-gradient(135deg, #e67e22, #d35400)';
           builderControls.style.display = 'none';
-          document.getElementById('improveDeckActionBtn').style.display = 'inline-block';
+          document.getElementById('canImproveDeckBtn').style.display = 'inline-block';
           document.getElementById('demoBtn').style.display = 'inline-block';
           renderDeck(currentPlayerData);
         }
@@ -2939,138 +2942,156 @@
 
 
 
-      let improveBtn = document.getElementById('improveDeckActionBtn');
-      if (improveBtn) {
-        const newBtn = improveBtn.cloneNode(true);
-        improveBtn.parentNode.replaceChild(newBtn, improveBtn);
-        improveBtn = newBtn;
-        improveBtn.onclick = (e) => {
-          e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
 
-          // Basic validation
-          if (!currentPlayerData) {
-            alert('Scan a player first!');
-            return;
-          }
+      // ENSURE IMPROVE BTN LOGIC IS ATTACHED SAFELY
+      // This wrapper ensures we override any previous listeners that might trigger "Weakness Check"
+      const attachImproveLogic = () => {
+        let improveBtn = document.getElementById('canImproveDeckBtn');
+        if (improveBtn) {
+          console.log("Attaching Improve Deck Logic - Replacing Button to clear listeners");
+          const newBtn = improveBtn.cloneNode(true);
+          improveBtn.parentNode.replaceChild(newBtn, improveBtn);
+          improveBtn = newBtn;
 
-          // Get current deck from DOM or globals WITHOUT entering builder mode yet
-          let currentDeck = window.currentAppDeck || [];
-          if (currentDeck.length === 0 && currentPlayerData) {
-            currentDeck = extractCards(currentPlayerData);
-          }
+          // Ensure it's visible if we have a player
+          if (currentPlayerData) improveBtn.style.display = 'inline-block';
 
-          if (currentDeck.length === 0) {
-            alert('No deck to improve!');
-            return;
-          }
+          improveBtn.onclick = (e) => {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
 
-          // AUTO-IMPROVE LOGIC: Swap 2-5 weak cards automatically
-          try {
-            const swaps = [];
-            const currentDeckNames = new Set(currentDeck.map(c => c.name));
+            // FAILSAFE: Explicitly hide Weakness Modal in case of ghost triggers
+            const wModal = document.getElementById('weaknessModal');
+            if (wModal) wModal.style.display = 'none';
 
-            // Get player's available cards (not in current deck)
-            // Fall back to using all cards from META_QUALITY if player cards not available
-            let availableCards = [];
-            if (currentPlayerData?.cards && currentPlayerData.cards.length > 0) {
-              availableCards = currentPlayerData.cards.filter(c => !currentDeckNames.has(c.name));
-            } else if (window.META_QUALITY) {
-              // Use all cards from META_QUALITY as fallback
-              availableCards = Object.keys(window.META_QUALITY).filter(name => !currentDeckNames.has(name)).map(name => ({ name, level: 13 }));
-            }
-
-            if (availableCards.length === 0) {
-              alert('No replacement cards available to improve your deck.');
+            // Basic validation
+            if (!currentPlayerData) {
+              alert('Scan a player first!');
               return;
             }
 
-            // Score each card in the current deck
-            const scoredCards = currentDeck.map(card => {
-              const metaScore = (window.META_QUALITY && window.META_QUALITY[card.name]) || 50;
-              const role = window.getCardRole ? window.getCardRole(card.name) : [];
-              const hasEvo = (card.evolutionLevel || 0) > 0;
-              const isWinCon = role.includes('winCon');
-              // Protect evos and win cons
-              const protectionBonus = (hasEvo ? 50 : 0) + (isWinCon ? 30 : 0);
-              return { card, score: metaScore + protectionBonus, role };
-            });
+            // Get current deck from DOM or globals WITHOUT entering builder mode yet
+            let currentDeck = window.currentAppDeck || [];
+            if (currentDeck.length === 0 && currentPlayerData) {
+              currentDeck = extractCards(currentPlayerData);
+            }
 
-            // Sort by score (lowest = weakest)
-            scoredCards.sort((a, b) => a.score - b.score);
+            if (currentDeck.length === 0) {
+              alert('No deck to improve!');
+              return;
+            }
 
-            // Find 2-5 weakest cards to replace (only those below threshold)
-            const numToReplace = Math.min(5, Math.max(2, scoredCards.filter(c => c.score < 70).length));
-            const weakest = scoredCards.slice(0, numToReplace);
+            // AUTO-IMPROVE LOGIC: Swap 2-5 weak cards automatically
+            try {
+              const swaps = [];
+              const currentDeckNames = new Set(currentDeck.map(c => c.name));
 
-            for (const weak of weakest) {
-              const weakRoles = weak.role;
-              let bestReplacement = null;
-              let bestScore = weak.score;
+              // Get player's available cards (not in current deck)
+              // Fall back to using all cards from META_QUALITY if player cards not available
+              let availableCards = [];
+              if (currentPlayerData?.cards && currentPlayerData.cards.length > 0) {
+                availableCards = currentPlayerData.cards.filter(c => !currentDeckNames.has(c.name));
+              } else if (window.META_QUALITY) {
+                // Use all cards from META_QUALITY as fallback
+                availableCards = Object.keys(window.META_QUALITY).filter(name => !currentDeckNames.has(name)).map(name => ({ name, level: 13 }));
+              }
 
-              for (const candidate of availableCards) {
-                if (swaps.find(s => s.add.name === candidate.name)) continue;
-                const candMeta = (window.META_QUALITY && window.META_QUALITY[candidate.name]) || 50;
-                const candRole = window.getCardRole ? window.getCardRole(candidate.name) : [];
+              if (availableCards.length === 0) {
+                alert('No replacement cards available to improve your deck.');
+                return;
+              }
 
-                // Prefer cards that share a role with the removed card
-                const roleMatch = weakRoles.some(r => candRole.includes(r));
-                const roleBonus = roleMatch ? 15 : 0;
-                const finalScore = candMeta + roleBonus;
+              // Score each card in the current deck
+              const scoredCards = currentDeck.map(card => {
+                const metaScore = (window.META_QUALITY && window.META_QUALITY[card.name]) || 50;
+                const role = window.getCardRole ? window.getCardRole(card.name) : [];
+                const hasEvo = (card.evolutionLevel || 0) > 0;
+                const isWinCon = role.includes('winCon');
+                // Protect evos and win cons
+                const protectionBonus = (hasEvo ? 50 : 0) + (isWinCon ? 30 : 0);
+                return { card, score: metaScore + protectionBonus, role };
+              });
 
-                if (finalScore > bestScore) {
-                  bestScore = finalScore;
-                  bestReplacement = candidate;
+              // Sort by score (lowest = weakest)
+              scoredCards.sort((a, b) => a.score - b.score);
+
+              // Find 2-5 weakest cards to replace (only those below threshold)
+              const numToReplace = Math.min(5, Math.max(2, scoredCards.filter(c => c.score < 70).length));
+              const weakest = scoredCards.slice(0, numToReplace);
+
+              for (const weak of weakest) {
+                const weakRoles = weak.role;
+                let bestReplacement = null;
+                let bestScore = weak.score;
+
+                for (const candidate of availableCards) {
+                  if (swaps.find(s => s.add.name === candidate.name)) continue;
+                  const candMeta = (window.META_QUALITY && window.META_QUALITY[candidate.name]) || 50;
+                  const candRole = window.getCardRole ? window.getCardRole(candidate.name) : [];
+
+                  // Prefer cards that share a role with the removed card
+                  const roleMatch = weakRoles.some(r => candRole.includes(r));
+                  const roleBonus = roleMatch ? 15 : 0;
+                  const finalScore = candMeta + roleBonus;
+
+                  if (finalScore > bestScore) {
+                    bestScore = finalScore;
+                    bestReplacement = candidate;
+                  }
+                }
+
+                if (bestReplacement) {
+                  swaps.push({
+                    remove: weak.card,
+                    add: bestReplacement,
+                    reason: `${weak.card.name} → ${bestReplacement.name}`
+                  });
+                  // Remove from available pool
+                  const idx = availableCards.findIndex(c => c.name === bestReplacement.name);
+                  if (idx > -1) availableCards.splice(idx, 1);
                 }
               }
 
-              if (bestReplacement) {
-                swaps.push({
-                  remove: weak.card,
-                  add: bestReplacement,
-                  reason: `${weak.card.name} → ${bestReplacement.name}`
-                });
-                // Remove from available pool
-                const idx = availableCards.findIndex(c => c.name === bestReplacement.name);
-                if (idx > -1) availableCards.splice(idx, 1);
+              if (swaps.length === 0) {
+                alert("Your deck is already optimized! No improvements found.");
+                return;
               }
-            }
 
-            if (swaps.length === 0) {
-              alert("Your deck is already optimized! No improvements found.");
-              return;
-            }
+              // NOW enter builder mode and apply swaps
+              if (!isBuilderMode) toggleBuilderMode();
+              builderDeck = [...currentDeck];
 
-            // NOW enter builder mode and apply swaps
-            if (!isBuilderMode) toggleBuilderMode();
-            builderDeck = [...currentDeck];
-
-            // Apply swaps
-            for (const swap of swaps) {
-              const idx = builderDeck.findIndex(c => c.name === swap.remove.name);
-              if (idx > -1) {
-                builderDeck[idx] = swap.add;
+              // Apply swaps
+              for (const swap of swaps) {
+                const idx = builderDeck.findIndex(c => c.name === swap.remove.name);
+                if (idx > -1) {
+                  builderDeck[idx] = swap.add;
+                }
               }
+
+              // Update globals
+              window.builderDeck = builderDeck;
+              window.currentAppDeck = builderDeck;
+              if (currentPlayerData) currentPlayerData.currentDeck = builderDeck;
+
+              // Re-render deck
+              renderDeck(currentPlayerData || { currentDeck: builderDeck });
+
+              // Show summary
+              const swapSummary = swaps.map(s => `• ${s.remove.name} → ${s.add.name}`).join('\n');
+              alert(`🔧 Improved ${swaps.length} cards:\n\n${swapSummary}`);
+
+            } catch (err) {
+              console.error("Improve Deck error:", err);
+              alert("Error improving deck: " + err.message);
             }
+          };
+        }
+      };
 
-            // Update globals
-            window.builderDeck = builderDeck;
-            window.currentAppDeck = builderDeck;
-            if (currentPlayerData) currentPlayerData.currentDeck = builderDeck;
-
-            // Re-render deck
-            renderDeck(currentPlayerData || { currentDeck: builderDeck });
-
-            // Show summary
-            const swapSummary = swaps.map(s => `• ${s.remove.name} → ${s.add.name}`).join('\n');
-            alert(`🔧 Improved ${swaps.length} cards:\n\n${swapSummary}`);
-
-          } catch (err) {
-            console.error("Improve Deck error:", err);
-            alert("Error improving deck: " + err.message);
-          }
-        };
-
-
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attachImproveLogic);
+      } else {
+        attachImproveLogic();
       }
       const createNewBtn = document.getElementById('createNewBtn');
 
