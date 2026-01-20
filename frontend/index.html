@@ -334,10 +334,12 @@
     <br><br>
     <div class="actions">
       <button id="scanBtn">Scan Player</button>
-      <button id="canImproveDeckBtn" style="display:none;">Improve Deck</button>
+      <button id="scanBtn">Scan Player</button>
+      <!-- Improve Deck Button Removed -->
       <button id="substitutionsBtn" style="display:none; background: #9b59b6;">Substitutions</button>
       <!-- Weakness Check button (Renamed & Restored) -->
       <button id="weaknessReportBtn" style="display:none; background: #c0392b;">Weakness Check</button>
+      <button id="synergyBtn" style="display:none; background: #2980b9;">🔗 Synergy Matrix</button>
       <button id="buildBtn" style="display:none; background: linear-gradient(135deg, #e67e22, #d35400);">Build
         Deck</button>
       <button id="demoBtn">Show Demo Deck</button>
@@ -462,7 +464,15 @@
           <h3 style="color:#2ecc71;">Your Deck</h3>
           <div id="myDeckPreview"
             style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; pointer-events:auto; opacity:1;">
-            <!-- Filled via JS -->
+            <!-- Synergy Modal -->
+  <div id="synergyModal" class="modal">
+    <div class="modal-content" style="background:rgba(10, 10, 20, 0.95); border:1px solid #00d2ff; box-shadow:0 0 50px rgba(0, 210, 255, 0.2);">
+      <span class="close" onclick="document.getElementById('synergyModal').style.display='none'">&times;</span>
+      <div id="synergyContent"></div>
+    </div>
+  </div>
+
+  <!-- Builder Mode & Modal Script -->
           </div>
         </div>
 
@@ -862,11 +872,245 @@
           removeReason: removeReason,
           reason: `${suggestionText} (${bestAdd.name}) by removing ${removeCard.name}.`
         };
+      },
+
+      /**
+       * Calculates detailed 0-100 stats for the Radar Chart.
+       */
+      calculateStats: function(deck) {
+        const cardNames = deck.map(c => c.name);
+        const roles = {
+            winCon: deck.filter(c => getCardRole(c.name).includes('winCon')).length,
+            air: deck.filter(c => getCardRole(c.name).includes('airDefense')).length,
+            building: deck.filter(c => getCardRole(c.name).includes('building')).length,
+            spell: deck.filter(c => getCardRole(c.name).includes('spellSmall') || getCardRole(c.name).includes('spellBig')).length,
+            miniTank: deck.filter(c => getCardRole(c.name).includes('miniTank')).length
+        };
+        const avgElixir = deck.reduce((s, c) => s + (c.elixir || c.elixirCost || 0), 0) / 8;
+
+        // 1. OFFENSE
+        // Base 40 + WinCon(30) + Spells(10 each) -> Cap 100
+        let off = 40 + (roles.winCon * 30) + (roles.spell * 10);
+        
+        // 2. DEFENSE
+        // Base 40 + Building(20) + MiniTank(15) + Air(10)
+        let def = 40 + (roles.building * 20) + (roles.miniTank * 15) + (roles.air * 10);
+
+        // 3. CYCLE
+        // 2.6 avg -> 100, 5.0 avg -> 20
+        let cyc = Math.max(20, Math.min(100, 100 - (avgElixir - 2.6) * 33));
+
+        // 4. VERSATILITY
+        // Air defense is critical. Spells are critical.
+        let vers = 30; 
+        if(roles.air >= 2) vers += 30;
+        if(roles.spell >= 2) vers += 20;
+        if(roles.miniTank >= 1) vers += 20;
+
+        // 5. SYNERGY (Placeholder for now, heuristic)
+        let syn = 50; 
+        if(roles.winCon && roles.spell) syn += 20;
+        if(roles.building) syn += 10;
+        if(avgElixir < 4.0) syn += 15;
+
+        // Clamping
+        const clamp = (n) => Math.max(20, Math.min(100, n));
+        
+        return {
+            offense: clamp(off),
+            defense: clamp(def),
+            cycle: clamp(cyc),
+            versatility: clamp(vers),
+            synergy: clamp(syn)
+        };
+      },
+
+      /**
+       * Generates SVG for Radar Chart
+       */
+      renderRadarChart: function(stats) {
+          const size = 160;
+          const center = size / 2;
+          const radius = 60;
+          const axes = ['Offense', 'Defense', 'Versatility', 'Cycle', 'Synergy'];
+          const values = [stats.offense, stats.defense, stats.versatility, stats.cycle, stats.synergy];
+          
+          // Helper to get coordinates
+          const getCoords = (val, i, total) => {
+              const angle = (Math.PI * 2 * i) / total - Math.PI / 2;
+              const r = (val / 100) * radius;
+              const x = center + r * Math.cos(angle);
+              const y = center + r * Math.sin(angle);
+              return [x, y];
+          };
+
+          // Draw Web Background (20%, 40%... 100%)
+          let web = '';
+          for(let level=1; level<=5; level++) {
+              let points = [];
+              for(let i=0; i<5; i++) {
+                  const [x, y] = getCoords(level * 20, i, 5);
+                  points.push(`${x},${y}`);
+              }
+              web += `<polygon points="${points.join(' ')}" fill="none" stroke="#444" stroke-width="1" />`;
+          }
+
+          // Draw Data Polygon
+          let dataPoints = [];
+          for(let i=0; i<5; i++) {
+              const [x, y] = getCoords(values[i], i, 5);
+              dataPoints.push(`${x},${y}`);
+          }
+          const poly = `<polygon points="${dataPoints.join(' ')}" fill="rgba(231, 76, 60, 0.5)" stroke="#e74c3c" stroke-width="2" />`;
+
+          // Draw Axes & Labels
+          let lines = '';
+          let labels = '';
+          for(let i=0; i<5; i++) {
+              const [x, y] = getCoords(100, i, 5);
+              lines += `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="#666" stroke-width="1" />`;
+              
+              // Label Offset
+              const labelAngle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+              const lx = center + (radius + 15) * Math.cos(labelAngle);
+              const ly = center + (radius + 15) * Math.sin(labelAngle);
+              // Anchor adjustment
+              let anchor = 'middle';
+              if(i===1) anchor='start'; if(i===4) anchor='end';
+              
+              labels += `<text x="${lx}" y="${ly + 4}" text-anchor="${anchor}" fill="#ccc" font-size="10px">${axes[i]}</text>`;
+          }
+
+          return `
+            <svg width="${size}" height="${size}" style="background:rgba(0,0,0,0.2); border-radius:50%;">
+                ${web}
+                ${lines}
+                ${poly}
+                ${labels}
+                <circle cx="${center}" cy="${center}" r="2" fill="#fff" />
+            </svg>
+          `;
       }
     };
 
     // Expose to window immediately
+    // Expose to window immediately
     window.DeckWeakness = DeckWeakness;
+
+    // --- SYNERGY MATRIX MODULE ---
+    const SynergyMatrix = {
+      // Small Database of High-Value Pairs
+      PAIRS: [
+        ['Tornado', 'Executioner'], ['Tornado', 'Ice Wizard'], ['Tornado', 'Magic Archer'], ['Tornado', 'Sparky'],
+        ['Hog Rider', 'Ice Golem'], ['Hog Rider', 'Earthquake'], ['Hog Rider', 'Fireball'],
+        ['Golem', 'Night Witch'], ['Golem', 'Baby Dragon'], ['Golem', 'Lightning'],
+        ['Lava Hound', 'Balloon'], ['Lava Hound', 'Mega Minion'], ['Lava Hound', 'Inferno Dragon'],
+        ['Miner', 'Wall Breakers'], ['Miner', 'Poison'], ['Miner', 'Bats'],
+        ['Graveyard', 'Poison'], ['Graveyard', 'Baby Dragon'], ['Graveyard', 'Knight'], ['Graveyard', 'Freeze'],
+        ['X-Bow', 'Tesla'], ['X-Bow', 'The Log'],
+        ['Royal Giant', 'Fisherman'], ['Royal Giant', 'Mother Witch'],
+        ['Goblin Barrel', 'Princess'], ['Goblin Barrel', 'Goblin Gang'], // Log Bait
+        ['P.E.K.K.A', 'Battle Ram'], ['P.E.K.K.A', 'Electro Wizard'],
+        ['Giant', 'Sparky'], ['Giant', 'Prince'],
+        ['Balloon', 'Lumberjack']
+      ],
+
+      analyze: function(deck) {
+        const names = new Set(deck.map(c => c.name));
+        const found = [];
+        this.PAIRS.forEach(pair => {
+            if(names.has(pair[0]) && names.has(pair[1])) {
+                found.push(pair);
+            }
+        });
+        return found;
+      },
+
+      render: function(deck) {
+        const synergies = this.analyze(deck);
+        const modal = document.getElementById('synergyModal');
+        const content = document.getElementById('synergyContent');
+        
+        if(synergies.length === 0) {
+            content.innerHTML = `<div style="text-align:center; padding:40px; color:#aaa;">
+                <h3>No Critical Synergies Detected</h3>
+                <p>Your deck contains cards that work independently, but lacks the specific "power combos" defined in our database.</p>
+                <div style="font-size:12px; margin-top:20px;">Try classic combos like <br><b>Tornado + Executioner</b> or <b>Lava Hound + Balloon</b>.</div>
+            </div>`;
+            modal.style.display = 'flex';
+            return;
+        }
+
+        // VISUALIZATION
+        // We will place cards in a circle and draw lines
+        const size = 300;
+        const center = size / 2;
+        const radius = 100;
+        
+        let cardNodes = deck.map((c, i) => {
+            const angle = (Math.PI * 2 * i) / 8 - Math.PI/2;
+            return {
+                name: c.name,
+                x: center + radius * Math.cos(angle),
+                y: center + radius * Math.sin(angle),
+                img: c.iconUrls?.medium || c.iconUrls || c.iconUrl,
+                angle: angle
+            };
+        });
+
+        // Draw Lines
+        let svgLines = '';
+        synergies.forEach(arr => {
+             const n1 = cardNodes.find(n => n.name === arr[0]);
+             const n2 = cardNodes.find(n => n.name === arr[1]);
+             if(n1 && n2) {
+                 svgLines += `<line x1="${n1.x}" y1="${n1.y}" x2="${n2.x}" y2="${n2.y}" stroke="#00d2ff" stroke-width="3" stroke-dasharray="0" opacity="0.6">
+                    <animate attributeName="stroke-opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite" />
+                 </line>`;
+             }
+        });
+
+        // Draw Nodes
+        let htmlNodes = '';
+        cardNodes.forEach(node => {
+            const isSynergistic = synergies.some(p => p.includes(node.name));
+            const border = isSynergistic ? '2px solid #00d2ff' : '1px solid #444';
+            const shadow = isSynergistic ? '0 0 15px rgba(0, 210, 255, 0.6)' : 'none';
+            const opacity = isSynergistic ? 1 : 0.5;
+            
+            htmlNodes += `
+                <div style="position:absolute; left:${node.x - 25}px; top:${node.y - 35}px; width:50px; text-align:center;">
+                    <img src="${node.img}" style="width:50px; border-radius:4px; border:${border}; box-shadow:${shadow}; opacity:${opacity}">
+                </div>
+            `;
+        });
+
+        content.innerHTML = `
+            <div style="text-align:center;">
+                <h2 style="color:#00d2ff; text-shadow:0 0 10px #00d2ff;">Synergy Matrix</h2>
+                <div style="font-size:14px; color:#ccc; margin-bottom:20px;">Detected ${synergies.length} Power Connections</div>
+                
+                <div style="position:relative; width:${size}px; height:${size}px; margin:0 auto;">
+                    <svg width="${size}" height="${size}" style="position:absolute; top:0; left:0;">
+                        ${svgLines}
+                    </svg>
+                    ${htmlNodes}
+                </div>
+
+                <div style="text-align:left; max-width:400px; margin:20px auto; background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
+                     ${synergies.map(s => `
+                        <div style="margin-bottom:8px; color:#fff;">
+                            <span style="color:#00d2ff;">🔗 ${s[0]} + ${s[1]}</span>
+                            <div style="font-size:11px; color:#aaa; margin-left:20px;">These cards cover each other's weaknesses perfectly.</div>
+                        </div>
+                     `).join('')}
+                </div>
+            </div>
+        `;
+        modal.style.display = 'flex';
+      }
+    };
+    window.SynergyMatrix = SynergyMatrix;
   </script>
 
   <script type="module">
@@ -1189,9 +1433,19 @@
       const weaknessBtnSetup = document.getElementById('weaknessReportBtn');
       if (weaknessBtnSetup) {
         weaknessBtnSetup.onclick = () => {
-          console.log("Weakness Check Button Clicked");
           window.dispatchEvent(new Event('SHOW_WEAKNESS_REPORT'));
         };
+      }
+      // SYNERGY BTN SETUP
+      const synergyBtn = document.getElementById('synergyBtn');
+      if(synergyBtn) {
+          synergyBtn.onclick = () => {
+              if (window.currentAppDeck && window.currentAppDeck.length > 0) {
+                  window.SynergyMatrix.render(window.currentAppDeck);
+              } else {
+                  alert("Please scan a deck first!");
+              }
+          };
       }
 
       // LISTENER FOR WEAKNESS CHECK
@@ -1205,110 +1459,62 @@
         }
 
         const result = window.DeckWeakness.detect(deckToAnalyze);
+      // NEW: Calculate Stats for Holographic Radar
+      const stats = window.DeckWeakness.calculateStats ? window.DeckWeakness.calculateStats(deckToAnalyze) : { offense:50, defense:50, cycle:50, versatility:50, synergy:50 };
+      const radarSVG = window.DeckWeakness.renderRadarChart ? window.DeckWeakness.renderRadarChart(stats) : '';
+      
+      const modal = document.getElementById('weaknessModal');
+      const scoreEl = document.getElementById('weaknessScore');
+      const bodyEl = document.getElementById('weaknessBody');
 
-        const modal = document.getElementById('weaknessModal');
-        const scoreEl = document.getElementById('weaknessScore');
-        const bodyEl = document.getElementById('weaknessBody');
+      let color = '#2ecc71';
+      if (result.health < 60) color = '#e74c3c';
+      else if (result.health < 85) color = '#f1c40f';
 
-        let color = '#2ecc71';
-        if (result.health < 60) color = '#e74c3c';
-        else if (result.health < 85) color = '#f1c40f';
+      // 1. Render Score
+      scoreEl.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:center; gap:20px;">
+            <div>
+                <div style="font-size:14px; color:#ccc; margin-bottom:5px;">DECK HEALTH</div>
+                <div style="color:${color}; font-size:48px;">${result.health}%</div>
+            </div>
+            ${radarSVG}
+        </div>
+      `;
+      // scoreEl.style.color = color; // Handled inline now
 
-        // 1. Render Score
-        scoreEl.textContent = `Health: ${result.health}%`;
-        scoreEl.style.color = color;
+      // 2. Render Weakness Body HTML
+      // ... keep existing body logic, maybe simplify ...
+      let html = '';
+      if (result.issues.length === 0) {
+        html = `<div style="text-align:center; padding:20px;">
+                    <h3 style="color:#2ecc71; font-size:24px;">✅ Operational</h3>
+                    <p>All critical systems are functioning within normal parameters.</p>
+                </div>`;
+      } else {
+        html = `<h3 style="color:#e74c3c; border-bottom:1px solid #444; padding-bottom:5px;">⚠️ System Weaknesses Detected</h3>`;
+        result.issues.forEach((issue, idx) => {
+          html += `<div style="margin-bottom:12px; border-left:3px solid #e74c3c; padding-left:10px;">
+                      <div style="font-size:16px; font-weight:bold; color:#e74c3c;">${issue}</div>
+                      <div style="font-size:12px; color:#aaa; margin-top:2px;">${result.suggestions[idx]}</div>
+                  </div>`;
+        });
+      }
+      bodyEl.innerHTML = html;
 
-        // 2. Render Weakness Body HTML
-        let html = '';
-        if (result.issues.length === 0) {
-          html = `<h3 style="color:#2ecc71">✅ Solid Deck!</h3><p>Your deck has all the standard roles covered.</p>`;
-        } else {
-          html = `<h3 style="color:#e74c3c; border-bottom:1px solid #444; padding-bottom:5px;">⚠️ Issues Found</h3><ul>`;
-          result.issues.forEach((issue, idx) => {
-            html += `<li style="margin-bottom:8px; font-size:1.1em;">${issue}
-                      <div style="font-size:0.8em; color:#aaa; margin-top:2px;">💡 ${result.suggestions[idx]}</div>
-                  </li>`;
-          });
-          html += `</ul>`;
-        }
-        bodyEl.innerHTML = html;
+      // 3. Render Footer Buttons (Simplified - No more "Weakness" modal inside weakness modal)
+      const footer = document.getElementById('weaknessFooter');
+      footer.innerHTML = '';
 
-        // 3. Render Footer Buttons
-        const footer = document.getElementById('weaknessFooter');
-        // Reset Footer
-        footer.innerHTML = '';
-
-        // "Close" Button
-        const closeBtn = document.createElement('button');
-        closeBtn.innerText = "Close";
-        closeBtn.className = "action-btn";
-        closeBtn.style.background = "#555";
-        closeBtn.onclick = () => document.getElementById('weaknessModal').style.display = 'none';
-
-        // "Fix Weaknesses" Button (if issues)
-        if (result.issues.length > 0) {
-          const fixBtn = document.createElement('button');
-          fixBtn.innerHTML = "🔧 Fix Weaknesses";
-          fixBtn.className = "action-btn";
-          fixBtn.style.background = "linear-gradient(135deg, #2ecc71, #27ae60)";
-          fixBtn.style.marginRight = "10px"; // Spacing
-
-          fixBtn.onclick = () => {
-            try {
-              const fix = window.DeckWeakness.proposeFix(deckToAnalyze);
-              if (fix) {
-                // Show Fix UI in Body
-                bodyEl.innerHTML = `
-                            <div style="background:rgba(39, 174, 96, 0.2); padding:15px; border-radius:8px; border:1px solid #27ae60;">
-                                <h3 style="color:#2ecc71; margin-top:0;">🔧 Recommended Card Swap</h3>
-                                <div style="display:flex; align-items:flex-start; justify-content:center; gap:20px; margin:15px 0;">
-                                    <div style="text-align:center; flex:1; max-width:45%;">
-                                        <div style="color:#e74c3c; font-weight:bold; font-size:14px; margin-bottom:8px;">❌ REMOVE</div>
-                                        <img src="${fix.remove.iconUrls?.medium || fix.remove.iconUrls || fix.remove.iconUrl}" style="width:70px; border:2px solid #e74c3c; border-radius:8px;">
-                                        <div style="font-size:14px; font-weight:bold; margin-top:5px;">${fix.remove.name}</div>
-                                        <p style="font-size:11px; color:#ccc; text-align:left; margin-top:8px; line-height:1.4;">${fix.removeReason || 'This card is the weakest link in your deck.'}</p>
-                                    </div>
-                                    <div style="font-size:28px; color:#aaa; align-self:center;">➝</div>
-                                    <div style="text-align:center; flex:1; max-width:45%;">
-                                        <div style="color:#2ecc71; font-weight:bold; font-size:14px; margin-bottom:8px;">✅ ADD</div>
-                                        <img src="${fix.add.iconUrls?.medium || fix.add.iconUrls || fix.add.iconUrl}" style="width:70px; border:2px solid #2ecc71; border-radius:8px;">
-                                        <div style="font-size:14px; font-weight:bold; margin-top:5px;">${fix.add.name}</div>
-                                        <p style="font-size:11px; color:#ccc; text-align:left; margin-top:8px; line-height:1.4;">${fix.addReason || 'This card fills a critical gap in your deck composition.'}</p>
-                                    </div>
-                                </div>
-                                <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:6px; margin:10px 0;">
-                                    <strong style="color:#f1c40f;">💡 Summary:</strong>
-                                    <span style="color:#ddd;">${fix.reason}</span>
-                                </div>
-                                <button id="confirmFixBtn" class="action-btn" style="background:linear-gradient(135deg, #27ae60, #1e8449); width:100%; font-size:16px; padding:12px;">✅ Apply This Fix</button>
-                                <button onclick="window.dispatchEvent(new Event('SHOW_WEAKNESS_REPORT'))" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin-top:10px; cursor:pointer; font-size:12px; display:block; width:100%; text-align:center;">← Back to Analysis</button>
-                            </div>
-                        `;
-
-                document.getElementById('confirmFixBtn').onclick = () => {
-                  const newDeck = window.currentAppDeck.filter(c => c.name !== fix.remove.name);
-                  newDeck.push(fix.add);
-                  window.currentAppDeck = newDeck;
-                  if (window.currentPlayerData) window.currentPlayerData.currentDeck = newDeck;
-                  renderDeck(window.currentPlayerData || { currentDeck: newDeck });
-                  document.getElementById('weaknessModal').style.display = 'none';
-                  alert(`Swapped ${fix.remove.name} with ${fix.add.name}!`);
-                };
-                fixBtn.style.display = 'none';
-              } else {
-                alert("No specific weakness fix found.");
-              }
-            } catch (e) {
-              console.error(e);
-              alert("Error finding fix: " + e.message);
-            }
-          };
-          footer.appendChild(fixBtn);
-        }
-
-        footer.appendChild(closeBtn);
-        modal.style.display = 'flex';
-      });
+      const closeBtn = document.createElement('button');
+      closeBtn.innerText = "Close Report";
+      closeBtn.className = "action-btn";
+      closeBtn.style.background = "#555";
+      closeBtn.onclick = () => document.getElementById('weaknessModal').style.display = 'none';
+      
+      footer.appendChild(closeBtn);
+      modal.style.display = 'flex';
+    });
 
 
 
@@ -1472,10 +1678,11 @@
         container.appendChild(supportCol);
 
         // FORCE VISIBILITY OF BUTTONS
-        const impBtn = document.getElementById('canImproveDeckBtn');
-        if(impBtn) impBtn.style.display = 'inline-block';
+        // Improve Deck Button Removed
         const wBtn = document.getElementById('weaknessReportBtn');
         if(wBtn) wBtn.style.display = 'inline-block';
+        const sBtn = document.getElementById('synergyBtn');
+        if(sBtn) sBtn.style.display = 'inline-block';
       }
 
       // Use 2 Evo Slots (Index 0 and 1)
@@ -2951,159 +3158,7 @@
 
       // ENSURE IMPROVE BTN LOGIC IS ATTACHED SAFELY
       // This wrapper ensures we override any previous listeners that might trigger "Weakness Check"
-      const attachImproveLogic = () => {
-        let improveBtn = document.getElementById('canImproveDeckBtn');
-        if (improveBtn) {
-          console.log("Attaching Improve Deck Logic - Replacing Button to clear listeners");
-          const newBtn = improveBtn.cloneNode(true);
-          improveBtn.parentNode.replaceChild(newBtn, improveBtn);
-          improveBtn = newBtn;
-
-          // Ensure it's visible if we have a player
-          if (currentPlayerData) {
-              improveBtn.style.display = 'inline-block';
-              // Also show Weakness Report button
-              const wBtn = document.getElementById('weaknessReportBtn');
-              if(wBtn) wBtn.style.display = 'inline-block';
-          }
-
-          improveBtn.onclick = (e) => {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-
-            // FAILSAFE: Explicitly hide Weakness Modal in case of ghost triggers
-            const wModal = document.getElementById('weaknessModal');
-            if (wModal) wModal.style.display = 'none';
-
-            // Basic validation
-            if (!currentPlayerData) {
-              alert('Scan a player first!');
-              return;
-            }
-
-            // Get current deck from DOM or globals WITHOUT entering builder mode yet
-            let currentDeck = window.currentAppDeck || [];
-            if (currentDeck.length === 0 && currentPlayerData) {
-              currentDeck = extractCards(currentPlayerData);
-            }
-
-            if (currentDeck.length === 0) {
-              alert('No deck to improve!');
-              return;
-            }
-
-            // AUTO-IMPROVE LOGIC: Swap 2-5 weak cards automatically
-            try {
-              const swaps = [];
-              const currentDeckNames = new Set(currentDeck.map(c => c.name));
-
-              // Get player's available cards (not in current deck)
-              // Fall back to using all cards from META_QUALITY if player cards not available
-              let availableCards = [];
-              if (currentPlayerData?.cards && currentPlayerData.cards.length > 0) {
-                availableCards = currentPlayerData.cards.filter(c => !currentDeckNames.has(c.name));
-              } else if (window.META_QUALITY) {
-                // Use all cards from META_QUALITY as fallback
-                availableCards = Object.keys(window.META_QUALITY).filter(name => !currentDeckNames.has(name)).map(name => ({ name, level: 13 }));
-              }
-
-              if (availableCards.length === 0) {
-                alert('No replacement cards available to improve your deck.');
-                return;
-              }
-
-              // Score each card in the current deck
-              const scoredCards = currentDeck.map(card => {
-                const metaScore = (window.META_QUALITY && window.META_QUALITY[card.name]) || 50;
-                const role = window.getCardRole ? window.getCardRole(card.name) : [];
-                const hasEvo = (card.evolutionLevel || 0) > 0;
-                const isWinCon = role.includes('winCon');
-                // Protect evos and win cons
-                const protectionBonus = (hasEvo ? 50 : 0) + (isWinCon ? 30 : 0);
-                return { card, score: metaScore + protectionBonus, role };
-              });
-
-              // Sort by score (lowest = weakest)
-              scoredCards.sort((a, b) => a.score - b.score);
-
-              // Find 2-5 weakest cards to replace (only those below threshold)
-              const numToReplace = Math.min(5, Math.max(2, scoredCards.filter(c => c.score < 70).length));
-              const weakest = scoredCards.slice(0, numToReplace);
-
-              for (const weak of weakest) {
-                const weakRoles = weak.role;
-                let bestReplacement = null;
-                let bestScore = weak.score;
-
-                for (const candidate of availableCards) {
-                  if (swaps.find(s => s.add.name === candidate.name)) continue;
-                  const candMeta = (window.META_QUALITY && window.META_QUALITY[candidate.name]) || 50;
-                  const candRole = window.getCardRole ? window.getCardRole(candidate.name) : [];
-
-                  // Prefer cards that share a role with the removed card
-                  const roleMatch = weakRoles.some(r => candRole.includes(r));
-                  const roleBonus = roleMatch ? 15 : 0;
-                  const finalScore = candMeta + roleBonus;
-
-                  if (finalScore > bestScore) {
-                    bestScore = finalScore;
-                    bestReplacement = candidate;
-                  }
-                }
-
-                if (bestReplacement) {
-                  swaps.push({
-                    remove: weak.card,
-                    add: bestReplacement,
-                    reason: `${weak.card.name} → ${bestReplacement.name}`
-                  });
-                  // Remove from available pool
-                  const idx = availableCards.findIndex(c => c.name === bestReplacement.name);
-                  if (idx > -1) availableCards.splice(idx, 1);
-                }
-              }
-
-              if (swaps.length === 0) {
-                alert("Your deck is already optimized! No improvements found.");
-                return;
-              }
-
-              // NOW enter builder mode and apply swaps
-              if (!isBuilderMode) toggleBuilderMode();
-              builderDeck = [...currentDeck];
-
-              // Apply swaps
-              for (const swap of swaps) {
-                const idx = builderDeck.findIndex(c => c.name === swap.remove.name);
-                if (idx > -1) {
-                  builderDeck[idx] = swap.add;
-                }
-              }
-
-              // Update globals
-              window.builderDeck = builderDeck;
-              window.currentAppDeck = builderDeck;
-              if (currentPlayerData) currentPlayerData.currentDeck = builderDeck;
-
-              // Re-render deck
-              renderDeck(currentPlayerData || { currentDeck: builderDeck });
-
-              // Show summary
-              const swapSummary = swaps.map(s => `• ${s.remove.name} → ${s.add.name}`).join('\n');
-              alert(`🔧 Improved ${swaps.length} cards:\n\n${swapSummary}`);
-
-            } catch (err) {
-              console.error("Improve Deck error:", err);
-              alert("Error improving deck: " + err.message);
-            }
-          };
-        }
-      };
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', attachImproveLogic);
-      } else {
-        attachImproveLogic();
-      }
+      /* attachImproveLogic Removed */
       const createNewBtn = document.getElementById('createNewBtn');
 
       // Shared Helper to prepare Builder Mode
