@@ -929,9 +929,9 @@
        * Generates SVG for Radar Chart
        */
       renderRadarChart: function(stats) {
-          const size = 160;
+          const size = 220; // Increased size
           const center = size / 2;
-          const radius = 60;
+          const radius = 65; // Slightly reduced radius ratio to give more text room
           const axes = ['Offense', 'Defense', 'Versatility', 'Cycle', 'Synergy'];
           const values = [stats.offense, stats.defense, stats.versatility, stats.cycle, stats.synergy];
           
@@ -978,11 +978,11 @@
               let anchor = 'middle';
               if(i===1) anchor='start'; if(i===4) anchor='end';
               
-              labels += `<text x="${lx}" y="${ly + 4}" text-anchor="${anchor}" fill="#ccc" font-size="10px">${axes[i]}</text>`;
+              labels += `<text x="${lx}" y="${ly + 4}" text-anchor="${anchor}" fill="#fff" font-weight="bold" font-size="11px" style="text-shadow:0px 1px 2px #000;">${axes[i]}</text>`;
           }
 
           return `
-            <svg width="${size}" height="${size}" style="background:rgba(0,0,0,0.2); border-radius:50%;">
+            <svg width="${size}" height="${size}" style="background:rgba(0,0,0,0.2); border-radius:10%;">
                 ${web}
                 ${lines}
                 ${poly}
@@ -994,11 +994,126 @@
     };
 
     // Expose to window immediately
-    // Expose to window immediately
     window.DeckWeakness = DeckWeakness;
 
     // --- SYNERGY MATRIX MODULE ---
     const SynergyMatrix = {
+      // Small Database of High-Value Pairs
+      PAIRS: [
+        ['Tornado', 'Executioner'], ['Tornado', 'Ice Wizard'], ['Tornado', 'Magic Archer'], ['Tornado', 'Sparky'],
+        ['Hog Rider', 'Ice Golem'], ['Hog Rider', 'Earthquake'], ['Hog Rider', 'Fireball'],
+        ['Golem', 'Night Witch'], ['Golem', 'Baby Dragon'], ['Golem', 'Lightning'],
+        ['Lava Hound', 'Balloon'], ['Lava Hound', 'Mega Minion'], ['Lava Hound', 'Inferno Dragon'],
+        ['Miner', 'Wall Breakers'], ['Miner', 'Poison'], ['Miner', 'Bats'],
+        ['Graveyard', 'Poison'], ['Graveyard', 'Baby Dragon'], ['Graveyard', 'Knight'], ['Graveyard', 'Freeze'],
+        ['X-Bow', 'Tesla'], ['X-Bow', 'The Log'],
+        ['Royal Giant', 'Fisherman'], ['Royal Giant', 'Mother Witch'],
+        ['Goblin Barrel', 'Princess'], ['Goblin Barrel', 'Goblin Gang'], // Log Bait
+        ['P.E.K.K.A', 'Battle Ram'], ['P.E.K.K.A', 'Electro Wizard'],
+        ['Giant', 'Sparky'], ['Giant', 'Prince'],
+        ['Balloon', 'Lumberjack']
+      ],
+
+      analyze: function(deck) {
+        const names = new Set(deck.map(c => c.name));
+        const found = [];
+        this.PAIRS.forEach(pair => {
+            if(names.has(pair[0]) && names.has(pair[1])) {
+                found.push(pair);
+            }
+        });
+        return found;
+      },
+
+      render: function(deck) {
+        // Ensure modal exists
+        let modal = document.getElementById('synergyModal');
+        // If not found in DOM, try to find it or log error
+        if(!modal) {
+             console.error("Synergy Modal not found!");
+             return;
+        }
+
+        const synergies = this.analyze(deck);
+        const content = document.getElementById('synergyContent');
+        
+        if(synergies.length === 0) {
+            content.innerHTML = `<div style="text-align:center; padding:40px; color:#aaa;">
+                <h3 style="color:#00d2ff;">Synergy Matrix</h3>
+                <p>No specific "Power Pairs" detected from our database.</p>
+                <div style="font-size:12px; margin-top:20px; color:#666;">Try combos like Tornado + Executioner.</div>
+            </div>`;
+            modal.style.display = 'flex';
+            return;
+        }
+
+        // VISUALIZATION
+        const size = 320;
+        const center = size / 2;
+        const radius = 100;
+        
+        let cardNodes = deck.map((c, i) => {
+            const angle = (Math.PI * 2 * i) / 8 - Math.PI/2;
+            return {
+                name: c.name,
+                x: center + radius * Math.cos(angle),
+                y: center + radius * Math.sin(angle),
+                img: c.iconUrls?.medium || c.iconUrls || c.iconUrl,
+                angle: angle
+            };
+        });
+
+        // Draw Lines
+        let svgLines = '';
+        synergies.forEach(arr => {
+             const n1 = cardNodes.find(n => n.name === arr[0]);
+             const n2 = cardNodes.find(n => n.name === arr[1]);
+             if(n1 && n2) {
+                 svgLines += `<line x1="${n1.x}" y1="${n1.y}" x2="${n2.x}" y2="${n2.y}" stroke="#00d2ff" stroke-width="2" stroke-dasharray="5,5" opacity="0.8">
+                    <animate attributeName="stroke-dashoffset" values="10;0" dur="1s" repeatCount="indefinite" />
+                 </line>`;
+             }
+        });
+
+        // Draw Nodes
+        let htmlNodes = '';
+        cardNodes.forEach(node => {
+            const isSynergistic = synergies.some(p => p.includes(node.name));
+            const border = isSynergistic ? '2px solid #00d2ff' : '1px solid #333';
+            const shadow = isSynergistic ? '0 0 10px rgba(0, 210, 255, 0.5)' : 'none';
+            const opacity = isSynergistic ? 1 : 0.4;
+            
+            htmlNodes += `
+                <div style="position:absolute; left:${node.x - 20}px; top:${node.y - 30}px; width:40px; text-align:center;">
+                    <img src="${node.img}" style="width:40px; border-radius:4px; border:${border}; box-shadow:${shadow}; opacity:${opacity}">
+                </div>
+            `;
+        });
+
+        content.innerHTML = `
+            <div style="text-align:center;">
+                <h2 style="color:#00d2ff; text-shadow:0 0 10px #00d2ff; margin-bottom:5px;">Synergy Matrix</h2>
+                <div style="font-size:12px; color:#ccc; margin-bottom:15px;">${synergies.length} Power Connections</div>
+                
+                <div style="position:relative; width:${size}px; height:${size}px; margin:0 auto; background:radial-gradient(circle, rgba(0,210,255,0.05) 0%, rgba(0,0,0,0) 70%); border-radius:50%;">
+                    <svg width="${size}" height="${size}" style="position:absolute; top:0; left:0;">
+                        ${svgLines}
+                    </svg>
+                    ${htmlNodes}
+                </div>
+
+                <div style="text-align:left; max-width:80%; margin:15px auto; background:rgba(0,0,0,0.3); padding:10px; border-radius:8px; font-size:13px;">
+                     ${synergies.map(s => `
+                        <div style="margin-bottom:5px; color:#fff;">
+                            <span style="color:#00d2ff;">★ ${s[0]} + ${s[1]}</span>
+                        </div>
+                     `).join('')}
+                </div>
+            </div>
+        `;
+        modal.style.display = 'flex';
+      }
+    };
       // Small Database of High-Value Pairs
       PAIRS: [
         ['Tornado', 'Executioner'], ['Tornado', 'Ice Wizard'], ['Tornado', 'Magic Archer'], ['Tornado', 'Sparky'],
@@ -1437,11 +1552,20 @@
         };
       }
       // SYNERGY BTN SETUP
+      // SYNERGY BTN SETUP (Consolidated)
+      // We do this check here, but also ensure it's re-applied in renderDeck if needed
       const synergyBtn = document.getElementById('synergyBtn');
       if(synergyBtn) {
-          synergyBtn.onclick = () => {
+          synergyBtn.onclick = (e) => {
+              e.preventDefault(); // Prevent any form submission or default behavior
+              console.log("Synergy Matrix Clicked");
               if (window.currentAppDeck && window.currentAppDeck.length > 0) {
-                  window.SynergyMatrix.render(window.currentAppDeck);
+                  if(window.SynergyMatrix) {
+                    window.SynergyMatrix.render(window.currentAppDeck);
+                  } else {
+                    console.error("SynergyMatrix module missing");
+                    alert("System loading... please try again.");
+                  }
               } else {
                   alert("Please scan a deck first!");
               }
