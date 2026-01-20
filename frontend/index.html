@@ -336,8 +336,8 @@
       <button id="scanBtn">Scan Player</button>
       <button id="canImproveDeckBtn" style="display:none;">Improve Deck</button>
       <button id="substitutionsBtn" style="display:none; background: #9b59b6;">Substitutions</button>
-      <!-- weaknessBtn is hidden - triggered programmatically by improveDeckActionBtn -->
-      <button id="weaknessReportBtn" style="display:none !important;">Weakness Check</button>
+      <!-- Weakness Check button (Renamed & Restored) -->
+      <button id="weaknessReportBtn" style="display:none; background: #c0392b;">Weakness Check</button>
       <button id="buildBtn" style="display:none; background: linear-gradient(135deg, #e67e22, #d35400);">Build
         Deck</button>
       <button id="demoBtn">Show Demo Deck</button>
@@ -441,7 +441,7 @@
         style="background: linear-gradient(135deg, #e74c3c, #c0392b); padding: 15px 30px; font-size: 18px; border: 2px solid #e74c3c;">
         ⚔️ Matchup Analyzer
       </button>
-      <!-- Weakness Check button removed - now triggered via "Improve Deck" button only -->
+      <!-- Weakness Check button is now in the main actions bar -->
     </div>
 
 
@@ -2954,7 +2954,12 @@
           improveBtn = newBtn;
 
           // Ensure it's visible if we have a player
-          if (currentPlayerData) improveBtn.style.display = 'inline-block';
+          if (currentPlayerData) {
+              improveBtn.style.display = 'inline-block';
+              // Also show Weakness Report button
+              const wBtn = document.getElementById('weaknessReportBtn');
+              if(wBtn) wBtn.style.display = 'inline-block';
+          }
 
           improveBtn.onclick = (e) => {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
