@@ -14,6 +14,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, '../frontend')));
 
+// Health Check for Uptime Monitoring
+app.get('/health', (req, res) => res.sendStatus(200));
+
 const API_TOKEN = process.env.CLASH_API_TOKEN;
 
 if (!API_TOKEN) {
