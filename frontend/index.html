@@ -334,7 +334,6 @@
     <br><br>
     <div class="actions">
       <button id="scanBtn">Scan Player</button>
-      <button id="scanBtn">Scan Player</button>
       <!-- Improve Deck Button Removed -->
       <button id="substitutionsBtn" style="display:none; background: #9b59b6;">Substitutions</button>
       <!-- Weakness Check button (Renamed & Restored) -->
@@ -1114,117 +1113,7 @@
         modal.style.display = 'flex';
       }
     };
-      // Small Database of High-Value Pairs
-      PAIRS: [
-        ['Tornado', 'Executioner'], ['Tornado', 'Ice Wizard'], ['Tornado', 'Magic Archer'], ['Tornado', 'Sparky'],
-        ['Hog Rider', 'Ice Golem'], ['Hog Rider', 'Earthquake'], ['Hog Rider', 'Fireball'],
-        ['Golem', 'Night Witch'], ['Golem', 'Baby Dragon'], ['Golem', 'Lightning'],
-        ['Lava Hound', 'Balloon'], ['Lava Hound', 'Mega Minion'], ['Lava Hound', 'Inferno Dragon'],
-        ['Miner', 'Wall Breakers'], ['Miner', 'Poison'], ['Miner', 'Bats'],
-        ['Graveyard', 'Poison'], ['Graveyard', 'Baby Dragon'], ['Graveyard', 'Knight'], ['Graveyard', 'Freeze'],
-        ['X-Bow', 'Tesla'], ['X-Bow', 'The Log'],
-        ['Royal Giant', 'Fisherman'], ['Royal Giant', 'Mother Witch'],
-        ['Goblin Barrel', 'Princess'], ['Goblin Barrel', 'Goblin Gang'], // Log Bait
-        ['P.E.K.K.A', 'Battle Ram'], ['P.E.K.K.A', 'Electro Wizard'],
-        ['Giant', 'Sparky'], ['Giant', 'Prince'],
-        ['Balloon', 'Lumberjack']
-      ],
 
-      analyze: function(deck) {
-        const names = new Set(deck.map(c => c.name));
-        const found = [];
-        this.PAIRS.forEach(pair => {
-            if(names.has(pair[0]) && names.has(pair[1])) {
-                found.push(pair);
-            }
-        });
-        return found;
-      },
-
-      render: function(deck) {
-        const synergies = this.analyze(deck);
-        const modal = document.getElementById('synergyModal');
-        const content = document.getElementById('synergyContent');
-        
-        if(synergies.length === 0) {
-            content.innerHTML = `<div style="text-align:center; padding:40px; color:#aaa;">
-                <h3>No Critical Synergies Detected</h3>
-                <p>Your deck contains cards that work independently, but lacks the specific "power combos" defined in our database.</p>
-                <div style="font-size:12px; margin-top:20px;">Try classic combos like <br><b>Tornado + Executioner</b> or <b>Lava Hound + Balloon</b>.</div>
-            </div>`;
-            modal.style.display = 'flex';
-            return;
-        }
-
-        // VISUALIZATION
-        // We will place cards in a circle and draw lines
-        const size = 300;
-        const center = size / 2;
-        const radius = 100;
-        
-        let cardNodes = deck.map((c, i) => {
-            const angle = (Math.PI * 2 * i) / 8 - Math.PI/2;
-            return {
-                name: c.name,
-                x: center + radius * Math.cos(angle),
-                y: center + radius * Math.sin(angle),
-                img: c.iconUrls?.medium || c.iconUrls || c.iconUrl,
-                angle: angle
-            };
-        });
-
-        // Draw Lines
-        let svgLines = '';
-        synergies.forEach(arr => {
-             const n1 = cardNodes.find(n => n.name === arr[0]);
-             const n2 = cardNodes.find(n => n.name === arr[1]);
-             if(n1 && n2) {
-                 svgLines += `<line x1="${n1.x}" y1="${n1.y}" x2="${n2.x}" y2="${n2.y}" stroke="#00d2ff" stroke-width="3" stroke-dasharray="0" opacity="0.6">
-                    <animate attributeName="stroke-opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite" />
-                 </line>`;
-             }
-        });
-
-        // Draw Nodes
-        let htmlNodes = '';
-        cardNodes.forEach(node => {
-            const isSynergistic = synergies.some(p => p.includes(node.name));
-            const border = isSynergistic ? '2px solid #00d2ff' : '1px solid #444';
-            const shadow = isSynergistic ? '0 0 15px rgba(0, 210, 255, 0.6)' : 'none';
-            const opacity = isSynergistic ? 1 : 0.5;
-            
-            htmlNodes += `
-                <div style="position:absolute; left:${node.x - 25}px; top:${node.y - 35}px; width:50px; text-align:center;">
-                    <img src="${node.img}" style="width:50px; border-radius:4px; border:${border}; box-shadow:${shadow}; opacity:${opacity}">
-                </div>
-            `;
-        });
-
-        content.innerHTML = `
-            <div style="text-align:center;">
-                <h2 style="color:#00d2ff; text-shadow:0 0 10px #00d2ff;">Synergy Matrix</h2>
-                <div style="font-size:14px; color:#ccc; margin-bottom:20px;">Detected ${synergies.length} Power Connections</div>
-                
-                <div style="position:relative; width:${size}px; height:${size}px; margin:0 auto;">
-                    <svg width="${size}" height="${size}" style="position:absolute; top:0; left:0;">
-                        ${svgLines}
-                    </svg>
-                    ${htmlNodes}
-                </div>
-
-                <div style="text-align:left; max-width:400px; margin:20px auto; background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
-                     ${synergies.map(s => `
-                        <div style="margin-bottom:8px; color:#fff;">
-                            <span style="color:#00d2ff;">🔗 ${s[0]} + ${s[1]}</span>
-                            <div style="font-size:11px; color:#aaa; margin-left:20px;">These cards cover each other's weaknesses perfectly.</div>
-                        </div>
-                     `).join('')}
-                </div>
-            </div>
-        `;
-        modal.style.display = 'flex';
-      }
-    };
     window.SynergyMatrix = SynergyMatrix;
   </script>
 
