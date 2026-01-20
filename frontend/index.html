@@ -707,7 +707,7 @@
         if (!hasWinCon) {
           report.health -= 30;
           report.issues.push("Missing Win Condition");
-          report.suggestions.push("Add a card that targets buildings (e.g., Hog Rider, Giant, Golem).");
+          report.suggestions.push("A Win Condition (like Hog Rider, Golem, or Miner) is essential. It's the primary way to deal damage to enemy towers. Without one, you will struggle to win matches efficiently.");
         }
 
         // --- CHECK 2: SPELLS ---
@@ -717,12 +717,12 @@
         if (!hasSmallSpell) {
           report.health -= 15;
           report.issues.push("Missing Small Spell");
-          report.suggestions.push("Add a cheap spell (Zap, Log, Arrows) to clear swarms.");
+          report.suggestions.push("Small spells (Zap, Log, Arrows) are crucial for clearing swarm troops like Skeleton Army or Goblin Gang. They also reset Inferno Towers and finish off low-HP towers.");
         }
         if (!hasBigSpell) {
           report.health -= 10;
           report.issues.push("Missing Big Spell");
-          report.suggestions.push("Add a heavy spell (Fireball, Poison) to finish towers or kill medium troops.");
+          report.suggestions.push("Big spells (Fireball, Poison, Lightning) provide high value against clustered medium-health troops (like Musketeer or Wizard) and can deal the finishing blow to an enemy tower.");
         }
 
         // --- CHECK 3: AIR DEFENSE ---
@@ -734,7 +734,7 @@
         if (antiAirUnits < 2) {
           report.health -= 20;
           report.issues.push("Weak Air Defense");
-          report.suggestions.push("You need at least 2 troops that can target air units (e.g., Musketeer + Bats).");
+          report.suggestions.push("You are vulnerable to air attacks (Lava Hound, Balloon). You need at least 2 reliable air-targeting troops (like Musketeer, Baby Dragon, or Archers).");
         }
 
         // --- CHECK 4: AVERAGE ELIXIR ---
@@ -755,7 +755,7 @@
         if (!hasBuilding && avgElixir < 4.0) {
           report.health -= 5; // Minor penalty
           report.issues.push("No Defensive Building");
-          report.suggestions.push("Control decks usually need a building (Cannon, Tesla) to distract tanks.");
+          report.suggestions.push("For decks this light, a defensive building (Cannon, Tesla, Bomb Tower) is highly recommended. It pulls building-targeting units (Hog Rider, Golem) away from your tower.");
         }
 
         // Final Clamp
@@ -945,9 +945,9 @@
        * Generates SVG for Radar Chart
        */
       renderRadarChart: function(stats) {
-          const size = 220; // Increased size
+          const size = 280; // Increased from 220 to prevent clipping
           const center = size / 2;
-          const radius = 65; // Slightly reduced radius ratio to give more text room
+          const radius = 70; 
           const axes = ['Offense', 'Defense', 'Versatility', 'Cycle', 'Synergy'];
           const values = [stats.offense, stats.defense, stats.versatility, stats.cycle, stats.synergy];
           
@@ -988,22 +988,23 @@
               
               // Label Offset
               const labelAngle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
-              const lx = center + (radius + 15) * Math.cos(labelAngle);
-              const ly = center + (radius + 15) * Math.sin(labelAngle);
+              const lx = center + (radius + 25) * Math.cos(labelAngle); // Increased offset
+              const ly = center + (radius + 25) * Math.sin(labelAngle);
+              
               // Anchor adjustment
               let anchor = 'middle';
               if(i===1) anchor='start'; if(i===4) anchor='end';
               
-              labels += `<text x="${lx}" y="${ly + 4}" text-anchor="${anchor}" fill="#fff" font-weight="bold" font-size="11px" style="text-shadow:0px 1px 2px #000;">${axes[i]}</text>`;
+              labels += `<text x="${lx}" y="${ly + 4}" text-anchor="${anchor}" fill="#fff" font-weight="bold" font-size="12px" style="text-shadow:0px 1px 3px #000;">${axes[i]}</text>`;
           }
 
           return `
-            <svg width="${size}" height="${size}" style="background:rgba(0,0,0,0.2); border-radius:10%;">
+            <svg width="${size}" height="${size}" style="background:rgba(0,0,0,0.2); border-radius:50%;">
                 ${web}
                 ${lines}
                 ${poly}
                 ${labels}
-                <circle cx="${center}" cy="${center}" r="2" fill="#fff" />
+                <circle cx="${center}" cy="${center}" r="3" fill="#fff" />
             </svg>
           `;
       }
