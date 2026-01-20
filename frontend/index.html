@@ -540,16 +540,33 @@
   <!-- WEAKNESS MODAL -->
   <div id="weaknessModal" class="modal-overlay"
     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2100; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
-    <div class="guide-content" style="text-align:center; display:flex; flex-direction:column; max-height:80vh;">
-      <h2 style="color:var(--gold); margin-top:0;">Deck Weakness Report</h2>
-      <div id="weaknessScore" style="font-size:40px; font-weight:bold; margin-bottom:15px;">100%</div>
-      <div id="weaknessBody"
-        style="text-align:left; color:#ddd; margin-bottom:20px; flex:1; overflow-y: auto; padding:10px;">
-        <!-- Results here -->
+    <div class="guide-content" style="text-align:center; display:flex; flex-direction:column; width:95%; max-width:1000px; max-height:90vh; background:#1e1e1e; border:1px solid #444; padding:0;">
+      
+      <!-- HEADER -->
+      <div style="padding:20px; border-bottom:1px solid #333;">
+          <h2 style="color:var(--gold); margin:0; font-size:24px;">Deck Weakness Report</h2>
       </div>
-      <div id="weaknessFooter" style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
+
+      <!-- CONTENT GRID -->
+      <div style="display:flex; flex:1; overflow:hidden; flex-wrap:wrap;">
+          
+          <!-- LEFT: SCORE & RADAR -->
+          <div style="flex:1; min-width:300px; background:rgba(0,0,0,0.2); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; border-right:1px solid #333;">
+               <div id="weaknessScore">
+                   <!-- Injected via JS -->
+               </div>
+          </div>
+
+          <!-- RIGHT: TEXT REPORT -->
+          <div id="weaknessBody" style="flex:1.5; min-width:300px; padding:25px; text-align:left; color:#ddd; overflow-y:auto;">
+              <!-- Results here -->
+          </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div id="weaknessFooter" style="padding:15px; border-top:1px solid #333; background:#252525;">
         <button onclick="document.getElementById('weaknessModal').style.display='none'" class="action-btn"
-          style="background:#555;">Close</button>
+          style="background:#555; padding:10px 30px;">Close Report</button>
       </div>
     </div>
   </div>
@@ -1444,17 +1461,17 @@
       // SYNERGY BTN SETUP (Consolidated)
       // We do this check here, but also ensure it's re-applied in renderDeck if needed
       const synergyBtn = document.getElementById('synergyBtn');
+      // Force re-attach incase of DOM overwrites
       if(synergyBtn) {
           synergyBtn.onclick = (e) => {
-              e.preventDefault(); // Prevent any form submission or default behavior
-              console.log("Synergy Matrix Clicked");
+              e.preventDefault();
               if (window.currentAppDeck && window.currentAppDeck.length > 0) {
-                  if(window.SynergyMatrix) {
-                    window.SynergyMatrix.render(window.currentAppDeck);
-                  } else {
-                    console.error("SynergyMatrix module missing");
-                    alert("System loading... please try again.");
-                  }
+                   if (typeof window.SynergyMatrix !== 'undefined') {
+                       window.SynergyMatrix.render(window.currentAppDeck);
+                   } else {
+                       alert("Synergy Module loading... please wait 2 seconds and try again.");
+                       console.error("SynergyMatrix is undefined");
+                   }
               } else {
                   alert("Please scan a deck first!");
               }
@@ -1486,11 +1503,9 @@
 
       // 1. Render Score
       scoreEl.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:center; gap:20px;">
-            <div>
-                <div style="font-size:14px; color:#ccc; margin-bottom:5px;">DECK HEALTH</div>
-                <div style="color:${color}; font-size:48px;">${result.health}%</div>
-            </div>
+        <div style="text-align:center;">
+            <div style="font-size:16px; color:#aaa; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Overall Health</div>
+            <div style="color:${color}; font-size:64px; font-weight:900; line-height:1; margin-bottom:20px; text-shadow:0 0 20px ${color}40;">${result.health}%</div>
             ${radarSVG}
         </div>
       `;
