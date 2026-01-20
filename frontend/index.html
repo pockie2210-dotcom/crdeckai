@@ -1470,6 +1470,12 @@
 
         container.appendChild(leftGrid);
         container.appendChild(supportCol);
+
+        // FORCE VISIBILITY OF BUTTONS
+        const impBtn = document.getElementById('canImproveDeckBtn');
+        if(impBtn) impBtn.style.display = 'inline-block';
+        const wBtn = document.getElementById('weaknessReportBtn');
+        if(wBtn) wBtn.style.display = 'inline-block';
       }
 
       // Use 2 Evo Slots (Index 0 and 1)
