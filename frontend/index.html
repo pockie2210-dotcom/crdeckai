@@ -1696,39 +1696,7 @@
         btn.disabled = true;
         output.textContent = 'Loading...';
 
-        // --- HARD OVERRIDE FOR #UQGVYGV99 (Guaranteed Success) ---
-        if (tag.toUpperCase().includes('UQGVYGV99')) {
-          console.log("HARD OVERRIDE: Loading Mock Data for #UQGVYGV99");
-          await new Promise(r => setTimeout(r, 800)); // Fake network delay (for realism)
-          const mockData = {
-            name: "Antigravity User",
-            tag: "#UQGVYGV99",
-            level: 14,
-            trophies: 6500,
-            wins: 1540,
-            losses: 1200,
-            clan: { name: "Pro Coders" }
-          };
-          const mockDeck = [
-            { name: "Hog Rider", level: 14, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/Ubu5DLPr6AIPnKVHeZ7RGnHgCjyYNWsaKcx7v7P62d8.png" }, rarity: "Rare", elixir: 4 },
-            { name: "Earthquake", level: 13, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/aJTMnWj60FX4E3qOaaQO_Qn1M8I5a5C4i9zM0y6e9aU.png" }, rarity: "Rare", elixir: 3 },
-            { name: "Firecracker", level: 14, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/c1rL3LO1U2lbXX262QgH9tD6zPe7s0j2a4z0y3k6a1k.png" }, rarity: "Common", elixir: 3 },
-            { name: "Ice Spirit", level: 13, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/lv1ou10WKXbvQy3HCT8Xo8iO4a9sJ1b7k2c6g5a4x3s.png" }, rarity: "Common", elixir: 1 },
-            { name: "Skeletons", level: 13, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/oO7iKM95GL8fD1-7qg8i7q5a5z4w2u2q2z3g4y5w6.png" }, rarity: "Common", elixir: 1 },
-            { name: "Tesla", level: 13, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/Oi7v5x5y5k5z5B3a5C2d2E3f3F4G5H6I7J8K9L0M.png" }, rarity: "Common", elixir: 4 },
-            { name: "Valkyrie", level: 14, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/0lIoYf3Y_plD8G0f8l2g6l2g6l2g6l2g6l2g6l2g6.png" }, rarity: "Rare", elixir: 4 },
-            { name: "The Log", level: 13, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/_oS_s_fsb9w1q5h2i6j5l3k5n2o1p0q3r4s5t6u7v8.png" }, rarity: "Legendary", elixir: 2 }
-          ];
-          output.style.display = 'none'; // Hide "loading"
-          // Expose to global window
-          window.currentPlayerData = mockData;
-          window.currentAppDeck = mockDeck;
-
-          renderPlayer(mockData);
-          renderDeck({ cards: mockDeck, currentDeck: mockDeck });
-          btn.disabled = false;
-          return; // STOP HERE. Do not Fetch.
-        }
+        // Hard mock override removed to ensure real API fetch.
 
         const MAX_RETRIES = 3;
         let attempts = 0;
@@ -1780,33 +1748,9 @@
           } catch (err) {
             log('fetch error', err && err.name ? err.name : err);
 
-            // MOCK FALLBACK (Catch-All for CORS/Network/Local File)
-            if ((String(err).includes('Failed to fetch') || window.location.protocol === 'file:') && tag.toUpperCase().includes('UQGVYGV99')) {
-              console.warn("Using Fallback Mock Data for Local Testing");
-              const mockData = {
-                name: "Antigravity User",
-                tag: "#UQGVYGV99",
-                level: 14,
-                trophies: 6500,
-                wins: 1540,
-                losses: 1200,
-                clan: { name: "Pro Coders" }
-              };
-              const mockDeck = [
-                { name: "Hog Rider", level: 14, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/Ubu5DLPr6AIPnKVHeZ7RGnHgCjyYNWsaKcx7v7P62d8.png" }, rarity: "Rare", elixir: 4 },
-                { name: "Earthquake", level: 13, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/aJTMnWj60FX4E3qOaaQO_Qn1M8I5a5C4i9zM0y6e9aU.png" }, rarity: "Rare", elixir: 3 },
-                { name: "Firecracker", level: 14, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/c1rL3LO1U2lbXX262QgH9tD6zPe7s0j2a4z0y3k6a1k.png" }, rarity: "Common", elixir: 3 },
-                { name: "Ice Spirit", level: 13, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/lv1ou10WKXbvQy3HCT8Xo8iO4a9sJ1b7k2c6g5a4x3s.png" }, rarity: "Common", elixir: 1 },
-                { name: "Skeletons", level: 13, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/oO7iKM95GL8fD1-7qg8i7q5a5z4w2u2q2z3g4y5w6.png" }, rarity: "Common", elixir: 1 },
-                { name: "Tesla", level: 13, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/Oi7v5x5y5k5z5B3a5C2d2E3f3F4G5H6I7J8K9L0M.png" }, rarity: "Common", elixir: 4 },
-                { name: "Valkyrie", level: 14, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/0lIoYf3Y_plD8G0f8l2g6l2g6l2g6l2g6l2g6l2g6.png" }, rarity: "Rare", elixir: 4 },
-                { name: "The Log", level: 13, iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/_oS_s_fsb9w1q5h2i6j5l3k5n2o1p0q3r4s5t6u7v8.png" }, rarity: "Legendary", elixir: 2 }
-              ];
-              renderPlayer(mockData);
-              renderDeck({ cards: mockDeck, currentDeck: mockDeck });
-              success = true;
-              return;
-            }
+            // Proper error handling instead of mock fallback
+            output.innerHTML = `<span style="color: #ff6b6b">Connection Failed: ${err.message}</span>`;
+            btn.disabled = false;
 
             if (attempts === MAX_RETRIES) {
               output.textContent = 'Request failed: ' + String(err) + '\n\nPossible causes:\n- Unstable internet connection\n- Timeout (try again)\n- Server unreachable\n\nYou can click Show Demo Deck to test the UI.';
