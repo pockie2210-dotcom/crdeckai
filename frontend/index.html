@@ -2036,6 +2036,9 @@
       const synergyBtn = document.getElementById('synergyBtn');
       if (synergyBtn) synergyBtn.style.display = 'inline-block';
       
+      const subBtn = document.getElementById('substitutionsBtn');
+      if (subBtn) subBtn.style.display = 'inline-block';
+      
       const createNewBtn = document.getElementById('createNewBtn');
       if (createNewBtn) createNewBtn.style.display = 'inline-block';
       const buildBtn = document.getElementById('buildBtn');
@@ -3401,12 +3404,7 @@
     if (subBtn) {
       // Show button when improve is shown (or whenever we have a deck)
       // Ideally trigger this inside runImproveLogic, but we can just unhide it here if deck exists
-      const observer = new MutationObserver(() => {
-        if (improveBtn.style.display !== 'none' || (createNewBtn && createNewBtn.style.display !== 'none')) {
-          subBtn.style.display = 'inline-block';
-        }
-      });
-      observer.observe(improveBtn.parentNode, { attributes: true, childList: true, subtree: true });
+      // Observer removed (improveBtn deleted)
 
       subBtn.onclick = () => {
         if (!currentPlayerData) {
@@ -3478,12 +3476,7 @@
     const smartRefreshBtn = document.getElementById('smartRefreshBtn');
     if (smartRefreshBtn) {
       // Updated Observer to ensure it stays visible if needed, but we also manually show it in renderPlayer
-      const observer = new MutationObserver(() => {
-        if (improveBtn.style.display !== 'none' || (createNewBtn && createNewBtn.style.display !== 'none')) {
-          smartRefreshBtn.style.display = 'inline-block';
-        }
-      });
-      observer.observe(improveBtn.parentNode, { attributes: true, childList: true, subtree: true });
+      // Observer removed (improveBtn deleted)
 
       smartRefreshBtn.onclick = async () => {
         // Feature: Support running on current deck if builderDeck is empty
