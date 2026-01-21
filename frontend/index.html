@@ -1171,8 +1171,8 @@
     // --- DECK STATS RADAR (New Feature) ---
     const DeckRadar = {
       calculate: function (deck) {
-        // Heuristic Scoring (0-100)
-        let offense = 0, defense = 0, cycle = 0, air = 0, synergy = 0;
+        // Tuned Scoring (40-100 scale for viable decks)
+        let offense = 40, defense = 40, cycle = 50, air = 40, synergy = 40;
         let reasons = { offense: [], defense: [], cycle: [], air: [], synergy: [] };
 
         let buildingCount = 0;
@@ -1181,41 +1181,57 @@
         let winCons = [];
         let airCounters = [];
 
+        // Fallback list in case global fails or for extra coverage
+        const KNOWN_WCS = ['Hog Rider', 'Royal Giant', 'Golem', 'Giant', 'Balloon', 'Miner', 'Goblin Barrel', 'Wall Breakers', 'Graveyard', 'Lava Hound', 'Elixir Golem', 'Electro Giant', 'Goblin Giant', 'Ram Rider', 'Battle Ram', 'Royal Hogs', 'Mortar', 'X-Bow', 'Skeleton Barrel', 'Three Musketeers', 'Sparky', 'Mega Knight', 'P.E.K.K.A', 'Prince'];
+
         deck.forEach(c => {
           totalElixir += c.elixirCost || 0;
 
-          // Offense: Win Cons & Spells
-          if (window.WIN_CONDITION_GUIDES && window.WIN_CONDITION_GUIDES[c.name]) {
-            offense += 30;
+          // Offense Logic
+          let isWinCon = false;
+          // Check Global Guide OR Fallback List
+          if ((window.WIN_CONDITION_GUIDES && window.WIN_CONDITION_GUIDES[c.name]) || KNOWN_WCS.includes(c.name)) {
+            offense += 20;
             winCons.push(c.name);
-          } else if (c.elixirCost >= 4 && (c.type === 'Troop' || c.name === 'Goblin Barrel')) {
-            // Seconday wincon check
-            offense += 5;
+            isWinCon = true;
           }
+
+          if (!isWinCon && c.elixirCost >= 4 && (c.type === 'Troop')) {
+            offense += 5; // Heavy troops add some offensive pressure
+          }
+
+          if (['Champion', 'Legendary'].includes(c.rarity)) offense += 5;
 
           if (['Rare', 'Epic', 'Legendary', 'Champion'].includes(c.rarity)) offense += 2;
 
-          // Defense: Buildings, Mini Tanks
-          if (c.type === 'Building' || c.name.includes('Tower') || c.name.includes('Tesla') || c.name.includes('Cannon')) {
-            defense += 25;
+          // Defense Logic
+          // Buildings
+          if (c.type === 'Building' || c.name.includes('Tower') || c.name.includes('Tesla') || c.name.includes('Cannon') || c.name.includes('Cage') || c.name.includes('Tombstone')) {
+            defense += 20;
             buildingCount++;
             reasons.defense.push(c.name);
           }
-          if (['Knight', 'Valkyrie', 'Ice Golem', 'Mini P.E.K.K.A', 'P.E.K.K.A', 'Mega Knight'].includes(c.name)) {
+          // Robust Defenders
+          const strongDefenders = ['Knight', 'Valkyrie', 'Ice Golem', 'Mini P.E.K.K.A', 'P.E.K.K.A', 'Mega Knight', 'Prince', 'Dark Prince', 'Hunter', 'Fisherman', 'Bowler', 'Executioner', 'Golden Knight', 'Skeleton King', 'Mighty Miner', 'Barbarians', 'Elite Barbarians', 'Royal Recruits'];
+          if (strongDefenders.includes(c.name)) {
             defense += 15;
-            reasons.defense.push(c.name);
+            if (!reasons.defense.includes(c.name)) reasons.defense.push(c.name);
+          }
+          // Swarm Defense
+          if (['Guards', 'Goblin Gang', 'Skeleton Army', 'Rascals', 'Bats'].includes(c.name)) {
+            defense += 10;
           }
 
           // Air Defense
-          const antiAir = ['Musketeer', 'Wizard', 'Archer', 'Minion', 'Dragon', 'Witch', 'Hunter', 'Firecracker', 'Tesla', 'Inferno', 'Executioner', 'Dart Goblin'];
+          const antiAir = ['Musketeer', 'Wizard', 'Archer', 'Minion', 'Dragon', 'Witch', 'Hunter', 'Firecracker', 'Tesla', 'Inferno', 'Executioner', 'Dart Goblin', 'Phoenix', 'Mother Witch', 'Flying Machine', 'Spear Goblins', 'Bats', 'Magic Archer', 'Zappies'];
           if (antiAir.some(k => c.name.includes(k))) {
-            air += 20;
+            air += 15;
             airCounters.push(c.name);
           }
 
           if (c.type === 'Spell') {
             spellCount++;
-            if (c.damage > 500) offense += 10; // Heavy spell
+            if (c.damage > 500) { offense += 10; reasons.offense.push("Big Spell"); }
           }
         });
 
@@ -1225,40 +1241,52 @@
 
         // Offense logic
         if (winCons.length > 0) {
-          reasons.offense.push(`Driven by ${winCons.join(', ')}`);
+          reasons.offense.unshift(`Driven by ${winCons.slice(0, 2).join(', ')}`);
         } else {
-          reasons.offense.push("No clear Win Condition found");
-          offense = Math.min(offense, 40); // Cap if no wincon
+          offense -= 20;
+          reasons.offense.push("Lacks a primary Win Condition");
         }
-        if (spellCount >= 2) reasons.offense.push("Supported by Spells");
 
-        // Defense logic
+        // Defense
         if (buildingCount === 0) {
-          reasons.defense.push("No defensive building");
-          defense -= 20;
+          // Check for high DPS tank killers as substitute
+          const tankKillers = deck.filter(c => ['P.E.K.K.A', 'Mini P.E.K.K.A', 'Hunter', 'Prince', 'Elite Barbarians', 'Inferno Dragon'].includes(c.name));
+          if (tankKillers.length > 0) {
+            reasons.defense.push(`Defense relies on ${tankKillers[0].name}`);
+            defense -= 5; // Mild penalty
+          } else {
+            reasons.defense.push("No Building/Tank Killer");
+            defense -= 20; // Harsh penalty
+          }
         }
 
         // Air logic
-        if (airCounters.length > 0) {
+        if (airCounters.length >= 2) {
           reasons.air.push(`Anti-Air: ${airCounters.slice(0, 2).join(', ')}`);
+        } else if (airCounters.length === 1) {
+          reasons.air.push(`Weak Air: ${airCounters[0]}`);
+          air -= 10;
         } else {
-          reasons.air.push("Vulnerable to Lava/Balloon");
+          reasons.air.push("Vulnerable to Air");
+          air -= 30;
         }
 
-        // Cycle Score: Lower elixir = Higher score. 2.6 -> 100, 5.0 -> 0
-        cycle = Math.max(0, Math.min(100, (5.0 - avgElixir) * 35));
+        // Cycle Score
+        cycle = Math.max(0, Math.min(100, (5.0 - avgElixir) * 30 + 10)); // Curve it up
         reasons.cycle.push(`${avgElixir.toFixed(1)} Avg Elixir`);
-        if (avgElixir <= 3.0) reasons.cycle.push("Fast Cycle");
-        else if (avgElixir >= 4.0) reasons.cycle.push("Beatdown / Heavy");
+        if (avgElixir <= 3.3) reasons.cycle.push("Fast Cycle");
+        else if (avgElixir >= 4.0) reasons.cycle.push("Heavy Beatdown");
+        else reasons.cycle.push("Balanced Weight");
 
         // Synergy Score
         const syns = SynergyMatrix.analyze(deck);
-        synergy = Math.min(100, syns.length * 20); // 5 pairs = 100
+        synergy = Math.min(100, 40 + syns.length * 15); // Start at 40
         if (syns.length > 0) {
           reasons.synergy.push(`${syns.length} Known Pairs`);
-          reasons.synergy.push(`Top: ${syns[0]}`); // Show first pair
+          reasons.synergy.push(`Top: ${syns[0]}`);
         } else {
-          reasons.synergy.push("No strong meta pairs found");
+          reasons.synergy.push("Loose Synergy");
+          synergy = 30;
         }
 
         // Clamp all
@@ -4549,6 +4577,11 @@
 
       console.log('Matchup Analyzer Script Loaded (Dual Manual Mode)');
     })();
+  </script>
+  <script type="module">
+    import { WIN_CONDITION_GUIDES } from './win_conditions.js';
+    window.WIN_CONDITION_GUIDES = WIN_CONDITION_GUIDES;
+    console.log("Win Conditions Loaded:", Object.keys(WIN_CONDITION_GUIDES).length);
   </script>
 </body>
 
