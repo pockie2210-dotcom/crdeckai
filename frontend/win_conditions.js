@@ -1,4 +1,4 @@
-window.WIN_CONDITION_GUIDES = {
+export const WIN_CONDITION_GUIDES = {
     'Miner': {
         role: 'Chip / Control',
         imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/miner.png',
