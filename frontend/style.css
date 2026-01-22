@@ -280,8 +280,8 @@ button:hover {
 /* Picker */
 .picker-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 15px;
   max-height: 200px;
   overflow-y: auto;
   border: 1px solid #333;
