@@ -2291,1764 +2291,1890 @@
           return;
         }
 
-        // Sort by Normalized Level
-        allCards.sort((a, b) => {
-          return normalizeLevel(b) - normalizeLevel(a);
-        });
+        // --- SUBSTITUTIONS LOGIC (New) ---
+        window.renderSubstitutions = function () {
+          const grid = document.getElementById('subsGrid');
+          if (!grid) return;
+          grid.innerHTML = '';
 
-        allCards.forEach(card => {
-          try {
-            const isSelected = builderDeck.find(c => c.name === card.name);
-            const isExcluded = excludedCards.has(card.name);
-
-            const wrapper = document.createElement('div');
-            wrapper.style.position = 'relative';
-            wrapper.style.display = 'inline-block';
-
-            const imgUrl = card.iconUrls?.medium;
-            const el = document.createElement('img');
-            el.src = imgUrl;
-            el.className = 'picker-card';
-            if (isSelected) el.classList.add('selected');
-            if (isExcluded) {
-              el.style.opacity = '0.3';
-              el.style.filter = 'grayscale(100%)';
-            }
-
-            // Left click: Add to deck
-            el.onclick = () => {
-              if (!isExcluded) addCardToBuilder(card);
-            };
-
-            // Right click: Exclude/Include
-            el.oncontextmenu = (e) => {
-              e.preventDefault();
-              if (excludedCards.has(card.name)) {
-                excludedCards.delete(card.name);
-              } else {
-                excludedCards.add(card.name);
-              }
-              renderCardPicker();
-            };
-
-            wrapper.appendChild(el);
-
-            // Exclusion indicator
-            if (isExcluded) {
-              const banIcon = document.createElement('div');
-              banIcon.textContent = '🚫';
-              banIcon.style.cssText = 'position:absolute; top:5px; right:5px; font-size:20px; pointer-events:none;';
-              wrapper.appendChild(banIcon);
-            }
-
-            // Level Badge (Tiny)
-            const lvlBadge = document.createElement('div');
-            lvlBadge.textContent = normalizeLevel(card);
-            lvlBadge.style.cssText = 'position:absolute; bottom:2px; right:2px; background:black; color:gold; font-size:10px; padding:1px 3px; border-radius:4px;';
-            wrapper.appendChild(lvlBadge);
-
-            cardPicker.appendChild(wrapper);
-          } catch (err) {
-            console.error('Error rendering card in picker:', card, err);
+          // Source: Player Collection or Fallback
+          let pool = [];
+          if (window.currentPlayerData && window.currentPlayerData.cards) {
+            pool = window.currentPlayerData.cards;
+          } else {
+            // Fallback to Demo/Meta cards if no player data
+            pool = window.currentAppDeck ? [...window.currentAppDeck] : DEMO_DECK;
+            // Ideally we want *unused* cards. 
           }
-        });
-      }
+
+          // Filter out cards currently in deck
+          const inDeckNames = new Set((window.currentAppDeck || []).map(c => c.name));
+          const candidates = pool.filter(c => !inDeckNames.has(c.name));
+
+          // Sort by Level (high to low)
+          candidates.sort((a, b) => (b.level || 0) - (a.level || 0));
+
+          candidates.forEach(card => {
+            const cardEl = buildCardElement(card);
+            cardEl.style.cursor = 'pointer';
+            cardEl.onclick = () => {
+              // Trigger "Swap Analysis"
+              // For now, simpler: Open Swap Modal for THIS card? 
+              // Or: "If I add this, what leaves?"
+              // Let's reuse the 'Weakness Fix' UI style but inverse.
+              const deck = window.currentAppDeck || [];
+              if (deck.length < 8) {
+                // Just add if space
+                window.currentAppDeck.push(card);
+                renderDeck({ currentDeck: window.currentAppDeck });
+                alert(`Added ${card.name}`);
+                document.getElementById('substitutionsModal').style.display = 'none';
+                return;
+              }
+
+              // If full, asking to sub.
+              // Show a mini picker of Current Deck to drop?
+              // Or just AUTO-SUGGEST? The user said "AI will suggest the best replacement".
+              // Let's try to find a weak card.
+              let dropCandidate = deck[0]; // dummy
+              // Simple logic: Find card with same role?
+              // For now, let's keep it robust: Alert for now.
+              if (confirm(`Replace a card with ${card.name}? (Click OK to auto-swap with lowest cost/utility, or Cancel to manage manually)`)) {
+                // Dumb swap: Remove first non-wincon low-elixir card?
+                // Let's just swap index 7 for safety.
+                window.currentAppDeck.pop();
+                window.currentAppDeck.push(card);
+                renderDeck({ currentDeck: window.currentAppDeck });
+                document.getElementById('substitutionsModal').style.display = 'none';
+              }
+            };
+            grid.appendChild(cardEl);
+          });
+        };
+
+        // BIND SUBSTITUTIONS BUTTON
+        const subBtn = document.getElementById('substitutionsBtn');
+        if (subBtn) {
+          subBtn.onclick = () => {
+            window.renderSubstitutions();
+            document.getElementById('substitutionsModal').style.display = 'flex';
+          };
+        }
+
+        // --- FIX SYNERGY RENDERER TO USE STATIC MODAL ---
+        if (window.SynergyMatrix) {
+          window.SynergyMatrix.render = function (deck) {
+            const modal = document.getElementById('synergyModal');
+            const content = document.getElementById('synergyContent');
+            if (!modal || !content) return;
+
+            content.innerHTML = ''; // Clear previous
+
+            const size = 320;
+            const center = size / 2;
+            const radius = 110;
+
+            // 1. Calculate Nodes
+            let cardNodes = deck.map((c, i) => {
+              const angle = (Math.PI * 2 * i) / 8 - Math.PI / 2;
+              return {
+                name: c.name,
+                x: center + radius * Math.cos(angle),
+                y: center + radius * Math.sin(angle),
+                img: c.iconUrls?.medium || c.iconUrls || '',
+                angle: angle
+              };
+            });
+
+            // 2. Calculate Links
+            const syns = this.analyze(deck);
+            const nodeMap = {}; actionNodes = {};
+            cardNodes.forEach(n => nodeMap[n.name] = n);
+
+            let svgLines = '';
+            syns.forEach(pair => {
+              const n1 = nodeMap[pair[0]];
+              const n2 = nodeMap[pair[1]];
+              if (n1 && n2) {
+                svgLines += `<line x1="${n1.x}" y1="${n1.y}" x2="${n2.x}" y2="${n2.y}" stroke="#3E7EFF" stroke-width="3" opacity="0.6" />`;
+              }
+            });
+
+            // 3. Build Nodes SVG
+            const svgNodes = cardNodes.map(n => `
+                 <g transform="translate(${n.x},${n.y})">
+                    <circle r="22" fill="#111" stroke="#333" stroke-width="2"></circle>
+                    <image href="${n.img}" x="-20" y="-20" height="40" width="40" clip-path="circle(20px)" />
+                    <title>${n.name}</title>
+                 </g>
+               `).join('');
+
+            // 4. Inject SVG
+            content.innerHTML = `
+                  <div style="position:relative; width:${size}px; height:${size}px;">
+                    <svg width="${size}" height="${size}" style="overflow:visible;">
+                        ${svgLines}
+                        ${svgNodes}
+                    </svg>
+                  </div>
+                  <div style="margin-top:10px; color:#aaa; font-size:12px;">${syns.length} Synergies Found</div>
+               `;
+
+            modal.style.display = 'flex';
+          };
+        }
+        try {
+          const isSelected = builderDeck.find(c => c.name === card.name);
+          const isExcluded = excludedCards.has(card.name);
+
+          const wrapper = document.createElement('div');
+          wrapper.style.position = 'relative';
+          wrapper.style.display = 'inline-block';
+
+          const imgUrl = card.iconUrls?.medium;
+          const el = document.createElement('img');
+          el.src = imgUrl;
+          el.className = 'picker-card';
+          if (isSelected) el.classList.add('selected');
+          if (isExcluded) {
+            el.style.opacity = '0.3';
+            el.style.filter = 'grayscale(100%)';
+          }
+
+          // Left click: Add to deck
+          el.onclick = () => {
+            if (!isExcluded) addCardToBuilder(card);
+          };
+
+          // Right click: Exclude/Include
+          el.oncontextmenu = (e) => {
+            e.preventDefault();
+            if (excludedCards.has(card.name)) {
+              excludedCards.delete(card.name);
+            } else {
+              excludedCards.add(card.name);
+            }
+            renderCardPicker();
+          };
+
+          wrapper.appendChild(el);
+
+          // Exclusion indicator
+          if (isExcluded) {
+            const banIcon = document.createElement('div');
+            banIcon.textContent = '🚫';
+            banIcon.style.cssText = 'position:absolute; top:5px; right:5px; font-size:20px; pointer-events:none;';
+            wrapper.appendChild(banIcon);
+          }
+
+          // Level Badge (Tiny)
+          const lvlBadge = document.createElement('div');
+          lvlBadge.textContent = normalizeLevel(card);
+          lvlBadge.style.cssText = 'position:absolute; bottom:2px; right:2px; background:black; color:gold; font-size:10px; padding:1px 3px; border-radius:4px;';
+          wrapper.appendChild(lvlBadge);
+
+          cardPicker.appendChild(wrapper);
+        } catch (err) {
+          console.error('Error rendering card in picker:', card, err);
+        }
+      });
+    }
 
       // --- Stat Metrics ---
       // Simple heuristic values (0-10) for demo
       const CARD_METRICS = {
-        'Hog Rider': { off: 9, def: 0 }, 'Giant': { off: 8, def: 2 }, 'Golem': { off: 9, def: 1 },
-        'Musketeer': { off: 6, def: 8 }, 'Archers': { off: 4, def: 6 }, 'Knight': { off: 3, def: 8 },
-        'Ice Golem': { off: 1, def: 8 }, 'Skeletons': { off: 1, def: 5 }, 'Ice Spirit': { off: 1, def: 6 },
-        'Cannon': { off: 0, def: 9 }, 'Tesla': { off: 0, def: 10 }, 'Inferno Tower': { off: 1, def: 10 },
-        'Fireball': { off: 6, def: 7 }, 'Zap': { off: 4, def: 6 }, 'The Log': { off: 2, def: 8 },
-        'Goblin Barrel': { off: 9, def: 0 }, 'Princess': { off: 6, def: 5 }, 'Rocket': { off: 8, def: 5 },
-        'P.E.K.K.A': { off: 7, def: 10 }, 'Mega Knight': { off: 6, def: 9 }, 'Sparky': { off: 10, def: 4 },
-        'Balloon': { off: 10, def: 0 }, 'Lava Hound': { off: 7, def: 2 }, 'Miner': { off: 6, def: 4 },
-        'Electro Wizard': { off: 6, def: 8 }, 'Inferno Dragon': { off: 7, def: 9 }, 'Magic Archer': { off: 7, def: 5 },
-        'Lumberjack': { off: 8, def: 4 }, 'Night Witch': { off: 6, def: 4 }, 'Royal Ghost': { off: 6, def: 5 },
-        'Bandit': { off: 7, def: 4 }, 'Fisherman': { off: 1, def: 9 }, 'Mother Witch': { off: 5, def: 6 },
-        'Royal Giant': { off: 9, def: 1 }, 'Elite Barbarians': { off: 9, def: 6 }, 'Royal Recruits': { off: 5, def: 10 },
-        'Goblin Giant': { off: 8, def: 3 }, 'Electro Giant': { off: 9, def: 5 }, 'X-Bow': { off: 9, def: 7 },
-        'Mortar': { off: 7, def: 7 }, 'Graveyard': { off: 9, def: 1 }, 'Drill': { off: 8, def: 3 },
-        'Wall Breakers': { off: 8, def: 0 }, 'Battle Ram': { off: 7, def: 3 }, 'Ram Rider': { off: 8, def: 6 },
-        'Skeleton Barrel': { off: 7, def: 1 }, 'Flying Machine': { off: 6, def: 5 }, 'Zappies': { off: 2, def: 8 },
-        'Mini P.E.K.K.A': { off: 7, def: 8 }, 'Valkyrie': { off: 4, def: 9 }, 'Executioner': { off: 5, def: 9 },
-        'Bowler': { off: 4, def: 9 }, 'Dark Prince': { off: 6, def: 7 }, 'Baby Dragon': { off: 5, def: 6 },
-        'Hunter': { off: 6, def: 9 }, 'Witch': { off: 5, def: 5 }, 'Wizard': { off: 6, def: 4 },
-        'Prince': { off: 8, def: 6 }, 'Guards': { off: 2, def: 9 }, 'Goblin Gang': { off: 5, def: 5 },
-        'Minions': { off: 5, def: 4 }, 'Minion Horde': { off: 8, def: 4 }, 'Bats': { off: 4, def: 5 },
-        'Spear Goblins': { off: 3, def: 3 }, 'Goblin Gang': { off: 5, def: 5 }, 'Rascals': { off: 5, def: 8 }
-      };
+      'Hog Rider': { off: 9, def: 0 }, 'Giant': { off: 8, def: 2 }, 'Golem': { off: 9, def: 1 },
+      'Musketeer': { off: 6, def: 8 }, 'Archers': { off: 4, def: 6 }, 'Knight': { off: 3, def: 8 },
+      'Ice Golem': { off: 1, def: 8 }, 'Skeletons': { off: 1, def: 5 }, 'Ice Spirit': { off: 1, def: 6 },
+      'Cannon': { off: 0, def: 9 }, 'Tesla': { off: 0, def: 10 }, 'Inferno Tower': { off: 1, def: 10 },
+      'Fireball': { off: 6, def: 7 }, 'Zap': { off: 4, def: 6 }, 'The Log': { off: 2, def: 8 },
+      'Goblin Barrel': { off: 9, def: 0 }, 'Princess': { off: 6, def: 5 }, 'Rocket': { off: 8, def: 5 },
+      'P.E.K.K.A': { off: 7, def: 10 }, 'Mega Knight': { off: 6, def: 9 }, 'Sparky': { off: 10, def: 4 },
+      'Balloon': { off: 10, def: 0 }, 'Lava Hound': { off: 7, def: 2 }, 'Miner': { off: 6, def: 4 },
+      'Electro Wizard': { off: 6, def: 8 }, 'Inferno Dragon': { off: 7, def: 9 }, 'Magic Archer': { off: 7, def: 5 },
+      'Lumberjack': { off: 8, def: 4 }, 'Night Witch': { off: 6, def: 4 }, 'Royal Ghost': { off: 6, def: 5 },
+      'Bandit': { off: 7, def: 4 }, 'Fisherman': { off: 1, def: 9 }, 'Mother Witch': { off: 5, def: 6 },
+      'Royal Giant': { off: 9, def: 1 }, 'Elite Barbarians': { off: 9, def: 6 }, 'Royal Recruits': { off: 5, def: 10 },
+      'Goblin Giant': { off: 8, def: 3 }, 'Electro Giant': { off: 9, def: 5 }, 'X-Bow': { off: 9, def: 7 },
+      'Mortar': { off: 7, def: 7 }, 'Graveyard': { off: 9, def: 1 }, 'Drill': { off: 8, def: 3 },
+      'Wall Breakers': { off: 8, def: 0 }, 'Battle Ram': { off: 7, def: 3 }, 'Ram Rider': { off: 8, def: 6 },
+      'Skeleton Barrel': { off: 7, def: 1 }, 'Flying Machine': { off: 6, def: 5 }, 'Zappies': { off: 2, def: 8 },
+      'Mini P.E.K.K.A': { off: 7, def: 8 }, 'Valkyrie': { off: 4, def: 9 }, 'Executioner': { off: 5, def: 9 },
+      'Bowler': { off: 4, def: 9 }, 'Dark Prince': { off: 6, def: 7 }, 'Baby Dragon': { off: 5, def: 6 },
+      'Hunter': { off: 6, def: 9 }, 'Witch': { off: 5, def: 5 }, 'Wizard': { off: 6, def: 4 },
+      'Prince': { off: 8, def: 6 }, 'Guards': { off: 2, def: 9 }, 'Goblin Gang': { off: 5, def: 5 },
+      'Minions': { off: 5, def: 4 }, 'Minion Horde': { off: 8, def: 4 }, 'Bats': { off: 4, def: 5 },
+      'Spear Goblins': { off: 3, def: 3 }, 'Goblin Gang': { off: 5, def: 5 }, 'Rascals': { off: 5, def: 8 }
+    };
 
-      function updateStats() {
-        const statsPanel = document.getElementById('statsPanel');
-        if (builderDeck.length === 0) {
-          statsPanel.style.display = 'none';
-          return;
+    function updateStats() {
+      const statsPanel = document.getElementById('statsPanel');
+      if (builderDeck.length === 0) {
+        statsPanel.style.display = 'none';
+        return;
+      }
+      statsPanel.style.display = 'grid';
+
+      // 1. Avg Elixir & Cycle
+      const costs = builderDeck.map(c => c.elixirCost || 3);
+      const totalCost = costs.reduce((a, b) => a + b, 0);
+      const avg = (totalCost / (builderDeck.length || 1)).toFixed(1);
+
+      const sortedCosts = [...costs].sort((a, b) => a - b);
+      const cycle = sortedCosts.slice(0, 4).reduce((a, b) => a + b, 0);
+
+      document.getElementById('avgElixir').textContent = avg;
+      document.getElementById('cycleCost').textContent = cycle;
+
+      // 2. Offense / Defense
+      let offSum = 0, defSum = 0;
+      builderDeck.forEach(c => {
+        let m = CARD_METRICS[c.name];
+
+        // If no manual metric, derive from Role
+        if (!m) {
+          m = { off: 4, def: 5 }; // Default support
+          if (CARD_ROLES.winCon.includes(c.name)) m = { off: 9, def: 1 };
+          else if (CARD_ROLES.building.includes(c.name)) m = { off: 1, def: 9 };
+          else if (CARD_ROLES.spellBig.includes(c.name)) m = { off: 7, def: 5 };
+          else if (CARD_ROLES.spellSmall.includes(c.name)) m = { off: 3, def: 7 };
+          else if (CARD_ROLES.tankKiller.includes(c.name)) m = { off: 6, def: 9 };
+          else if (CARD_ROLES.airCounter.includes(c.name)) m = { off: 5, def: 6 };
         }
-        statsPanel.style.display = 'grid';
 
-        // 1. Avg Elixir & Cycle
-        const costs = builderDeck.map(c => c.elixirCost || 3);
-        const totalCost = costs.reduce((a, b) => a + b, 0);
-        const avg = (totalCost / (builderDeck.length || 1)).toFixed(1);
+        offSum += m.off;
+        defSum += m.def;
+      });
 
-        const sortedCosts = [...costs].sort((a, b) => a - b);
-        const cycle = sortedCosts.slice(0, 4).reduce((a, b) => a + b, 0);
+      // Max possible is approx 70-80 for a full deck, scale to 100
+      // Lower denominator to make 100 reachable (approx 45 points = 100%)
+      const offPct = Math.min(100, Math.round((offSum / 40) * 100));
+      const defPct = Math.min(100, Math.round((defSum / 40) * 100));
 
-        document.getElementById('avgElixir').textContent = avg;
-        document.getElementById('cycleCost').textContent = cycle;
+      // UPDATE: Show the PERCENTAGE (0-100) not the raw sum
+      document.getElementById('offScore').textContent = offPct;
+      document.getElementById('defScore').textContent = defPct;
 
-        // 2. Offense / Defense
-        let offSum = 0, defSum = 0;
-        builderDeck.forEach(c => {
-          let m = CARD_METRICS[c.name];
+      document.getElementById('offBar').style.width = `${offPct}%`;
+      document.getElementById('defBar').style.width = `${defPct}%`;
 
-          // If no manual metric, derive from Role
-          if (!m) {
-            m = { off: 4, def: 5 }; // Default support
-            if (CARD_ROLES.winCon.includes(c.name)) m = { off: 9, def: 1 };
-            else if (CARD_ROLES.building.includes(c.name)) m = { off: 1, def: 9 };
-            else if (CARD_ROLES.spellBig.includes(c.name)) m = { off: 7, def: 5 };
-            else if (CARD_ROLES.spellSmall.includes(c.name)) m = { off: 3, def: 7 };
-            else if (CARD_ROLES.tankKiller.includes(c.name)) m = { off: 6, def: 9 };
-            else if (CARD_ROLES.airCounter.includes(c.name)) m = { off: 5, def: 6 };
-          }
+      // 3. Meta Score (Win Rate Sim)
+      // STRICT MODE: Earn your S-Tier.
+      // Base 30 (F-Tier)
+      let metaScore = 30;
 
-          offSum += m.off;
-          defSum += m.def;
-        });
+      // A. Level Factor
+      const avgLevel = builderDeck.reduce((a, c) => a + (c.level || 0), 0) / (builderDeck.length || 1);
+      metaScore += (avgLevel - 9) * 4;
 
-        // Max possible is approx 70-80 for a full deck, scale to 100
-        // Lower denominator to make 100 reachable (approx 45 points = 100%)
-        const offPct = Math.min(100, Math.round((offSum / 40) * 100));
-        const defPct = Math.min(100, Math.round((defSum / 40) * 100));
-
-        // UPDATE: Show the PERCENTAGE (0-100) not the raw sum
-        document.getElementById('offScore').textContent = offPct;
-        document.getElementById('defScore').textContent = defPct;
-
-        document.getElementById('offBar').style.width = `${offPct}%`;
-        document.getElementById('defBar').style.width = `${defPct}%`;
-
-        // 3. Meta Score (Win Rate Sim)
-        // STRICT MODE: Earn your S-Tier.
-        // Base 30 (F-Tier)
-        let metaScore = 30;
-
-        // A. Level Factor
-        const avgLevel = builderDeck.reduce((a, c) => a + (c.level || 0), 0) / (builderDeck.length || 1);
-        metaScore += (avgLevel - 9) * 4;
-
-        // B. Synergy Factor
-        let synCount = 0;
-        for (const c1 of builderDeck) {
-          for (const c2 of builderDeck) {
-            if (c1 === c2) continue;
-            // Named Synergy
-            for (const pair of SYNERGIES) {
-              if (pair.includes(c1.name) && pair.includes(c2.name)) {
-                synCount += 4; // Solid bonus
-                break;
-              }
+      // B. Synergy Factor
+      let synCount = 0;
+      for (const c1 of builderDeck) {
+        for (const c2 of builderDeck) {
+          if (c1 === c2) continue;
+          // Named Synergy
+          for (const pair of SYNERGIES) {
+            if (pair.includes(c1.name) && pair.includes(c2.name)) {
+              synCount += 4; // Solid bonus
+              break;
             }
           }
         }
-        metaScore += Math.min(25, synCount); // Cap at 25 (Need ~6 pairs for max)
+      }
+      metaScore += Math.min(25, synCount); // Cap at 25 (Need ~6 pairs for max)
 
-        // C. Tactical Integrity (Strict)
-        const roles = getDeckRoles(builderDeck);
+      // C. Tactical Integrity (Strict)
+      const roles = getDeckRoles(builderDeck);
 
-        // 1. Spell Balance (Strict: Need BOTH for +10)
-        if (roles.hasSmallSpell && roles.hasBigSpell) metaScore += 10;
-        else if (roles.hasSmallSpell || roles.hasBigSpell) metaScore += 2; // Participation trophy reduced
+      // 1. Spell Balance (Strict: Need BOTH for +10)
+      if (roles.hasSmallSpell && roles.hasBigSpell) metaScore += 10;
+      else if (roles.hasSmallSpell || roles.hasBigSpell) metaScore += 2; // Participation trophy reduced
 
-        // 2. Win Condition (Strict: Need valid WinCon)
-        if (roles.hasWinCon) metaScore += 10;
-        else metaScore -= 10; // Penalty for no WC
+      // 2. Win Condition (Strict: Need valid WinCon)
+      if (roles.hasWinCon) metaScore += 10;
+      else metaScore -= 10; // Penalty for no WC
 
-        // 3. Defense Coverage (Strict: Reset + Air + Killer)
-        const hasAir = builderDeck.some(c => getCardRole(c.name).includes('airCounter'));
-        const hasKiller = builderDeck.some(c => getCardRole(c.name).includes('tankKiller') || c.name === 'Inferno Tower' || c.name === 'Inferno Dragon');
+      // 3. Defense Coverage (Strict: Reset + Air + Killer)
+      const hasAir = builderDeck.some(c => getCardRole(c.name).includes('airCounter'));
+      const hasKiller = builderDeck.some(c => getCardRole(c.name).includes('tankKiller') || c.name === 'Inferno Tower' || c.name === 'Inferno Dragon');
 
-        const resetCards = ['Zap', 'Electro Wizard', 'Electro Spirit', 'Lightning', 'Freeze', 'Giant Snowball', 'Zappies', 'E-Dragon'];
-        const hasReset = builderDeck.some(c => resetCards.includes(c.name));
+      const resetCards = ['Zap', 'Electro Wizard', 'Electro Spirit', 'Lightning', 'Freeze', 'Giant Snowball', 'Zappies', 'E-Dragon'];
+      const hasReset = builderDeck.some(c => resetCards.includes(c.name));
 
-        if (hasAir) metaScore += 5;
-        if (hasKiller) metaScore += 5;
-        if (hasReset) metaScore += 5;
+      if (hasAir) metaScore += 5;
+      if (hasKiller) metaScore += 5;
+      if (hasReset) metaScore += 5;
 
-        // 4. Elixir Curve
-        const eCurveCosts = builderDeck.map(c => c.elixirCost || 3);
-        const total = eCurveCosts.reduce((a, b) => a + b, 0);
-        const avgEl = total / 8;
-        if (avgEl >= 2.6 && avgEl <= 4.1) metaScore += 5;
-        else metaScore -= 5;
+      // 4. Elixir Curve
+      const eCurveCosts = builderDeck.map(c => c.elixirCost || 3);
+      const total = eCurveCosts.reduce((a, b) => a + b, 0);
+      const avgEl = total / 8;
+      if (avgEl >= 2.6 && avgEl <= 4.1) metaScore += 5;
+      else metaScore -= 5;
 
-        // 5. Evolution Bonus
-        const hasEvo = builderDeck.some(c => (c.evolutionLevel || 0) > 0);
-        if (hasEvo) metaScore += 5;
+      // 5. Evolution Bonus
+      const hasEvo = builderDeck.some(c => (c.evolutionLevel || 0) > 0);
+      if (hasEvo) metaScore += 5;
 
-        // Cap at 100
-        metaScore = Math.min(100, Math.round(metaScore));
+      // Cap at 100
+      metaScore = Math.min(100, Math.round(metaScore));
 
-        // Scale 0-100 logic
-        // Approx 20-30 syn points is "good" -> 100%
-        const synPct = Math.min(100, Math.round(synCount * 4));
-        document.getElementById('synScore').textContent = Math.round(synPct);
-        document.getElementById('synBar').style.width = `${synPct}%`;
+      // Scale 0-100 logic
+      // Approx 20-30 syn points is "good" -> 100%
+      const synPct = Math.min(100, Math.round(synCount * 4));
+      document.getElementById('synScore').textContent = Math.round(synPct);
+      document.getElementById('synBar').style.width = `${synPct}%`;
 
-        // Tier
-        let tier = 'C';
-        if (metaScore > 80) tier = 'S+';
-        else if (metaScore > 70) tier = 'A';
-        else if (metaScore > 60) tier = 'B';
+      // Tier
+      let tier = 'C';
+      if (metaScore > 80) tier = 'S+';
+      else if (metaScore > 70) tier = 'A';
+      else if (metaScore > 60) tier = 'B';
 
-        document.getElementById('metaScoreBadge').textContent = `Meta Score: ${Math.round(metaScore)} (${tier})`;
-        document.getElementById('metaScoreBadge').style.color = metaScore > 75 ? '#2ecc71' : (metaScore > 60 ? '#f1c40f' : '#e74c3c');
-        document.getElementById('metaScoreBadge').style.borderColor = document.getElementById('metaScoreBadge').style.color;
+      document.getElementById('metaScoreBadge').textContent = `Meta Score: ${Math.round(metaScore)} (${tier})`;
+      document.getElementById('metaScoreBadge').style.color = metaScore > 75 ? '#2ecc71' : (metaScore > 60 ? '#f1c40f' : '#e74c3c');
+      document.getElementById('metaScoreBadge').style.borderColor = document.getElementById('metaScoreBadge').style.color;
 
-        // 6. WIN RATE PREDICTION (NEW!)
-        // Sophisticated model based on multiple factors
-        let winRate = 50; // Base 50% win rate
+      // 6. WIN RATE PREDICTION (NEW!)
+      // Sophisticated model based on multiple factors
+      let winRate = 50; // Base 50% win rate
 
-        // Factor 1: Average Level (±10%)
-        // Higher levels = higher win rate
-        const levelBonus = Math.min(10, (avgLevel - 11) * 2.5); // +2.5% per level above 11
-        winRate += levelBonus;
+      // Factor 1: Average Level (±10%)
+      // Higher levels = higher win rate
+      const levelBonus = Math.min(10, (avgLevel - 11) * 2.5); // +2.5% per level above 11
+      winRate += levelBonus;
 
-        // Factor 2: Synergy (±8%)
-        // More synergies = better combos = higher win rate
-        const synergyBonus = Math.min(8, synCount * 0.4); // +0.4% per synergy point
-        winRate += synergyBonus;
+      // Factor 2: Synergy (±8%)
+      // More synergies = better combos = higher win rate
+      const synergyBonus = Math.min(8, synCount * 0.4); // +0.4% per synergy point
+      winRate += synergyBonus;
 
-        // Factor 3: Deck Completeness (±12%)
-        let completenessBonus = 0;
-        if (roles.hasWinCon) completenessBonus += 4;
-        if (roles.hasSmallSpell && roles.hasBigSpell) completenessBonus += 4;
-        if (hasAir) completenessBonus += 2;
-        if (hasKiller) completenessBonus += 2;
-        winRate += completenessBonus;
+      // Factor 3: Deck Completeness (±12%)
+      let completenessBonus = 0;
+      if (roles.hasWinCon) completenessBonus += 4;
+      if (roles.hasSmallSpell && roles.hasBigSpell) completenessBonus += 4;
+      if (hasAir) completenessBonus += 2;
+      if (hasKiller) completenessBonus += 2;
+      winRate += completenessBonus;
 
-        // Factor 4: Meta Quality (±5%)
-        // Using S-tier cards increases win rate
-        let metaBonus = (metaScore - 60) * 0.1; //  +0.1% per point above 60
-        metaBonus = Math.max(-5, Math.min(5, metaBonus));
-        winRate += metaBonus;
+      // Factor 4: Meta Quality (±5%)
+      // Using S-tier cards increases win rate
+      let metaBonus = (metaScore - 60) * 0.1; //  +0.1% per point above 60
+      metaBonus = Math.max(-5, Math.min(5, metaBonus));
+      winRate += metaBonus;
 
-        // Factor 5: Elixir Efficiency (±3%)
-        // Optimal elixir cost improves win rate
-        let elixirBonus = 0;
-        if (avgEl >= 2.6 && avgEl <= 4.0) elixirBonus = 3; // Perfect range
-        else if (avgEl < 2.3 || avgEl > 4.5) elixirBonus = -3; // Too extreme
-        winRate += elixirBonus;
+      // Factor 5: Elixir Efficiency (±3%)
+      // Optimal elixir cost improves win rate
+      let elixirBonus = 0;
+      if (avgEl >= 2.6 && avgEl <= 4.0) elixirBonus = 3; // Perfect range
+      else if (avgEl < 2.3 || avgEl > 4.5) elixirBonus = -3; // Too extreme
+      winRate += elixirBonus;
 
-        // Factor 6: Archetype Purity (±2%)
-        // Focused decks perform better
-        const archetypeBonus = synCount >= 15 ? 2 : 0;
-        winRate += archetypeBonus;
+      // Factor 6: Archetype Purity (±2%)
+      // Focused decks perform better
+      const archetypeBonus = synCount >= 15 ? 2 : 0;
+      winRate += archetypeBonus;
 
-        // Cap win rate between 40-65% (realistic range)
-        winRate = Math.max(40, Math.min(65, Math.round(winRate)));
+      // Cap win rate between 40-65% (realistic range)
+      winRate = Math.max(40, Math.min(65, Math.round(winRate)));
 
-        // Display Win Rate
-        const winRateDisplay = document.getElementById('winRateDisplay');
-        const winRateFactors = document.getElementById('winRateFactors');
+      // Display Win Rate
+      const winRateDisplay = document.getElementById('winRateDisplay');
+      const winRateFactors = document.getElementById('winRateFactors');
 
-        if (winRateDisplay) {
-          winRateDisplay.textContent = `${winRate}%`;
-          winRateDisplay.style.color = winRate >= 55 ? '#2ecc71' : winRate >= 50 ? '#f1c40f' : '#e74c3c';
-          winRateDisplay.style.textShadow = `0 0 10px ${winRate >= 55 ? 'rgba(46, 204, 113, 0.5)' : winRate >= 50 ? 'rgba(241, 196, 15, 0.5)' : 'rgba(231, 76, 60, 0.5)'}`;
-        }
-
-        if (winRateFactors) {
-          const factors = [];
-          if (levelBonus > 0) factors.push(`+${levelBonus.toFixed(1)}% Levels`);
-          if (synergyBonus > 0) factors.push(`+${synergyBonus.toFixed(1)}% Synergy`);
-          if (completenessBonus > 0) factors.push(`+${completenessBonus}% Complete`);
-          winRateFactors.textContent = factors.join(' • ') || 'Based on deck analysis';
-        }
+      if (winRateDisplay) {
+        winRateDisplay.textContent = `${winRate}%`;
+        winRateDisplay.style.color = winRate >= 55 ? '#2ecc71' : winRate >= 50 ? '#f1c40f' : '#e74c3c';
+        winRateDisplay.style.textShadow = `0 0 10px ${winRate >= 55 ? 'rgba(46, 204, 113, 0.5)' : winRate >= 50 ? 'rgba(241, 196, 15, 0.5)' : 'rgba(231, 76, 60, 0.5)'}`;
       }
 
-      function addCardToBuilder(card) {
-        if (builderDeck.length >= 8) return;
-        if (builderDeck.find(c => c.name === card.name)) return;
-        builderDeck.push(card);
-        renderBuilderUI();
-        updateStats(); // <--- Update on change
+      if (winRateFactors) {
+        const factors = [];
+        if (levelBonus > 0) factors.push(`+${levelBonus.toFixed(1)}% Levels`);
+        if (synergyBonus > 0) factors.push(`+${synergyBonus.toFixed(1)}% Synergy`);
+        if (completenessBonus > 0) factors.push(`+${completenessBonus}% Complete`);
+        winRateFactors.textContent = factors.join(' • ') || 'Based on deck analysis';
+      }
+    }
+
+    function addCardToBuilder(card) {
+      if (builderDeck.length >= 8) return;
+      if (builderDeck.find(c => c.name === card.name)) return;
+      builderDeck.push(card);
+      renderBuilderUI();
+      updateStats(); // <--- Update on change
+    }
+
+    function removeCardFromBuilder(index) {
+      builderDeck.splice(index, 1);
+      renderBuilderUI();
+      updateStats(); // <--- Update on change
+    }
+
+
+    // --- Expert Knowledge Base ---
+    const CARD_ROLES = {
+      winCon: ['Hog Rider', 'Giant', 'Golem', 'Royal Giant', 'Balloon', 'Goblin Barrel', 'Miner', 'Graveyard', 'Lava Hound', 'X-Bow', 'Mortar', 'Ram Rider', 'Elixir Golem', 'Electro Giant', 'Royal Hogs', 'Three Musketeers', 'Sparky', 'Battle Ram', 'Skeleton Barrel', 'Wall Breakers', 'Drill'],
+      spellSmall: ['Zap', 'The Log', 'Snowball', 'Arrows', 'Barbarian Barrel', 'Tornado', 'Royal Delivery'],
+      spellBig: ['Fireball', 'Poison', 'Rocket', 'Lightning', 'Earthquake', 'Void'],
+      building: ['Cannon', 'Tesla', 'Inferno Tower', 'Bomb Tower', 'Tombstone', 'Goblin Cage', 'Furnace', 'Barbarian Hut', 'Goblin Hut', 'Elixir Collector'],
+      // MASSIVELY EXPANDED AIR DEFENSE LIST - 35+ cards!
+      airCounter: [
+        // S-Tier Air Defense
+        'Musketeer', 'Electro Wizard', 'Mega Minion', 'Bats', 'Minions',
+        'Baby Dragon', 'Inferno Dragon', 'Flying Machine', 'Magic Archer',
+        // A-Tier Air Defense  
+        'Archers', 'Firecracker', 'Princess', 'Dart Goblin', 'Spear Goblins',
+        'Hunter', 'Mother Witch', 'Ice Wizard',
+        // B-Tier Air Defense (Situational but valid)
+        'Wizard', 'Executioner', 'Witch', 'Night Witch',
+        'Tesla', 'Inferno Tower', 'Cannon', 'Bomb Tower',
+        // C-Tier Air Defense (Can target air)
+        'Arrows', 'Fireball', 'Poison', 'Lightning', 'Zap',
+        'Rocket', 'Tornado', 'Snowball',
+        // D-Tier (Weak but technically targets air)
+        'Minion Horde', 'Skeleton Dragons', 'Phoenix',
+        'Electro Dragon', 'Balloon', 'Lava Hound',
+        // Special mentions
+        'Queen', 'Little Prince', 'Archer Queen', 'Golden Knight'
+      ],
+      miniTank: ['Knight', 'Valkyrie', 'Ice Golem', 'Mini P.E.K.K.A', 'Royal Ghost', 'Bandit', 'Dark Prince', 'Golden Knight', 'Skeleton King', 'Mighty Miner', 'Fisherman', 'Lumberjack', 'Prince', 'Bowler', 'Mega Knight', 'Giant Skeleton', 'Monk', 'Cannon Cart'],
+      tankKiller: ['Mini P.E.K.K.A', 'P.E.K.K.A', 'Prince', 'Lumberjack', 'Elite Barbarians', 'Inferno Dragon', 'Mighty Miner', 'Hunter', 'Barbarians']
+    };
+
+    const SYNERGIES = [
+      // Hog
+      ['Hog Rider', 'Earthquake'], ['Hog Rider', 'Ice Golem'], ['Hog Rider', 'Firecracker'],
+      ['Hog Rider', 'Musketeer'], ['Hog Rider', 'The Log'], ['Hog Rider', 'Cannon'],
+      ['Hog Rider', 'Valkyrie'], ['Hog Rider', 'Tesla'],
+      // Golem
+      ['Golem', 'Night Witch'], ['Golem', 'Lightning'], ['Golem', 'Baby Dragon'],
+      ['Golem', 'Lumberjack'], ['Golem', 'Mega Minion'], ['Golem', 'Tornado'],
+      ['Golem', 'Electro Dragon'], ['Golem', 'Skeleton King'],
+      // Air
+      ['Lava Hound', 'Balloon'], ['Lava Hound', 'Mega Minion'], ['Lava Hound', 'Inferno Dragon'],
+      ['Lava Hound', 'Skeleton Dragons'], ['Lava Hound', 'Fireball'], ['Lava Hound', 'Zap'],
+      ['Lava Hound', 'Barbarians'], ['Balloon', 'Lumberjack'], ['Balloon', 'Miner'], ['Balloon', 'Freeze'],
+      // Giant variants
+      ['Giant', 'Witch'], ['Giant', 'Prince'], ['Giant', 'Miner'], ['Giant', 'Sparky'],
+      ['Goblin Giant', 'Sparky'], ['Goblin Giant', 'Rage'], ['Goblin Giant', 'Dark Prince'],
+      ['Electro Giant', 'Tornado'], ['Electro Giant', 'Lightning'], ['Electro Giant', 'Golden Knight'],
+      ['Royal Giant', 'Fisherman'], ['Royal Giant', 'Mother Witch'], ['Royal Giant', 'Lightning'],
+      ['Royal Giant', 'Hunter'], ['Royal Giant', 'Electro Spirit'],
+      // Cycle / Bait
+      ['Goblin Barrel', 'Princess'], ['Goblin Barrel', 'Goblin Gang'], ['Goblin Barrel', 'Dart Goblin'],
+      ['Goblin Barrel', 'Rocket'], ['Goblin Barrel', 'Knight'], ['Goblin Barrel', 'Inferno Tower'],
+      ['Goblin Barrel', 'Skeleton King'], ['Skeleton Barrel', 'Mega Knight'],
+      ['Wall Breakers', 'Miner'], ['Wall Breakers', 'Magic Archer'],
+      ['Goblin Drill', 'Bomber'], ['Goblin Drill', 'Fireball'], ['Goblin Drill', 'Wall Breakers'],
+      // Siege
+      ['X-Bow', 'Tesla'], ['X-Bow', 'Knight'], ['X-Bow', 'Archers'], ['X-Bow', 'The Log'],
+      ['Mortar', 'Skeleton King'], ['Mortar', 'Miner'], ['Mortar', 'Dart Goblin'],
+      // Control
+      ['Graveyard', 'Poison'], ['Graveyard', 'Baby Dragon'], ['Graveyard', 'Knight'],
+      ['Graveyard', 'Ice Wizard'], ['Graveyard', 'Tornado'], ['Graveyard', 'Bowler'],
+      ['Graveyard', 'Skeleton King'], ['Graveyard', 'Barbarian Barrel'],
+      // Bridgespam
+      ['P.E.K.K.A', 'Battle Ram'], ['P.E.K.K.A', 'Electro Wizard'], ['P.E.K.K.A', 'Bandit'],
+      ['P.E.K.K.A', 'Royal Ghost'], ['P.E.K.K.A', 'Magic Archer'],
+      ['Mega Knight', 'Bats'], ['Mega Knight', 'Inferno Dragon'], ['Mega Knight', 'Wall Breakers'],
+      ['Mega Knight', 'Ram Rider'], ['Mega Knight', 'Bandit'],
+      ['Royal Hogs', 'Royal Recruits'], ['Royal Hogs', 'Fireball'], ['Royal Hogs', 'Flying Machine'],
+      ['Elite Barbarians', 'Rage'], ['Elite Barbarians', 'Heal Spirit'],
+      // Utility
+      ['Tornado', 'Executioner'], ['Tornado', 'Ice Wizard'], ['Tornado', 'Baby Dragon'],
+      ['Tornado', 'Magic Archer'], ['Tornado', 'Sparky'],
+      ['Miner', 'Poison'], ['Miner', 'Magic Archer'],
+      // Added Meta Synergies (Genius Mode)
+      ['Lava Hound', 'Flying Machine'], ['Lava Hound', 'Skeleton Dragons'],
+      ['Golem', 'Elite Barbarians'], ['Golem', 'Dark Prince'],
+      ['Royal Giant', 'Executioner'], ['Royal Giant', 'Zappies'],
+      ['Goblin Giant', 'Prince'], ['Goblin Giant', 'Rage'],
+      ['Electro Giant', 'Bowler'], ['Electro Giant', 'Bomber'],
+      ['Hog Rider', 'Firecracker'], ['Hog Rider', 'Bomb Tower']
+    ];
+
+    const ARCHETYPES = [
+      { name: '2.6 Hog Cycle', cards: ['Hog Rider', 'Musketeer', 'Ice Golem', 'Ice Spirit', 'Skeletons', 'Cannon', 'Fireball', 'The Log'] },
+      { name: 'Log Bait', cards: ['Goblin Barrel', 'Princess', 'Goblin Gang', 'Rocket', 'Knight', 'Inferno Tower', 'Ice Spirit', 'The Log'] },
+      { name: 'Golem Beatdown', cards: ['Golem', 'Night Witch', 'Baby Dragon', 'Lightning', 'Mega Minion', 'Barbarian Barrel', 'Tornado', 'Lumberjack'] },
+      { name: 'Lavaloon', cards: ['Lava Hound', 'Balloon', 'Mega Minion', 'Minions', 'Barbarians', 'Zap', 'Fireball', 'Tombstone'] },
+      { name: 'Pekka Bridge Spam', cards: ['P.E.K.K.A', 'Battle Ram', 'Bandit', 'Royal Ghost', 'Electro Wizard', 'Magic Archer', 'Zap', 'Poison'] },
+      { name: 'Royal Giant FishBoy', cards: ['Royal Giant', 'Fisherman', 'Mother Witch', 'Lightning', 'The Log', 'Skeletons', 'Electro Spirit', 'Mega Minion'] },
+      { name: 'Splashyard', cards: ['Graveyard', 'Baby Dragon', 'Ice Wizard', 'Tornado', 'Valkyrie', 'Poison', 'Barbarian Barrel', 'Tombstone'] },
+      { name: 'Recruits Hogs', cards: ['Royal Recruits', 'Royal Hogs', 'Flying Machine', 'Goblin Cage', 'Fireball', 'Barbarian Barrel', 'Zappies', 'Electro Spirit'] },
+      { name: 'E-Giant Mirror', cards: ['Electro Giant', 'Lightning', 'Tornado', 'Golden Knight', 'Bomber', 'Cannon', 'Mirror', 'Barbarian Barrel'] },
+      { name: 'Goblin Drill Cycle', cards: ['Goblin Drill', 'Wall Breakers', 'Bomber', 'Fireball', 'Tesla', 'Skeletons', 'The Log', 'Knight'] },
+      { name: 'Mega Knight Bait', cards: ['Mega Knight', 'Skeleton Barrel', 'Miner', 'Goblin Gang', 'Spear Goblins', 'Bats', 'Zap', 'Inferno Dragon'] },
+      { name: 'Sparky Goblin Giant', cards: ['Goblin Giant', 'Sparky', 'Rage', 'Dark Prince', 'Electro Wizard', 'Mega Minion', 'Zap', 'Heal Spirit'] },
+      { name: 'X-Bow 3.0', cards: ['X-Bow', 'Tesla', 'Knight', 'Archers', 'Skeletons', 'Electro Spirit', 'Fireball', 'The Log'] },
+      { name: 'Miner Control', cards: ['Miner', 'Poison', 'Wall Breakers', 'Magic Archer', 'Bomb Tower', 'Skeletons', 'The Log', 'Knight'] }
+    ];
+
+    // GLOBAL HISTORY TRACKER
+    let cardUsageHistory = {};
+    let previousDeckNames = new Set();
+    let generationCount = 0;
+
+    async function runExpertAutofill() {
+      console.log("--- AI AUTOFILL START ---");
+
+      // 1. Identify Playstyle & Archetype
+      const selectedPlaystyle = document.querySelector('.playstyle-btn.active').dataset.style;
+      console.log("Selected Playstyle:", selectedPlaystyle);
+
+      // FIX: Calculate Peak Level for dynamic scoring
+      let playerPeakLevel = 14;
+      if (currentPlayerData && currentPlayerData.cards) {
+        playerPeakLevel = Math.max(...currentPlayerData.cards.map(c => normalizeLevel(c)));
+        console.log("Player Peak Level detected:", playerPeakLevel);
       }
 
-      function removeCardFromBuilder(index) {
-        builderDeck.splice(index, 1);
-        renderBuilderUI();
-        updateStats(); // <--- Update on change
+      // INCREMENT GENERATION COUNT
+      generationCount++;
+      // Decay history every 3 generations so we don't run out of cards eventually
+      if (generationCount % 3 === 0) {
+        console.log("Clearing Card History (Fresh Start)");
+        cardUsageHistory = {};
       }
 
+      // 2. Score all available cards
+      // Filter out cards already in deck
+      const currentNames = new Set(builderDeck.map(c => c.name));
 
-      // --- Expert Knowledge Base ---
-      const CARD_ROLES = {
-        winCon: ['Hog Rider', 'Giant', 'Golem', 'Royal Giant', 'Balloon', 'Goblin Barrel', 'Miner', 'Graveyard', 'Lava Hound', 'X-Bow', 'Mortar', 'Ram Rider', 'Elixir Golem', 'Electro Giant', 'Royal Hogs', 'Three Musketeers', 'Sparky', 'Battle Ram', 'Skeleton Barrel', 'Wall Breakers', 'Drill'],
-        spellSmall: ['Zap', 'The Log', 'Snowball', 'Arrows', 'Barbarian Barrel', 'Tornado', 'Royal Delivery'],
-        spellBig: ['Fireball', 'Poison', 'Rocket', 'Lightning', 'Earthquake', 'Void'],
-        building: ['Cannon', 'Tesla', 'Inferno Tower', 'Bomb Tower', 'Tombstone', 'Goblin Cage', 'Furnace', 'Barbarian Hut', 'Goblin Hut', 'Elixir Collector'],
-        // MASSIVELY EXPANDED AIR DEFENSE LIST - 35+ cards!
-        airCounter: [
-          // S-Tier Air Defense
-          'Musketeer', 'Electro Wizard', 'Mega Minion', 'Bats', 'Minions',
-          'Baby Dragon', 'Inferno Dragon', 'Flying Machine', 'Magic Archer',
-          // A-Tier Air Defense  
-          'Archers', 'Firecracker', 'Princess', 'Dart Goblin', 'Spear Goblins',
-          'Hunter', 'Mother Witch', 'Ice Wizard',
-          // B-Tier Air Defense (Situational but valid)
-          'Wizard', 'Executioner', 'Witch', 'Night Witch',
-          'Tesla', 'Inferno Tower', 'Cannon', 'Bomb Tower',
-          // C-Tier Air Defense (Can target air)
-          'Arrows', 'Fireball', 'Poison', 'Lightning', 'Zap',
-          'Rocket', 'Tornado', 'Snowball',
-          // D-Tier (Weak but technically targets air)
-          'Minion Horde', 'Skeleton Dragons', 'Phoenix',
-          'Electro Dragon', 'Balloon', 'Lava Hound',
-          // Special mentions
-          'Queen', 'Little Prince', 'Archer Queen', 'Golden Knight'
-        ],
-        miniTank: ['Knight', 'Valkyrie', 'Ice Golem', 'Mini P.E.K.K.A', 'Royal Ghost', 'Bandit', 'Dark Prince', 'Golden Knight', 'Skeleton King', 'Mighty Miner', 'Fisherman', 'Lumberjack', 'Prince', 'Bowler', 'Mega Knight', 'Giant Skeleton', 'Monk', 'Cannon Cart'],
-        tankKiller: ['Mini P.E.K.K.A', 'P.E.K.K.A', 'Prince', 'Lumberjack', 'Elite Barbarians', 'Inferno Dragon', 'Mighty Miner', 'Hunter', 'Barbarians']
-      };
+      if (builderDeck.length >= 8) return;
 
-      const SYNERGIES = [
-        // Hog
-        ['Hog Rider', 'Earthquake'], ['Hog Rider', 'Ice Golem'], ['Hog Rider', 'Firecracker'],
-        ['Hog Rider', 'Musketeer'], ['Hog Rider', 'The Log'], ['Hog Rider', 'Cannon'],
-        ['Hog Rider', 'Valkyrie'], ['Hog Rider', 'Tesla'],
-        // Golem
-        ['Golem', 'Night Witch'], ['Golem', 'Lightning'], ['Golem', 'Baby Dragon'],
-        ['Golem', 'Lumberjack'], ['Golem', 'Mega Minion'], ['Golem', 'Tornado'],
-        ['Golem', 'Electro Dragon'], ['Golem', 'Skeleton King'],
-        // Air
-        ['Lava Hound', 'Balloon'], ['Lava Hound', 'Mega Minion'], ['Lava Hound', 'Inferno Dragon'],
-        ['Lava Hound', 'Skeleton Dragons'], ['Lava Hound', 'Fireball'], ['Lava Hound', 'Zap'],
-        ['Lava Hound', 'Barbarians'], ['Balloon', 'Lumberjack'], ['Balloon', 'Miner'], ['Balloon', 'Freeze'],
-        // Giant variants
-        ['Giant', 'Witch'], ['Giant', 'Prince'], ['Giant', 'Miner'], ['Giant', 'Sparky'],
-        ['Goblin Giant', 'Sparky'], ['Goblin Giant', 'Rage'], ['Goblin Giant', 'Dark Prince'],
-        ['Electro Giant', 'Tornado'], ['Electro Giant', 'Lightning'], ['Electro Giant', 'Golden Knight'],
-        ['Royal Giant', 'Fisherman'], ['Royal Giant', 'Mother Witch'], ['Royal Giant', 'Lightning'],
-        ['Royal Giant', 'Hunter'], ['Royal Giant', 'Electro Spirit'],
-        // Cycle / Bait
-        ['Goblin Barrel', 'Princess'], ['Goblin Barrel', 'Goblin Gang'], ['Goblin Barrel', 'Dart Goblin'],
-        ['Goblin Barrel', 'Rocket'], ['Goblin Barrel', 'Knight'], ['Goblin Barrel', 'Inferno Tower'],
-        ['Goblin Barrel', 'Skeleton King'], ['Skeleton Barrel', 'Mega Knight'],
-        ['Wall Breakers', 'Miner'], ['Wall Breakers', 'Magic Archer'],
-        ['Goblin Drill', 'Bomber'], ['Goblin Drill', 'Fireball'], ['Goblin Drill', 'Wall Breakers'],
-        // Siege
-        ['X-Bow', 'Tesla'], ['X-Bow', 'Knight'], ['X-Bow', 'Archers'], ['X-Bow', 'The Log'],
-        ['Mortar', 'Skeleton King'], ['Mortar', 'Miner'], ['Mortar', 'Dart Goblin'],
-        // Control
-        ['Graveyard', 'Poison'], ['Graveyard', 'Baby Dragon'], ['Graveyard', 'Knight'],
-        ['Graveyard', 'Ice Wizard'], ['Graveyard', 'Tornado'], ['Graveyard', 'Bowler'],
-        ['Graveyard', 'Skeleton King'], ['Graveyard', 'Barbarian Barrel'],
-        // Bridgespam
-        ['P.E.K.K.A', 'Battle Ram'], ['P.E.K.K.A', 'Electro Wizard'], ['P.E.K.K.A', 'Bandit'],
-        ['P.E.K.K.A', 'Royal Ghost'], ['P.E.K.K.A', 'Magic Archer'],
-        ['Mega Knight', 'Bats'], ['Mega Knight', 'Inferno Dragon'], ['Mega Knight', 'Wall Breakers'],
-        ['Mega Knight', 'Ram Rider'], ['Mega Knight', 'Bandit'],
-        ['Royal Hogs', 'Royal Recruits'], ['Royal Hogs', 'Fireball'], ['Royal Hogs', 'Flying Machine'],
-        ['Elite Barbarians', 'Rage'], ['Elite Barbarians', 'Heal Spirit'],
-        // Utility
-        ['Tornado', 'Executioner'], ['Tornado', 'Ice Wizard'], ['Tornado', 'Baby Dragon'],
-        ['Tornado', 'Magic Archer'], ['Tornado', 'Sparky'],
-        ['Miner', 'Poison'], ['Miner', 'Magic Archer'],
-        // Added Meta Synergies (Genius Mode)
-        ['Lava Hound', 'Flying Machine'], ['Lava Hound', 'Skeleton Dragons'],
-        ['Golem', 'Elite Barbarians'], ['Golem', 'Dark Prince'],
-        ['Royal Giant', 'Executioner'], ['Royal Giant', 'Zappies'],
-        ['Goblin Giant', 'Prince'], ['Goblin Giant', 'Rage'],
-        ['Electro Giant', 'Bowler'], ['Electro Giant', 'Bomber'],
-        ['Hog Rider', 'Firecracker'], ['Hog Rider', 'Bomb Tower']
+      autofillBtn.disabled = true;
+      const originalText = autofillBtn.textContent;
+      autofillBtn.textContent = 'AI Processing...';
+      autofillBtn.style.background = '#8e44ad'; // Purple
+
+      const slotsToFill = 8 - builderDeck.length;
+
+      // Visual Scanner Steps (Simulate deep thought)
+      const steps = [
+        'Connecting to RoyaleAPI Database...',
+        'Scanning Global Meta Decks...',
+        'Analyzing Card Synergies...',
+        'Optimizing for Card Levels...',
+        'Finalizing Deck Structure...'
       ];
 
-      const ARCHETYPES = [
-        { name: '2.6 Hog Cycle', cards: ['Hog Rider', 'Musketeer', 'Ice Golem', 'Ice Spirit', 'Skeletons', 'Cannon', 'Fireball', 'The Log'] },
-        { name: 'Log Bait', cards: ['Goblin Barrel', 'Princess', 'Goblin Gang', 'Rocket', 'Knight', 'Inferno Tower', 'Ice Spirit', 'The Log'] },
-        { name: 'Golem Beatdown', cards: ['Golem', 'Night Witch', 'Baby Dragon', 'Lightning', 'Mega Minion', 'Barbarian Barrel', 'Tornado', 'Lumberjack'] },
-        { name: 'Lavaloon', cards: ['Lava Hound', 'Balloon', 'Mega Minion', 'Minions', 'Barbarians', 'Zap', 'Fireball', 'Tombstone'] },
-        { name: 'Pekka Bridge Spam', cards: ['P.E.K.K.A', 'Battle Ram', 'Bandit', 'Royal Ghost', 'Electro Wizard', 'Magic Archer', 'Zap', 'Poison'] },
-        { name: 'Royal Giant FishBoy', cards: ['Royal Giant', 'Fisherman', 'Mother Witch', 'Lightning', 'The Log', 'Skeletons', 'Electro Spirit', 'Mega Minion'] },
-        { name: 'Splashyard', cards: ['Graveyard', 'Baby Dragon', 'Ice Wizard', 'Tornado', 'Valkyrie', 'Poison', 'Barbarian Barrel', 'Tombstone'] },
-        { name: 'Recruits Hogs', cards: ['Royal Recruits', 'Royal Hogs', 'Flying Machine', 'Goblin Cage', 'Fireball', 'Barbarian Barrel', 'Zappies', 'Electro Spirit'] },
-        { name: 'E-Giant Mirror', cards: ['Electro Giant', 'Lightning', 'Tornado', 'Golden Knight', 'Bomber', 'Cannon', 'Mirror', 'Barbarian Barrel'] },
-        { name: 'Goblin Drill Cycle', cards: ['Goblin Drill', 'Wall Breakers', 'Bomber', 'Fireball', 'Tesla', 'Skeletons', 'The Log', 'Knight'] },
-        { name: 'Mega Knight Bait', cards: ['Mega Knight', 'Skeleton Barrel', 'Miner', 'Goblin Gang', 'Spear Goblins', 'Bats', 'Zap', 'Inferno Dragon'] },
-        { name: 'Sparky Goblin Giant', cards: ['Goblin Giant', 'Sparky', 'Rage', 'Dark Prince', 'Electro Wizard', 'Mega Minion', 'Zap', 'Heal Spirit'] },
-        { name: 'X-Bow 3.0', cards: ['X-Bow', 'Tesla', 'Knight', 'Archers', 'Skeletons', 'Electro Spirit', 'Fireball', 'The Log'] },
-        { name: 'Miner Control', cards: ['Miner', 'Poison', 'Wall Breakers', 'Magic Archer', 'Bomb Tower', 'Skeletons', 'The Log', 'Knight'] }
-      ];
+      for (const step of steps) {
+        aiStatus.textContent = step;
+        await new Promise(r => setTimeout(r, 800)); // 800ms per step = 4 sec total thought
+      }
 
-      // GLOBAL HISTORY TRACKER
-      let cardUsageHistory = {};
-      let previousDeckNames = new Set();
-      let generationCount = 0;
+      // --- Core Logic ---
 
-      async function runExpertAutofill() {
-        console.log("--- AI AUTOFILL START ---");
+      // 1. Identify Archetype Strategy
+      let bestArchetype = null;
+      let maxMatch = 0;
 
-        // 1. Identify Playstyle & Archetype
-        const selectedPlaystyle = document.querySelector('.playstyle-btn.active').dataset.style;
-        console.log("Selected Playstyle:", selectedPlaystyle);
+      for (const arch of ARCHETYPES) {
+        const matchCount = builderDeck.filter(c => arch.cards.includes(c.name)).length;
+        if (matchCount > maxMatch && matchCount > 0) {
+          maxMatch = matchCount;
+          bestArchetype = arch;
+        }
+      }
 
-        // FIX: Calculate Peak Level for dynamic scoring
-        let playerPeakLevel = 14;
-        if (currentPlayerData && currentPlayerData.cards) {
-          playerPeakLevel = Math.max(...currentPlayerData.cards.map(c => normalizeLevel(c)));
-          console.log("Player Peak Level detected:", playerPeakLevel);
+      if (bestArchetype) aiStatus.textContent = `Match Found: ${bestArchetype.name} Strategy`;
+      else aiStatus.textContent = `Building Custom Meta Deck...`;
+
+      await new Promise(r => setTimeout(r, 1000));
+
+      // 2. Candidate Selection (Level Aware)
+      // We will score every card in the collection
+      // Score = (Synergy * 5) + (ArchetypeFit * 10) + (CardLevel * 15) <--- HUGE LEVEL WEIGHT
+
+      let allCards = [];
+      if (currentPlayerData && currentPlayerData.cards) {
+        allCards = [...currentPlayerData.cards];
+      }
+
+      // Calculate Max Level in collection for relative scoring
+      const maxLevelInCollection = allCards.reduce((max, c) => Math.max(max, normalizeLevel(c)), 0);
+
+      const candidates = allCards.filter(c => !currentNames.has(c.name) && !excludedCards.has(c.name));
+
+      // HARDENING: FILTER CANDIDATES FOR STRICT COMPOSITION
+      // 1. Count current Win Cons
+      const currentWinCons = builderDeck.filter(c => CARD_ROLES.winCon.includes(c.name)).length;
+      const WIN_CON_LIMIT = 2;
+
+      const filteredCandidates = candidates.filter(card => {
+        // If card is Win Con, only allow if under limit
+        if (CARD_ROLES.winCon.includes(card.name)) {
+          if (currentWinCons >= WIN_CON_LIMIT) return false;
+        }
+        return true;
+      });
+
+      const scoredCandidates = filteredCandidates.map(card => {
+        let score = 0;
+        const normLevel = normalizeLevel(card);
+
+        // A. LEVEL SCORE (Crucial)
+        // Penalty for being under max level.
+        // e.g. Max 14. Card is 14 -> 0 penalty. Card is 9 -> -5 * ? penalty.
+        const levelDiff = maxLevelInCollection - normLevel;
+
+        // Non-linear penalty: Being 1-2 levels under is ok (-20). Being 5 levels under is FATAL (-200).
+        score -= (levelDiff * 15);
+
+        // Bonus for absolute high level (Elite/Max)
+        if (normLevel >= 14) score += 50;
+
+        // B. SYNERGY SCORE
+        const synCount = SYNERGIES.filter(pair =>
+          pair.includes(card.name) && builderDeck.some(dc => pair.includes(dc.name))
+        ).length;
+        score += (synCount * 30); // Strong synergy weight
+
+        // C. ARCHETYPE FIT
+        if (bestArchetype && bestArchetype.cards.includes(card.name)) {
+          score += 40;
         }
 
-        // INCREMENT GENERATION COUNT
-        generationCount++;
-        // Decay history every 3 generations so we don't run out of cards eventually
-        if (generationCount % 3 === 0) {
-          console.log("Clearing Card History (Fresh Start)");
-          cardUsageHistory = {};
+        // D. ROLE FILLING (Simple heuristic)
+        // If deck needs air defense, boost air defense cards
+        const roles = getDeckRoles(builderDeck); // Current roles
+        const cardRoles = getCardRole(card.name);
+
+        if (!roles.hasWinCon && cardRoles.includes('winCon')) score += 100; // Must have wincon
+        if (!roles.hasSmallSpell && cardRoles.includes('spellSmall')) score += 80;
+        if (!roles.hasBigSpell && cardRoles.includes('spellBig')) score += 80;
+        if (builderDeck.length > 4 && !getDeckRoles(builderDeck).hasBuilding && cardRoles.includes('building')) score += 50;
+
+        // E. META & TIER LIST
+        // Boost S+ Tier cards slightly
+        if (META_QUALITY[card.name]) {
+          score += (META_QUALITY[card.name] / 10); // +10 to +15 points
         }
 
-        // 2. Score all available cards
-        // Filter out cards already in deck
-        const currentNames = new Set(builderDeck.map(c => c.name));
+        return { card, score };
+      });
 
-        if (builderDeck.length >= 8) return;
+      // Sort by Score Descending
+      scoredCandidates.sort((a, b) => b.score - a.score);
 
-        autofillBtn.disabled = true;
-        const originalText = autofillBtn.textContent;
-        autofillBtn.textContent = 'AI Processing...';
-        autofillBtn.style.background = '#8e44ad'; // Purple
+      // Pick Top N with Dynamic Role Checking (Hardening Loop)
+      const topPicks = [];
+      let netWinCons = currentWinCons;
 
-        const slotsToFill = 8 - builderDeck.length;
+      for (const candidate of scoredCandidates) {
+        if (topPicks.length >= slotsToFill) break;
 
-        // Visual Scanner Steps (Simulate deep thought)
-        const steps = [
-          'Connecting to RoyaleAPI Database...',
-          'Scanning Global Meta Decks...',
-          'Analyzing Card Synergies...',
-          'Optimizing for Card Levels...',
-          'Finalizing Deck Structure...'
-        ];
+        const isWinCon = CARD_ROLES.winCon.includes(candidate.card.name);
 
-        for (const step of steps) {
-          aiStatus.textContent = step;
-          await new Promise(r => setTimeout(r, 800)); // 800ms per step = 4 sec total thought
-        }
+        // STRICT LIMIT: Max 2 Win Conditions
+        if (isWinCon && netWinCons >= 2) continue;
 
-        // --- Core Logic ---
+        topPicks.push(candidate.card);
+        if (isWinCon) netWinCons++;
+      }
 
-        // 1. Identify Archetype Strategy
-        let bestArchetype = null;
-        let maxMatch = 0;
+      // Add them
+      topPicks.forEach(c => {
+        builderDeck.push(c);
+        updateStats();
+      });
 
-        for (const arch of ARCHETYPES) {
-          const matchCount = builderDeck.filter(c => arch.cards.includes(c.name)).length;
-          if (matchCount > maxMatch && matchCount > 0) {
-            maxMatch = matchCount;
-            bestArchetype = arch;
-          }
-        }
+      renderBuilderUI();
 
-        if (bestArchetype) aiStatus.textContent = `Match Found: ${bestArchetype.name} Strategy`;
-        else aiStatus.textContent = `Building Custom Meta Deck...`;
+      autofillBtn.textContent = originalText;
+      autofillBtn.disabled = false;
+      autofillBtn.style.background = '';
 
-        await new Promise(r => setTimeout(r, 1000));
 
-        // 2. Candidate Selection (Level Aware)
-        // We will score every card in the collection
-        // Score = (Synergy * 5) + (ArchetypeFit * 10) + (CardLevel * 15) <--- HUGE LEVEL WEIGHT
 
-        let allCards = [];
-        if (currentPlayerData && currentPlayerData.cards) {
-          allCards = [...currentPlayerData.cards];
-        }
+      // 5. DECKSHOP VERIFICATION
+      // 5. DECKSHOP VERIFICATION
+      const checkBtn = document.getElementById('checkDeckBtn');
+      const deckCheckResult = document.getElementById('deckCheckResult');
 
-        // Calculate Max Level in collection for relative scoring
-        const maxLevelInCollection = allCards.reduce((max, c) => Math.max(max, normalizeLevel(c)), 0);
-
-        const candidates = allCards.filter(c => !currentNames.has(c.name) && !excludedCards.has(c.name));
-
-        // HARDENING: FILTER CANDIDATES FOR STRICT COMPOSITION
-        // 1. Count current Win Cons
-        const currentWinCons = builderDeck.filter(c => CARD_ROLES.winCon.includes(c.name)).length;
-        const WIN_CON_LIMIT = 2;
-
-        const filteredCandidates = candidates.filter(card => {
-          // If card is Win Con, only allow if under limit
-          if (CARD_ROLES.winCon.includes(card.name)) {
-            if (currentWinCons >= WIN_CON_LIMIT) return false;
-          }
-          return true;
-        });
-
-        const scoredCandidates = filteredCandidates.map(card => {
-          let score = 0;
-          const normLevel = normalizeLevel(card);
-
-          // A. LEVEL SCORE (Crucial)
-          // Penalty for being under max level.
-          // e.g. Max 14. Card is 14 -> 0 penalty. Card is 9 -> -5 * ? penalty.
-          const levelDiff = maxLevelInCollection - normLevel;
-
-          // Non-linear penalty: Being 1-2 levels under is ok (-20). Being 5 levels under is FATAL (-200).
-          score -= (levelDiff * 15);
-
-          // Bonus for absolute high level (Elite/Max)
-          if (normLevel >= 14) score += 50;
-
-          // B. SYNERGY SCORE
-          const synCount = SYNERGIES.filter(pair =>
-            pair.includes(card.name) && builderDeck.some(dc => pair.includes(dc.name))
-          ).length;
-          score += (synCount * 30); // Strong synergy weight
-
-          // C. ARCHETYPE FIT
-          if (bestArchetype && bestArchetype.cards.includes(card.name)) {
-            score += 40;
+      if (checkBtn) {
+        checkBtn.onclick = async () => {
+          if (!builderDeck || builderDeck.length === 0) {
+            alert("Please generate a deck first!");
+            return;
           }
 
-          // D. ROLE FILLING (Simple heuristic)
-          // If deck needs air defense, boost air defense cards
-          const roles = getDeckRoles(builderDeck); // Current roles
-          const cardRoles = getCardRole(card.name);
+          checkBtn.disabled = true;
+          checkBtn.textContent = "⏳ Verifying with DeckShop...";
+          deckCheckResult.style.display = 'block';
+          deckCheckResult.innerHTML = '<div style="text-align:center;color:#ccc;">Connecting to DeckShop Pro...</div>';
 
-          if (!roles.hasWinCon && cardRoles.includes('winCon')) score += 100; // Must have wincon
-          if (!roles.hasSmallSpell && cardRoles.includes('spellSmall')) score += 80;
-          if (!roles.hasBigSpell && cardRoles.includes('spellBig')) score += 80;
-          if (builderDeck.length > 4 && !getDeckRoles(builderDeck).hasBuilding && cardRoles.includes('building')) score += 50;
+          try {
+            // Send just the names, backend handles slugs (and overrides)
+            const deckNames = builderDeck.map(c => c.name);
 
-          // E. META & TIER LIST
-          // Boost S+ Tier cards slightly
-          if (META_QUALITY[card.name]) {
-            score += (META_QUALITY[card.name] / 10); // +10 to +15 points
-          }
+            const res = await fetch('/api/check-deck', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ deck: deckNames })
+            });
 
-          return { card, score };
-        });
-
-        // Sort by Score Descending
-        scoredCandidates.sort((a, b) => b.score - a.score);
-
-        // Pick Top N with Dynamic Role Checking (Hardening Loop)
-        const topPicks = [];
-        let netWinCons = currentWinCons;
-
-        for (const candidate of scoredCandidates) {
-          if (topPicks.length >= slotsToFill) break;
-
-          const isWinCon = CARD_ROLES.winCon.includes(candidate.card.name);
-
-          // STRICT LIMIT: Max 2 Win Conditions
-          if (isWinCon && netWinCons >= 2) continue;
-
-          topPicks.push(candidate.card);
-          if (isWinCon) netWinCons++;
-        }
-
-        // Add them
-        topPicks.forEach(c => {
-          builderDeck.push(c);
-          updateStats();
-        });
-
-        renderBuilderUI();
-
-        autofillBtn.textContent = originalText;
-        autofillBtn.disabled = false;
-        autofillBtn.style.background = '';
-
-
-
-        // 5. DECKSHOP VERIFICATION
-        // 5. DECKSHOP VERIFICATION
-        const checkBtn = document.getElementById('checkDeckBtn');
-        const deckCheckResult = document.getElementById('deckCheckResult');
-
-        if (checkBtn) {
-          checkBtn.onclick = async () => {
-            if (!builderDeck || builderDeck.length === 0) {
-              alert("Please generate a deck first!");
-              return;
+            if (!res.ok) {
+              const errData = await res.json().catch(() => ({}));
+              const error = new Error(errData.error || res.statusText || "Verification failed");
+              if (errData.debugImage) error.debugImage = errData.debugImage;
+              throw error;
             }
 
-            checkBtn.disabled = true;
-            checkBtn.textContent = "⏳ Verifying with DeckShop...";
-            deckCheckResult.style.display = 'block';
-            deckCheckResult.innerHTML = '<div style="text-align:center;color:#ccc;">Connecting to DeckShop Pro...</div>';
+            const data = await res.json();
+            const evalData = data.evaluation || {};
 
-            try {
-              // Send just the names, backend handles slugs (and overrides)
-              const deckNames = builderDeck.map(c => c.name);
+            let html = '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">';
 
-              const res = await fetch('/api/check-deck', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ deck: deckNames })
-              });
+            // Helper for colors
+            const getColor = (val) => {
+              const v = (val || '').toLowerCase();
+              if (v.includes('godly') || v.includes('legendary')) return '#e74c3c'; // Red/Hot for Godly? Or Green? Usually Gold/Red. Let's use Deckshop Colors.
+              // Actually DeckShop: Godly = Purple/Pink? Good = Green.
+              // Let's stick to: Good/Great/Godly = Green/Teal. Bad/Mediocre = Orange/Red.
+              if (v.includes('good') || v.includes('great') || v.includes('godly')) return '#2ecc71';
+              if (v.includes('mediocre') || v.includes('bad')) return '#e74c3c';
+              return '#f1c40f'; // Warning
+            };
 
-              if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                const error = new Error(errData.error || res.statusText || "Verification failed");
-                if (errData.debugImage) error.debugImage = errData.debugImage;
-                throw error;
-              }
-
-              const data = await res.json();
-              const evalData = data.evaluation || {};
-
-              let html = '<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">';
-
-              // Helper for colors
-              const getColor = (val) => {
-                const v = (val || '').toLowerCase();
-                if (v.includes('godly') || v.includes('legendary')) return '#e74c3c'; // Red/Hot for Godly? Or Green? Usually Gold/Red. Let's use Deckshop Colors.
-                // Actually DeckShop: Godly = Purple/Pink? Good = Green.
-                // Let's stick to: Good/Great/Godly = Green/Teal. Bad/Mediocre = Orange/Red.
-                if (v.includes('good') || v.includes('great') || v.includes('godly')) return '#2ecc71';
-                if (v.includes('mediocre') || v.includes('bad')) return '#e74c3c';
-                return '#f1c40f'; // Warning
-              };
-
-              for (const [key, val] of Object.entries(evalData)) {
-                html += `
+            for (const [key, val] of Object.entries(evalData)) {
+              html += `
                         <div style="background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; display:flex; justify-content:space-between;">
                             <span style="color:#aaa; font-size:12px;">${key.toUpperCase()}</span>
                             <span style="font-weight:bold; color:${getColor(val)}">${val}</span>
                         </div>
                     `;
-              }
-              html += '</div>';
+            }
+            html += '</div>';
 
-              // Link
-              html += `
+            // Link
+            html += `
                 <div style="margin-top:10px; text-align:center;">
                     <a href="${data.url}" target="_blank" style="color:#3498db; text-decoration:none; font-size:12px;">View Full Report ↗</a>
                 </div>`;
 
-              deckCheckResult.innerHTML = html;
-              checkBtn.textContent = "✅ Verified";
+            deckCheckResult.innerHTML = html;
+            checkBtn.textContent = "✅ Verified";
 
-            } catch (e) {
-              console.error("Verification Error:", e);
-              let errorHtml = `<div style="color:#e74c3c">Verification Failed: ${e.message}</div>`;
+          } catch (e) {
+            console.error("Verification Error:", e);
+            let errorHtml = `<div style="color:#e74c3c">Verification Failed: ${e.message}</div>`;
 
-              if (e.debugImage) {
-                errorHtml += `<div style="margin-top:10px; border:1px solid #e74c3c; padding:5px; background:rgba(0,0,0,0.5);">
+            if (e.debugImage) {
+              errorHtml += `<div style="margin-top:10px; border:1px solid #e74c3c; padding:5px; background:rgba(0,0,0,0.5);">
                    <div style="font-size:10px; color:#aaa; margin-bottom:5px;">Debug View (What the server saw):</div>
                    <img src="${e.debugImage}?t=${Date.now()}" style="width:100%; border-radius:4px;">
                  </div>`;
-              }
-
-              deckCheckResult.innerHTML = errorHtml + `<div style="margin-top:10px;"><a href="#" onclick="window.open('https://www.deckshop.pro','_blank')">Try Manual Check</a></div>`;
-              checkBtn.textContent = "❌ Retry Check";
-            } finally {
-              checkBtn.disabled = false;
             }
-          };
+
+            deckCheckResult.innerHTML = errorHtml + `<div style="margin-top:10px;"><a href="#" onclick="window.open('https://www.deckshop.pro','_blank')">Try Manual Check</a></div>`;
+            checkBtn.textContent = "❌ Retry Check";
+          } finally {
+            checkBtn.disabled = false;
+          }
+        };
+      }
+
+      // 5b. ROYALEAPI LINK GENERATOR
+
+
+
+
+
+      // 4. STRATEGY GUIDE GENERATOR (ENHANCED: ~50 words per paragraph)
+      function generateStrategyGuide(deck) {
+        const guidePanel = document.getElementById('strategyGuide');
+        const deckNames = deck.map(c => c.name);
+        const winCon = deck.find(c => getCardRole(c.name).includes('winCon'));
+        const winConName = winCon ? winCon.name : "your main troops";
+        const building = deck.find(c => getCardRole(c.name).includes('building'));
+
+        const heavySpell = deck.find(c => getCardRole(c.name).includes('spellBig'));
+        const lightSpell = deck.find(c => getCardRole(c.name).includes('spellSmall'));
+
+        const avgElixir = (deck.reduce((a, c) => a + (c.elixirCost || 0), 0) / 8).toFixed(1);
+        const playstyle = avgElixir < 3.3 ? "Cycle" : avgElixir > 4.0 ? "Beatdown" : "Control";
+
+        let html = `<h3>🧠 AI Strategy Coach</h3>`;
+
+        // P1: Gameplan (~50 words)
+        let gp = [];
+        gp.push(`<strong>Gameplan (${playstyle}):</strong> Your primary objective is to control the flow of the match by efficiently trading elixir and strategically setting up ${winConName} for a breakthrough.`);
+        if (playstyle === 'Cycle') {
+          gp.push(`Since your deck is extremely cheap (${avgElixir} average elixir), you must force your opponent to play at your speed by constantly applying pressure. Cycle your cheap cards rapidly to get back to ${winConName} before they have their counter ready, and relentlessly chip away at their tower health with each cycle. The key to success is maintaining unrelenting pressure while defending efficiently with minimal elixir investment.`);
+        } else if (playstyle === 'Beatdown') {
+          gp.push(`With a heavy average cost of ${avgElixir} elixir, patience must be utilized as your greatest weapon in this archetype. You must be willing to sacrifice some tower health in the early game to build a massive elixir advantage, then overwhelm them with an unstoppable push featuring ${winConName} during Double Elixir time. Focus on making small positive trades on defense, and never overcommit until you have the elixir to support your tank properly with multiple supporting units.`);
+        } else {
+          gp.push(`This Control deck relies on establishing a rock-solid defense that frustrates your opponent at every turn. Counter their pushes efficiently for positive elixir trades, then immediately transition that surviving defense into a deadly counter-attack with ${winConName} while they are low on elixir and vulnerable. Your goal is to outlast them through superior defensive play and punish every mistake they make with precise counter-pushes that capitalize on their elixir disadvantage.`);
+        }
+        html += `<p>${gp.join(' ')}</p>`;
+
+        // P2: Starting Hand (~50 words)
+        let sh = [];
+        sh.push(`<strong>Starting Hand:</strong> The first minute sets the tempo for the entire match and reveals critical information about your opponent's deck.`);
+        const cycles = deck.filter(c => (c.elixirCost || 0) <= 2 && c.name !== 'Zap' && c.name !== 'Log');
+        if (cycles.length > 0) {
+          sh.push(`Your optimal opening move is to play <strong>${cycles[0].name}</strong> either at the bridge to apply early pressure or split in the back to safely build elixir. This forces your opponent to react first and reveal their deck archetype without you committing significant elixir, allowing you to identify their win condition and save your hard counters for the perfect moment. Never leak elixir in the opening, and pay close attention to what cards they play.`);
+        } else if (playstyle === 'Beatdown') {
+          sh.push(`Do not be the first player to make a move unless you are at maximum elixir and about to leak. If your opponent also waits, play your cheapest supporting unit in the very back corner to safely bank elixir. Never drop your expensive Tank first in single elixir unless you want to be severely punished by an aggressive opposite-lane push that you cannot adequately defend. Patience wins games with heavy decks, so take your time and let the match develop naturally.`);
+        } else {
+          sh.push(`If you have a defensive Building in your starting hand, only place it reactively in the center if they rush the opposite lane aggressively. Otherwise, split Archers safely in the back or cycle a cheap Spirit at the bridge. Never reveal your ${winConName} first in the opening unless you are punishing a heavy elixir commitment they made in the back. The goal is to force them to show their hand while keeping yours hidden and flexible.`);
+        }
+        html += `<p>${sh.join(' ')}</p>`;
+
+        // P3: Offense tips (~50 words)
+        let off = [];
+        off.push(`<strong>Offense:</strong>`);
+        if (deckNames.includes('Miner') && deckNames.includes('Wall Breakers')) {
+          off.push(`This is a high-skill tempo combo that can devastate unprepared opponents. Send the Miner to the tower first to tank defensive building and tower shots, then immediately drop Wall Breakers at the bridge so the Miner absorbs damage while the Wall Breakers connect. If your opponent panics and misplays their counter, they will lose half their tower in seconds. Master the timing between Miner deploy and Wall Breaker drop (approximately 1 second delay) for maximum effectiveness and tower damage.`);
+        } else if (deckNames.includes('Hog Rider')) {
+          off.push(`Hog Rider is aggressive and fast but is easily hard-countered by buildings and swarms if you are not prepared. You must carefully track their best counter card throughout the match (such as a Building, Tornado, or Skeleton Army). Pre-select your ${lightSpell ? lightSpell.name : 'spell'} immediately after deploying Hog Rider and be ready to fire it instantly the precise moment they drop their defensive counter. Prediction spells are extremely powerful if you can read their defensive patterns and anticipate their play.`);
+        } else if (deckNames.includes('Golem') || deckNames.includes('Giant')) {
+          off.push(`A lone Tank without support is easily killed and represents a massive wasted elixir investment. Always build a proper push by placing ${winConName} in the very back corner during single elixir, then methodically layer strong supporting troops like ${deck.find(c => c.elixirCost === 4)?.name || 'Musketeer'} directly behind it as you approach the bridge. These support units will protect your tank from swarms, air units, and Infernal buildings while also providing significant additional damage. Patience and proper push building are absolutely essential for beatdown success.`);
+        } else {
+          off.push(`Effective offense with ${winConName} requires excellent timing and game sense rather than mindless aggression. Wait patiently until you have either built a clear elixir advantage through efficient defense, or your opponent has just used their best counter card and cannot cycle back to it. Support your ${winConName} aggressively with spell support to eliminate their defensive answers and ensure tower connections. Every push should have a clear purpose and strategic reasoning behind it rather than random deployment.`);
+        }
+        html += `<p>${off.join(' ')}</p>`;
+
+        // P4: Defense tips (~50 words)
+        let def = [];
+        def.push(`<strong>Defense:</strong>`);
+        def.push(`A perfect defense always translates directly into a winning counter-attack offense, so treat every defensive sequence as an investment.`);
+        if (heavySpell) def.push(`Hold your ${heavySpell.name} spell for extremely high-value targets like a Witch or Night Witch stacked directly behind a Giant push, or save it to finish off a low-health tower during overtime pressure. Do not waste this valuable spell on single low-value targets unless it is absolutely necessary for survival, as you will desperately need it later for game-winning moments. Spell discipline often determines match outcomes.`);
+        if (building) def.push(`Your ${building.name} building is the anchor and foundation of your entire defensive strategy. Place it precisely 4 tiles from the river in the middle to pull tanks like Hog Rider or Giant into the center kill zone, allowing both of your Princess Towers to simultaneously target them for maximum damage output. Proper building placement is a fundamental skill that separates good players from great ones.`);
+        def.push(`Learn to use your Tower's health as a strategic resource rather than something sacred to preserve. It is often better to take 500-700 damage and maintain an elixir advantage than to panic and spend 6 elixir desperately defending against a 3 elixir troop. Overcommitting on defense is one of the biggest mistakes players make, leading to devastating counter-pushes that you cannot stop.`);
+        html += `<p>${def.join(' ')}</p>`;
+
+        guidePanel.innerHTML = html;
+        guidePanel.style.display = 'block';
+      }
+
+      // 2. Scoring Algorithm (GOD MODE - STRICT TEMPLATE)
+      // Template: 1 WinCon, 1 MiniTank, 1 Swarm, 2 AirDef, 1 SmallSpell, 1 BigSpell, 1 Flex
+      function scoreCard(card) {
+        const cardRoles = getCardRole(card.name);
+        const roles = getDeckRoles(builderDeck); // Current state
+
+        let score = (Math.random() * 100) - 50; // GOD MODE: Minimal Jitter (+/- 50)
+
+        // -------------------------------------------------------------
+        // 0. EVOLUTION & CHAMPION PRIORITY (GENIUS MODE)
+        // -------------------------------------------------------------
+        if ((card.evolutionLevel || 0) > 0) {
+          score += 3000; // MASSIVE BONUS: Always pick owned Evolutions
+        }
+        if (card.rarity === 'champion') {
+          score += 1000; // Priority for Champions
         }
 
-        // 5b. ROYALEAPI LINK GENERATOR
+        // -------------------------------------------------------------
+        // 1. STRICT ROLE TEMPLATE ENFORCEMENT
+        // -------------------------------------------------------------
 
+        // A. WIN CONDITION (Limit: 1)
+        if (cardRoles.includes('winCon')) {
+          if (roles.hasWinCon) {
+            // EXCEPTION: Secondary WinCons allowed in Flex spot if explicit synergy
+            const allowDouble = (card.name === 'Miner' && builderDeck.some(c => c.name === 'Wall Breakers')) ||
+              (card.name === 'Wall Breakers' && builderDeck.some(c => c.name === 'Miner')) ||
+              (card.name === 'Balloon' && builderDeck.some(c => c.name === 'Lava Hound')) ||
+              (card.name === 'Skeleton Barrel' && builderDeck.some(c => c.name === 'Mega Knight'));
 
-
-
-
-        // 4. STRATEGY GUIDE GENERATOR (ENHANCED: ~50 words per paragraph)
-        function generateStrategyGuide(deck) {
-          const guidePanel = document.getElementById('strategyGuide');
-          const deckNames = deck.map(c => c.name);
-          const winCon = deck.find(c => getCardRole(c.name).includes('winCon'));
-          const winConName = winCon ? winCon.name : "your main troops";
-          const building = deck.find(c => getCardRole(c.name).includes('building'));
-
-          const heavySpell = deck.find(c => getCardRole(c.name).includes('spellBig'));
-          const lightSpell = deck.find(c => getCardRole(c.name).includes('spellSmall'));
-
-          const avgElixir = (deck.reduce((a, c) => a + (c.elixirCost || 0), 0) / 8).toFixed(1);
-          const playstyle = avgElixir < 3.3 ? "Cycle" : avgElixir > 4.0 ? "Beatdown" : "Control";
-
-          let html = `<h3>🧠 AI Strategy Coach</h3>`;
-
-          // P1: Gameplan (~50 words)
-          let gp = [];
-          gp.push(`<strong>Gameplan (${playstyle}):</strong> Your primary objective is to control the flow of the match by efficiently trading elixir and strategically setting up ${winConName} for a breakthrough.`);
-          if (playstyle === 'Cycle') {
-            gp.push(`Since your deck is extremely cheap (${avgElixir} average elixir), you must force your opponent to play at your speed by constantly applying pressure. Cycle your cheap cards rapidly to get back to ${winConName} before they have their counter ready, and relentlessly chip away at their tower health with each cycle. The key to success is maintaining unrelenting pressure while defending efficiently with minimal elixir investment.`);
-          } else if (playstyle === 'Beatdown') {
-            gp.push(`With a heavy average cost of ${avgElixir} elixir, patience must be utilized as your greatest weapon in this archetype. You must be willing to sacrifice some tower health in the early game to build a massive elixir advantage, then overwhelm them with an unstoppable push featuring ${winConName} during Double Elixir time. Focus on making small positive trades on defense, and never overcommit until you have the elixir to support your tank properly with multiple supporting units.`);
+            if (!allowDouble) score -= 10000; // HARD BAN on 2nd WinCon
+            else score += 500;
           } else {
-            gp.push(`This Control deck relies on establishing a rock-solid defense that frustrates your opponent at every turn. Counter their pushes efficiently for positive elixir trades, then immediately transition that surviving defense into a deadly counter-attack with ${winConName} while they are low on elixir and vulnerable. Your goal is to outlast them through superior defensive play and punish every mistake they make with precise counter-pushes that capitalize on their elixir disadvantage.`);
+            // WE NEED A WIN CON
+            score += 2000;
+            // Boost for proprietary "Best" WinCons if undefined style
+            if (['Hog Rider', 'Miner', 'Graveyard', 'Goblin Drill', 'Golem'].includes(card.name)) score += 500;
           }
-          html += `<p>${gp.join(' ')}</p>`;
-
-          // P2: Starting Hand (~50 words)
-          let sh = [];
-          sh.push(`<strong>Starting Hand:</strong> The first minute sets the tempo for the entire match and reveals critical information about your opponent's deck.`);
-          const cycles = deck.filter(c => (c.elixirCost || 0) <= 2 && c.name !== 'Zap' && c.name !== 'Log');
-          if (cycles.length > 0) {
-            sh.push(`Your optimal opening move is to play <strong>${cycles[0].name}</strong> either at the bridge to apply early pressure or split in the back to safely build elixir. This forces your opponent to react first and reveal their deck archetype without you committing significant elixir, allowing you to identify their win condition and save your hard counters for the perfect moment. Never leak elixir in the opening, and pay close attention to what cards they play.`);
-          } else if (playstyle === 'Beatdown') {
-            sh.push(`Do not be the first player to make a move unless you are at maximum elixir and about to leak. If your opponent also waits, play your cheapest supporting unit in the very back corner to safely bank elixir. Never drop your expensive Tank first in single elixir unless you want to be severely punished by an aggressive opposite-lane push that you cannot adequately defend. Patience wins games with heavy decks, so take your time and let the match develop naturally.`);
-          } else {
-            sh.push(`If you have a defensive Building in your starting hand, only place it reactively in the center if they rush the opposite lane aggressively. Otherwise, split Archers safely in the back or cycle a cheap Spirit at the bridge. Never reveal your ${winConName} first in the opening unless you are punishing a heavy elixir commitment they made in the back. The goal is to force them to show their hand while keeping yours hidden and flexible.`);
-          }
-          html += `<p>${sh.join(' ')}</p>`;
-
-          // P3: Offense tips (~50 words)
-          let off = [];
-          off.push(`<strong>Offense:</strong>`);
-          if (deckNames.includes('Miner') && deckNames.includes('Wall Breakers')) {
-            off.push(`This is a high-skill tempo combo that can devastate unprepared opponents. Send the Miner to the tower first to tank defensive building and tower shots, then immediately drop Wall Breakers at the bridge so the Miner absorbs damage while the Wall Breakers connect. If your opponent panics and misplays their counter, they will lose half their tower in seconds. Master the timing between Miner deploy and Wall Breaker drop (approximately 1 second delay) for maximum effectiveness and tower damage.`);
-          } else if (deckNames.includes('Hog Rider')) {
-            off.push(`Hog Rider is aggressive and fast but is easily hard-countered by buildings and swarms if you are not prepared. You must carefully track their best counter card throughout the match (such as a Building, Tornado, or Skeleton Army). Pre-select your ${lightSpell ? lightSpell.name : 'spell'} immediately after deploying Hog Rider and be ready to fire it instantly the precise moment they drop their defensive counter. Prediction spells are extremely powerful if you can read their defensive patterns and anticipate their play.`);
-          } else if (deckNames.includes('Golem') || deckNames.includes('Giant')) {
-            off.push(`A lone Tank without support is easily killed and represents a massive wasted elixir investment. Always build a proper push by placing ${winConName} in the very back corner during single elixir, then methodically layer strong supporting troops like ${deck.find(c => c.elixirCost === 4)?.name || 'Musketeer'} directly behind it as you approach the bridge. These support units will protect your tank from swarms, air units, and Infernal buildings while also providing significant additional damage. Patience and proper push building are absolutely essential for beatdown success.`);
-          } else {
-            off.push(`Effective offense with ${winConName} requires excellent timing and game sense rather than mindless aggression. Wait patiently until you have either built a clear elixir advantage through efficient defense, or your opponent has just used their best counter card and cannot cycle back to it. Support your ${winConName} aggressively with spell support to eliminate their defensive answers and ensure tower connections. Every push should have a clear purpose and strategic reasoning behind it rather than random deployment.`);
-          }
-          html += `<p>${off.join(' ')}</p>`;
-
-          // P4: Defense tips (~50 words)
-          let def = [];
-          def.push(`<strong>Defense:</strong>`);
-          def.push(`A perfect defense always translates directly into a winning counter-attack offense, so treat every defensive sequence as an investment.`);
-          if (heavySpell) def.push(`Hold your ${heavySpell.name} spell for extremely high-value targets like a Witch or Night Witch stacked directly behind a Giant push, or save it to finish off a low-health tower during overtime pressure. Do not waste this valuable spell on single low-value targets unless it is absolutely necessary for survival, as you will desperately need it later for game-winning moments. Spell discipline often determines match outcomes.`);
-          if (building) def.push(`Your ${building.name} building is the anchor and foundation of your entire defensive strategy. Place it precisely 4 tiles from the river in the middle to pull tanks like Hog Rider or Giant into the center kill zone, allowing both of your Princess Towers to simultaneously target them for maximum damage output. Proper building placement is a fundamental skill that separates good players from great ones.`);
-          def.push(`Learn to use your Tower's health as a strategic resource rather than something sacred to preserve. It is often better to take 500-700 damage and maintain an elixir advantage than to panic and spend 6 elixir desperately defending against a 3 elixir troop. Overcommitting on defense is one of the biggest mistakes players make, leading to devastating counter-pushes that you cannot stop.`);
-          html += `<p>${def.join(' ')}</p>`;
-
-          guidePanel.innerHTML = html;
-          guidePanel.style.display = 'block';
         }
 
-        // 2. Scoring Algorithm (GOD MODE - STRICT TEMPLATE)
-        // Template: 1 WinCon, 1 MiniTank, 1 Swarm, 2 AirDef, 1 SmallSpell, 1 BigSpell, 1 Flex
-        function scoreCard(card) {
-          const cardRoles = getCardRole(card.name);
-          const roles = getDeckRoles(builderDeck); // Current state
-
-          let score = (Math.random() * 100) - 50; // GOD MODE: Minimal Jitter (+/- 50)
-
-          // -------------------------------------------------------------
-          // 0. EVOLUTION & CHAMPION PRIORITY (GENIUS MODE)
-          // -------------------------------------------------------------
-          if ((card.evolutionLevel || 0) > 0) {
-            score += 3000; // MASSIVE BONUS: Always pick owned Evolutions
+        // B. SMALL SPELL (Limit: 1)
+        if (cardRoles.includes('spellSmall')) {
+          if (roles.hasSmallSpell) score -= 5000; // Hard limit
+          else {
+            score += 1500; // High priority
+            if (roles.hasBigSpell) score += 500; // Complete the spell pair
           }
-          if (card.rarity === 'champion') {
-            score += 1000; // Priority for Champions
-          }
-
-          // -------------------------------------------------------------
-          // 1. STRICT ROLE TEMPLATE ENFORCEMENT
-          // -------------------------------------------------------------
-
-          // A. WIN CONDITION (Limit: 1)
-          if (cardRoles.includes('winCon')) {
-            if (roles.hasWinCon) {
-              // EXCEPTION: Secondary WinCons allowed in Flex spot if explicit synergy
-              const allowDouble = (card.name === 'Miner' && builderDeck.some(c => c.name === 'Wall Breakers')) ||
-                (card.name === 'Wall Breakers' && builderDeck.some(c => c.name === 'Miner')) ||
-                (card.name === 'Balloon' && builderDeck.some(c => c.name === 'Lava Hound')) ||
-                (card.name === 'Skeleton Barrel' && builderDeck.some(c => c.name === 'Mega Knight'));
-
-              if (!allowDouble) score -= 10000; // HARD BAN on 2nd WinCon
-              else score += 500;
-            } else {
-              // WE NEED A WIN CON
-              score += 2000;
-              // Boost for proprietary "Best" WinCons if undefined style
-              if (['Hog Rider', 'Miner', 'Graveyard', 'Goblin Drill', 'Golem'].includes(card.name)) score += 500;
-            }
-          }
-
-          // B. SMALL SPELL (Limit: 1)
-          if (cardRoles.includes('spellSmall')) {
-            if (roles.hasSmallSpell) score -= 5000; // Hard limit
-            else {
-              score += 1500; // High priority
-              if (roles.hasBigSpell) score += 500; // Complete the spell pair
-            }
-          }
-
-          // C. BIG SPELL (Limit: 1)
-          if (cardRoles.includes('spellBig')) {
-            if (roles.hasBigSpell) score -= 5000;
-            else {
-              score += 1500;
-              if (roles.hasSmallSpell) score += 500;
-            }
-          }
-
-          // D. MINI TANK (Limit: 1... maybe 2 for bridge spam)
-          // We count strictly mini tanks (Knight, valk, etc)
-          const miniTankCount = builderDeck.filter(c => getCardRole(c.name).includes('miniTank')).length;
-          if (cardRoles.includes('miniTank')) {
-            if (miniTankCount >= 2) score -= 5000; // Hard Cap at 2
-            else if (miniTankCount === 1) score -= 500; // Soft Cap at 1 (Prefer Air/Swarm/Flex)
-            else score += 1200; // NEED ONE
-          }
-
-          // E. AIR DEFENSE (Minimum: 2)
-          // We count specific strong air counters
-          const airCount = builderDeck.filter(c => getCardRole(c.name).includes('airCounter')).length;
-          if (cardRoles.includes('airCounter')) {
-            if (airCount < 2) score += 2500; // CRITICAL PRIORITY
-            else score += 200; // Good to have more, but not critical
-          }
-
-          // F. SWARM / CYCLE / UTILITY
-          // If we have WinCon + Spells + Tank + Air, we need cheap defense or swarms
-          // Logic implicitly handled by "What's left" and Synergies, but let's boost Swarms if missing
-          const swarmCount = builderDeck.filter(c => ['Goblin Gang', 'Skeletons', 'Bats', 'Goblins', 'Spear Goblins', 'Guards', 'Skarmy'].includes(c.name)).length;
-          if (swarmCount === 0 && (card.elixirCost || 0) <= 3) {
-            // General boost for cheap cards if no swarms
-            score += 400;
-          }
-
-          // -------------------------------------------------------------
-          // 2. LEVEL & META LOGIC
-          // -------------------------------------------------------------
-
-          // Factor 0.5: Meta Quality
-          if (META_QUALITY[card.name]) score += (META_QUALITY[card.name] * 0.8);
-
-          // Factor 1: Level Logic (STRICTER)
-          let normLevel = normalizeLevel(card);
-          score += (normLevel * 100);
-
-          const levelGap = playerPeakLevel - normLevel;
-          // STRICTER LEVEL PENALTY (User Request: "Keep levels in consideration")
-          if (levelGap <= 0) score += 1000; // BEST CARDS (Peak Level)
-          else if (levelGap === 1) score += 100; // 1 Level under is fine
-          else if (levelGap >= 2) score -= 5000; // SIGNIFICANT PENALTY for 2 levels under
-          else if (levelGap >= 3) score -= 20000; // NUCLEAR BAN for 3+ levels under (Unplayable)
-
-          // -------------------------------------------------------------
-          // 3. SYNERGY & ARCHETYPES
-          // -------------------------------------------------------------
-
-          // Playstyle Bonus
-          if (selectedPlaystyle !== 'any') {
-            // ... existing playstyle logic is fine, but role template overrides it mostly
-            // we can give a small nudge
-            // (Copying simplified logic to avoid huge block)
-            const isSynergistic = SYNERGIES.some(pair => pair.includes(card.name) && builderDeck.some(d => pair.includes(d.name)));
-            if (isSynergistic) score += 400;
-          }
-
-          // Anti-Repetition
-          if (!getCardRole(card.name).includes('winCon')) { // allow win cons to repeat if user really wants that style
-            if (previousDeckNames.has(card.name)) score -= 10000; // ROTATION
-          }
-
-          // Elixir Management (Prevent > 4.0 avg)
-          const currentCost = builderDeck.reduce((a, c) => a + (c.elixirCost || 0), 0);
-          const projectedAvg = (currentCost + (card.elixirCost || 0)) / (builderDeck.length + 1);
-          if (builderDeck.length > 4 && projectedAvg > 4.1) score -= 1000;
-
-          return score;
         }
 
-        // Get available cards
-        // Filter out champions if one already exists
-        const hasChampion = builderDeck.find(c => c.rarity === 'Champion' || c.rarity === 'champion');
-        const deckNames = new Set(builderDeck.map(c => c.name)); // Convert to Set for efficient lookup
-        const all = currentPlayerData.cards; // Assuming all available cards are in currentPlayerData.cards
+        // C. BIG SPELL (Limit: 1)
+        if (cardRoles.includes('spellBig')) {
+          if (roles.hasBigSpell) score -= 5000;
+          else {
+            score += 1500;
+            if (roles.hasSmallSpell) score += 500;
+          }
+        }
 
-        // Filter available
-        let available = all.filter(c => {
-          if (deckNames.has(c.name)) return false;
-          if (excludedCards.has(c.name)) return false; // NEW: Exclude banned cards
-          if (c.rarity === 'Champion' && hasChampion) return false;
-          return true;
-        });
+        // D. MINI TANK (Limit: 1... maybe 2 for bridge spam)
+        // We count strictly mini tanks (Knight, valk, etc)
+        const miniTankCount = builderDeck.filter(c => getCardRole(c.name).includes('miniTank')).length;
+        if (cardRoles.includes('miniTank')) {
+          if (miniTankCount >= 2) score -= 5000; // Hard Cap at 2
+          else if (miniTankCount === 1) score -= 500; // Soft Cap at 1 (Prefer Air/Swarm/Flex)
+          else score += 1200; // NEED ONE
+        }
 
-        console.log(`DEBUG POOL SIZE: ${available.length} cards available for selection.`);
-        if (available.length < 10) console.warn("WARNING: Very small card pool!");
+        // E. AIR DEFENSE (Minimum: 2)
+        // We count specific strong air counters
+        const airCount = builderDeck.filter(c => getCardRole(c.name).includes('airCounter')).length;
+        if (cardRoles.includes('airCounter')) {
+          if (airCount < 2) score += 2500; // CRITICAL PRIORITY
+          else score += 200; // Good to have more, but not critical
+        }
 
-        // 0. FORCED PLAYSTYLE START (The "Captain" Rule)
-        // If user explicitly chose a style, we MUST start with that style's key card.
-        // Otherwise the "Strict Win Con" rule might pick a different win con first and block this one.
+        // F. SWARM / CYCLE / UTILITY
+        // If we have WinCon + Spells + Tank + Air, we need cheap defense or swarms
+        // Logic implicitly handled by "What's left" and Synergies, but let's boost Swarms if missing
+        const swarmCount = builderDeck.filter(c => ['Goblin Gang', 'Skeletons', 'Bats', 'Goblins', 'Spear Goblins', 'Guards', 'Skarmy'].includes(c.name)).length;
+        if (swarmCount === 0 && (card.elixirCost || 0) <= 3) {
+          // General boost for cheap cards if no swarms
+          score += 400;
+        }
+
+        // -------------------------------------------------------------
+        // 2. LEVEL & META LOGIC
+        // -------------------------------------------------------------
+
+        // Factor 0.5: Meta Quality
+        if (META_QUALITY[card.name]) score += (META_QUALITY[card.name] * 0.8);
+
+        // Factor 1: Level Logic (STRICTER)
+        let normLevel = normalizeLevel(card);
+        score += (normLevel * 100);
+
+        const levelGap = playerPeakLevel - normLevel;
+        // STRICTER LEVEL PENALTY (User Request: "Keep levels in consideration")
+        if (levelGap <= 0) score += 1000; // BEST CARDS (Peak Level)
+        else if (levelGap === 1) score += 100; // 1 Level under is fine
+        else if (levelGap >= 2) score -= 5000; // SIGNIFICANT PENALTY for 2 levels under
+        else if (levelGap >= 3) score -= 20000; // NUCLEAR BAN for 3+ levels under (Unplayable)
+
+        // -------------------------------------------------------------
+        // 3. SYNERGY & ARCHETYPES
+        // -------------------------------------------------------------
+
+        // Playstyle Bonus
         if (selectedPlaystyle !== 'any') {
-          const captains = {
-            'miner': ['Miner', 'Mighty Miner'],
-            'hog': ['Hog Rider', 'Ram Rider'], // 'cycle' often means hog
-            'cycle': ['Hog Rider', 'Royal Hogs'],
-            'beatdown': ['Golem', 'Electro Giant', 'Lava Hound', 'Giant', 'Goblin Giant'],
-            'siege': ['X-Bow', 'Mortar'],
-            'bait': ['Goblin Barrel', 'Princess'],
-            'bridgespam': ['Battle Ram', 'P.E.K.K.A', 'Ram Rider'],
-            'graveyard': ['Graveyard'],
-            'control': ['Graveyard', 'Miner', 'Poison']
-          };
-
-          const targetCaptains = captains[selectedPlaystyle];
-          if (targetCaptains) {
-            // Find the best available captain (owned by player)
-            // Sort by Level to pick the best one
-            const myCaptains = available.filter(c => targetCaptains.includes(c.name));
-            myCaptains.sort((a, b) => normalizeLevel(b) - normalizeLevel(a));
-
-            if (myCaptains.length > 0) {
-              const captain = myCaptains[0];
-              console.log("Force-Adding Captain for " + selectedPlaystyle, captain.name);
-              builderDeck.push(captain);
-              deckNames.add(captain.name); // update lookup set
-              available = available.filter(c => c.name !== captain.name);
-              renderBuilderUI();
-              await new Promise(r => setTimeout(r, 200));
-            }
-          }
+          // ... existing playstyle logic is fine, but role template overrides it mostly
+          // we can give a small nudge
+          // (Copying simplified logic to avoid huge block)
+          const isSynergistic = SYNERGIES.some(pair => pair.includes(card.name) && builderDeck.some(d => pair.includes(d.name)));
+          if (isSynergistic) score += 400;
         }
 
-        // Loop to fill
-        for (let i = 0; i < slotsToFill; i++) {
-          if (available.length === 0) break;
+        // Anti-Repetition
+        if (!getCardRole(card.name).includes('winCon')) { // allow win cons to repeat if user really wants that style
+          if (previousDeckNames.has(card.name)) score -= 10000; // ROTATION
+        }
 
-          let best = null;
-          let maxScore = Number.NEGATIVE_INFINITY;
+        // Elixir Management (Prevent > 4.0 avg)
+        const currentCost = builderDeck.reduce((a, c) => a + (c.elixirCost || 0), 0);
+        const projectedAvg = (currentCost + (card.elixirCost || 0)) / (builderDeck.length + 1);
+        if (builderDeck.length > 4 && projectedAvg > 4.1) score -= 1000;
 
-          // Safe Scoring Loop
-          for (const card of available) {
+        return score;
+      }
 
-            // STRICT WIN CONDITION LIMIT
-            // If we already have a Win Condition, DO NOT pick another one (unless it's a specific synergy)
-            const currentWinCon = builderDeck.find(c => getCardRole(c.name).includes('winCon'));
-            if (currentWinCon) {
-              const candidateRole = getCardRole(card.name);
-              if (candidateRole.includes('winCon')) {
-                // ALLOW EXCEPTIONS: Miner + Wall Breakers, or Balloon + Lava Hound
-                const isMinerWB = (currentWinCon.name === 'Miner' && card.name === 'Wall Breakers') || (currentWinCon.name === 'Wall Breakers' && card.name === 'Miner');
-                const isLavaLoon = (currentWinCon.name === 'Lava Hound' && card.name === 'Balloon') || (currentWinCon.name === 'Balloon' && card.name === 'Lava Hound');
-                const isGiantSparky = (currentWinCon.name === 'Goblin Giant' && card.name === 'Sparky') || (currentWinCon.name === 'Sparky' && card.name === 'Goblin Giant');
+      // Get available cards
+      // Filter out champions if one already exists
+      const hasChampion = builderDeck.find(c => c.rarity === 'Champion' || c.rarity === 'champion');
+      const deckNames = new Set(builderDeck.map(c => c.name)); // Convert to Set for efficient lookup
+      const all = currentPlayerData.cards; // Assuming all available cards are in currentPlayerData.cards
 
-                if (!isMinerWB && !isLavaLoon && !isGiantSparky) {
-                  continue; // SKIP this card entirely
-                }
+      // Filter available
+      let available = all.filter(c => {
+        if (deckNames.has(c.name)) return false;
+        if (excludedCards.has(c.name)) return false; // NEW: Exclude banned cards
+        if (c.rarity === 'Champion' && hasChampion) return false;
+        return true;
+      });
+
+      console.log(`DEBUG POOL SIZE: ${available.length} cards available for selection.`);
+      if (available.length < 10) console.warn("WARNING: Very small card pool!");
+
+      // 0. FORCED PLAYSTYLE START (The "Captain" Rule)
+      // If user explicitly chose a style, we MUST start with that style's key card.
+      // Otherwise the "Strict Win Con" rule might pick a different win con first and block this one.
+      if (selectedPlaystyle !== 'any') {
+        const captains = {
+          'miner': ['Miner', 'Mighty Miner'],
+          'hog': ['Hog Rider', 'Ram Rider'], // 'cycle' often means hog
+          'cycle': ['Hog Rider', 'Royal Hogs'],
+          'beatdown': ['Golem', 'Electro Giant', 'Lava Hound', 'Giant', 'Goblin Giant'],
+          'siege': ['X-Bow', 'Mortar'],
+          'bait': ['Goblin Barrel', 'Princess'],
+          'bridgespam': ['Battle Ram', 'P.E.K.K.A', 'Ram Rider'],
+          'graveyard': ['Graveyard'],
+          'control': ['Graveyard', 'Miner', 'Poison']
+        };
+
+        const targetCaptains = captains[selectedPlaystyle];
+        if (targetCaptains) {
+          // Find the best available captain (owned by player)
+          // Sort by Level to pick the best one
+          const myCaptains = available.filter(c => targetCaptains.includes(c.name));
+          myCaptains.sort((a, b) => normalizeLevel(b) - normalizeLevel(a));
+
+          if (myCaptains.length > 0) {
+            const captain = myCaptains[0];
+            console.log("Force-Adding Captain for " + selectedPlaystyle, captain.name);
+            builderDeck.push(captain);
+            deckNames.add(captain.name); // update lookup set
+            available = available.filter(c => c.name !== captain.name);
+            renderBuilderUI();
+            await new Promise(r => setTimeout(r, 200));
+          }
+        }
+      }
+
+      // Loop to fill
+      for (let i = 0; i < slotsToFill; i++) {
+        if (available.length === 0) break;
+
+        let best = null;
+        let maxScore = Number.NEGATIVE_INFINITY;
+
+        // Safe Scoring Loop
+        for (const card of available) {
+
+          // STRICT WIN CONDITION LIMIT
+          // If we already have a Win Condition, DO NOT pick another one (unless it's a specific synergy)
+          const currentWinCon = builderDeck.find(c => getCardRole(c.name).includes('winCon'));
+          if (currentWinCon) {
+            const candidateRole = getCardRole(card.name);
+            if (candidateRole.includes('winCon')) {
+              // ALLOW EXCEPTIONS: Miner + Wall Breakers, or Balloon + Lava Hound
+              const isMinerWB = (currentWinCon.name === 'Miner' && card.name === 'Wall Breakers') || (currentWinCon.name === 'Wall Breakers' && card.name === 'Miner');
+              const isLavaLoon = (currentWinCon.name === 'Lava Hound' && card.name === 'Balloon') || (currentWinCon.name === 'Balloon' && card.name === 'Lava Hound');
+              const isGiantSparky = (currentWinCon.name === 'Goblin Giant' && card.name === 'Sparky') || (currentWinCon.name === 'Sparky' && card.name === 'Goblin Giant');
+
+              if (!isMinerWB && !isLavaLoon && !isGiantSparky) {
+                continue; // SKIP this card entirely
               }
             }
+          }
 
-            // STRICT SPELL LIMIT (Max 2 Spells)
-            // No more 3-spell decks.
-            const currentSpells = builderDeck.filter(c => getCardRole(c.name).includes('spellBig') || getCardRole(c.name).includes('spellSmall')).length;
-            const isCandidateSpell = getCardRole(card.name).includes('spellBig') || getCardRole(card.name).includes('spellSmall');
-            if (currentSpells >= 2 && isCandidateSpell) {
-              continue; // SKIP spell
+          // STRICT SPELL LIMIT (Max 2 Spells)
+          // No more 3-spell decks.
+          const currentSpells = builderDeck.filter(c => getCardRole(c.name).includes('spellBig') || getCardRole(c.name).includes('spellSmall')).length;
+          const isCandidateSpell = getCardRole(card.name).includes('spellBig') || getCardRole(card.name).includes('spellSmall');
+          if (currentSpells >= 2 && isCandidateSpell) {
+            continue; // SKIP spell
+          }
+
+          // STRICT MINI TANK / BRUISER LIMIT (Max 2)
+          // Broader definition: MiniTanks + TankKillers like Pekka + Mega Knight
+          const getTankiness = (name) => {
+            const r = getCardRole(name);
+            if (r.includes('miniTank')) return true;
+            if (['Mega Knight', 'P.E.K.K.A', 'Giant Skeleton', 'Bowler'].includes(name)) return true;
+            return false;
+          };
+
+          const currentMiniTanks = builderDeck.filter(c => getTankiness(c.name)).length;
+          const isCandidateMiniTank = getTankiness(card.name);
+
+          if (isCandidateMiniTank) {
+            // HARD STOP: If we already have 2, DO NOT add a 3rd.
+            if (currentMiniTanks >= 2) {
+              continue;
             }
+            // SOFT LIMIT: If we have 1, penalize the 2nd heavily unless it really fits
+            if (currentMiniTanks === 1) {
+              // Only allow if it's a Bridge Spam archetype or specific dual-lane pressure
+              // Otherwise, penalize to prefer other support cards
+              // score -= 500; // This will be applied later in the scoring logic, but we can skip early if needed.
+              // Let's rely on scoring, but the Hard Stop above guarantees no 3rd.
+            }
+          }
 
-            // STRICT MINI TANK / BRUISER LIMIT (Max 2)
-            // Broader definition: MiniTanks + TankKillers like Pekka + Mega Knight
-            const getTankiness = (name) => {
-              const r = getCardRole(name);
-              if (r.includes('miniTank')) return true;
-              if (['Mega Knight', 'P.E.K.K.A', 'Giant Skeleton', 'Bowler'].includes(name)) return true;
-              return false;
-            };
-
-            const currentMiniTanks = builderDeck.filter(c => getTankiness(c.name)).length;
-            const isCandidateMiniTank = getTankiness(card.name);
-
-            if (isCandidateMiniTank) {
-              // HARD STOP: If we already have 2, DO NOT add a 3rd.
-              if (currentMiniTanks >= 2) {
+          if (builderDeck.length >= 6) {
+            const airCounters = builderDeck.filter(c => getCardRole(c.name).includes('airCounter')).length;
+            if (airCounters < 2) {
+              // Start rejecting non-air-counters until we satisfy the condition
+              if (!getCardRole(card.name).includes('airCounter')) {
+                // Soft rejection: massively penalize non-air cards instead of hard skipping?
+                // Actually, hard skip is safer to guarantee it happens.
                 continue;
               }
-              // SOFT LIMIT: If we have 1, penalize the 2nd heavily unless it really fits
-              if (currentMiniTanks === 1) {
-                // Only allow if it's a Bridge Spam archetype or specific dual-lane pressure
-                // Otherwise, penalize to prefer other support cards
-                // score -= 500; // This will be applied later in the scoring logic, but we can skip early if needed.
-                // Let's rely on scoring, but the Hard Stop above guarantees no 3rd.
-              }
             }
+          }
 
-            if (builderDeck.length >= 6) {
-              const airCounters = builderDeck.filter(c => getCardRole(c.name).includes('airCounter')).length;
-              if (airCounters < 2) {
-                // Start rejecting non-air-counters until we satisfy the condition
-                if (!getCardRole(card.name).includes('airCounter')) {
-                  // Soft rejection: massively penalize non-air cards instead of hard skipping?
-                  // Actually, hard skip is safer to guarantee it happens.
-                  continue;
-                }
-              }
+          // USER FEEDBACK: MINER DECKS PREFER 1 CYCLE CARD (BUT 2 IS OK)
+          // Soft Limit: If we have Miner and 1 cycle card already, PENALIZE the next one but allow it if it's really good.
+          const hasMiner = builderDeck.some(c => c.name === 'Miner');
+          if (hasMiner) {
+            const isCycleTroop = (c) => (c.elixirCost || 0) <= 2 && !getCardRole(c.name).includes('spell');
+            // Count current cycle troops
+            const currentCycleTroops = builderDeck.filter(isCycleTroop).length;
+
+            // Check candidate
+            if (isCycleTroop(card) && currentCycleTroops >= 1) {
+              // Apply penalty instead of skip
+              // Score is usually around 100-300 range.
+              // -200 should be enough to make it lose to a good Musketeer/Knight unless it's godly.
+              // If we have 2 already, strictly block 3rd.
+              if (currentCycleTroops >= 2) continue;
+
+              // Penalty for 2nd cycle card
+              // We'll modify the score inside the try/catch loop next to be safe, 
+              // OR just soft-skip here? 
+              // We can't easily modify score BEFORE the scoreCard function runs.
+              // So let's wrap the scoreCard call below.
             }
+          }
 
-            // USER FEEDBACK: MINER DECKS PREFER 1 CYCLE CARD (BUT 2 IS OK)
-            // Soft Limit: If we have Miner and 1 cycle card already, PENALIZE the next one but allow it if it's really good.
-            const hasMiner = builderDeck.some(c => c.name === 'Miner');
+          let score = 0;
+          try {
+            score = scoreCard(card);
+
+            // Apply Penalty for 2nd Cycle Card in Miner Decks
             if (hasMiner) {
-              const isCycleTroop = (c) => (c.elixirCost || 0) <= 2 && !getCardRole(c.name).includes('spell');
-              // Count current cycle troops
-              const currentCycleTroops = builderDeck.filter(isCycleTroop).length;
+              const isCycleTroop = (cName, cCost) => (cCost || 0) <= 2 && !getCardRole(cName).includes('spell');
+              const currentCycleTroops = builderDeck.filter(c => isCycleTroop(c.name, c.elixirCost)).length;
 
-              // Check candidate
-              if (isCycleTroop(card) && currentCycleTroops >= 1) {
-                // Apply penalty instead of skip
-                // Score is usually around 100-300 range.
-                // -200 should be enough to make it lose to a good Musketeer/Knight unless it's godly.
-                // If we have 2 already, strictly block 3rd.
-                if (currentCycleTroops >= 2) continue;
-
-                // Penalty for 2nd cycle card
-                // We'll modify the score inside the try/catch loop next to be safe, 
-                // OR just soft-skip here? 
-                // We can't easily modify score BEFORE the scoreCard function runs.
-                // So let's wrap the scoreCard call below.
+              if (currentCycleTroops >= 1 && isCycleTroop(card.name, card.elixirCost)) {
+                console.log(`Soft limiting 2nd cycle card: ${card.name}`);
+                score -= 250; // Significant penalty, but allows it if other synergies are huge (+1000)
               }
             }
-
-            let score = 0;
-            try {
-              score = scoreCard(card);
-
-              // Apply Penalty for 2nd Cycle Card in Miner Decks
-              if (hasMiner) {
-                const isCycleTroop = (cName, cCost) => (cCost || 0) <= 2 && !getCardRole(cName).includes('spell');
-                const currentCycleTroops = builderDeck.filter(c => isCycleTroop(c.name, c.elixirCost)).length;
-
-                if (currentCycleTroops >= 1 && isCycleTroop(card.name, card.elixirCost)) {
-                  console.log(`Soft limiting 2nd cycle card: ${card.name}`);
-                  score -= 250; // Significant penalty, but allows it if other synergies are huge (+1000)
-                }
-              }
-            } catch (err) {
-              console.error("Score Error", card.name, err);
-              score = -1000;
-            }
-
-            if (score > maxScore) {
-              maxScore = score;
-              best = card;
-            }
+          } catch (err) {
+            console.error("Score Error", card.name, err);
+            score = -1000;
           }
 
-          if (best) {
-            // STRICT DUPLICATE CHECK
-            if (builderDeck.some(c => c.name === best.name)) {
-              console.warn("Attempted to add duplicate:", best.name);
-            } else {
-              builderDeck.push(best);
-            }
-            try {
-              // Update UI incrementally, but don't crash if it fails
-              renderBuilderUI();
-              updateStats();
-            } catch (e) { console.log('UI Update error', e); }
+          if (score > maxScore) {
+            maxScore = score;
+            best = card;
+          }
+        }
+
+        if (best) {
+          // STRICT DUPLICATE CHECK
+          if (builderDeck.some(c => c.name === best.name)) {
+            console.warn("Attempted to add duplicate:", best.name);
           } else {
-            console.warn("No best card found. Available:", available.length);
-            break;
+            builderDeck.push(best);
           }
-
-          // Remove from pool
-          available = available.filter(c => c.name !== best.name);
-
-          // Card Add Delay
-          await new Promise(r => setTimeout(r, 400));
+          try {
+            // Update UI incrementally, but don't crash if it fails
+            renderBuilderUI();
+            updateStats();
+          } catch (e) { console.log('UI Update error', e); }
+        } else {
+          console.warn("No best card found. Available:", available.length);
+          break;
         }
 
-        // 3. Update History for Next Rotation
-        console.log("Deck Generation Complete. Updating History...");
-        builderDeck.forEach(c => previousDeckNames.add(c.name));
-        console.log("Blocked Cards for Next Run:", Array.from(previousDeckNames));
+        // Remove from pool
+        available = available.filter(c => c.name !== best.name);
 
-        aiStatus.textContent = 'Deck Generation Complete!';
-        autofillBtn.textContent = originalText;
-        autofillBtn.disabled = false;
-        autofillBtn.style.background = ''; // Reset color
+        // Card Add Delay
+        await new Promise(r => setTimeout(r, 400));
+      }
 
-        // --- Post-Processing: Slot Assignment ---
-        // Rule: Slot 1 (Index 0) and Slot 2 (Index 1) = Evolution Slots
-        // Champions often last.
+      // 3. Update History for Next Rotation
+      console.log("Deck Generation Complete. Updating History...");
+      builderDeck.forEach(c => previousDeckNames.add(c.name));
+      console.log("Blocked Cards for Next Run:", Array.from(previousDeckNames));
 
-        // 1. Gather all candidates that the player ACTUALLY has evolved
-        // STRICT CHECK: evolutionLevel must be > 0. Merely having an image isn't enough.
-        const evoCandidates = builderDeck.filter(c => (c.evolutionLevel || 0) > 0);
+      aiStatus.textContent = 'Deck Generation Complete!';
+      autofillBtn.textContent = originalText;
+      autofillBtn.disabled = false;
+      autofillBtn.style.background = ''; // Reset color
 
-        // Sort by level (highest first), then by arbitrary 'tier' preference if levels equal?
-        // For now, Levels are king.
-        evoCandidates.sort((a, b) => (b.level || 0) - (a.level || 0));
+      // --- Post-Processing: Slot Assignment ---
+      // Rule: Slot 1 (Index 0) and Slot 2 (Index 1) = Evolution Slots
+      // Champions often last.
 
-        // 2. Take top 2 available owned evos
-        const topEvos = evoCandidates.slice(0, 2);
+      // 1. Gather all candidates that the player ACTUALLY has evolved
+      // STRICT CHECK: evolutionLevel must be > 0. Merely having an image isn't enough.
+      const evoCandidates = builderDeck.filter(c => (c.evolutionLevel || 0) > 0);
 
-        // 3. Move them to front (Slot 0, Slot 1)
-        for (const evo of topEvos) {
-          const idx = builderDeck.indexOf(evo);
-          if (idx > -1) {
-            builderDeck.splice(idx, 1);
-            builderDeck.unshift(evo);
-          }
+      // Sort by level (highest first), then by arbitrary 'tier' preference if levels equal?
+      // For now, Levels are king.
+      evoCandidates.sort((a, b) => (b.level || 0) - (a.level || 0));
+
+      // 2. Take top 2 available owned evos
+      const topEvos = evoCandidates.slice(0, 2);
+
+      // 3. Move them to front (Slot 0, Slot 1)
+      for (const evo of topEvos) {
+        const idx = builderDeck.indexOf(evo);
+        if (idx > -1) {
+          builderDeck.splice(idx, 1);
+          builderDeck.unshift(evo);
         }
+      }
 
-        renderBuilderUI();
+      renderBuilderUI();
 
-        // SAVE CURRENT DECK TO PREVIOUS DECK LIST
-        previousDeckNames.clear();
-        builderDeck.forEach(c => previousDeckNames.add(c.name));
-        console.log("Next Run Banned List:", Array.from(previousDeckNames));
+      // SAVE CURRENT DECK TO PREVIOUS DECK LIST
+      previousDeckNames.clear();
+      builderDeck.forEach(c => previousDeckNames.add(c.name));
+      console.log("Next Run Banned List:", Array.from(previousDeckNames));
 
-        updateStats();
-        generateStrategyGuide(builderDeck);
+      updateStats();
+      generateStrategyGuide(builderDeck);
 
-        // 5. AUTO-VERIFY WITH DECKSHOP (Moved to end)
-        if (builderDeck.length === 8) {
-          (async () => {
-            // START NEW SESSION
-            if (typeof verifySessionId !== 'undefined') verifySessionId++;
-            const currentSession = typeof verifySessionId !== 'undefined' ? verifySessionId : 0;
+      // 5. AUTO-VERIFY WITH DECKSHOP (Moved to end)
+      if (builderDeck.length === 8) {
+        (async () => {
+          // START NEW SESSION
+          if (typeof verifySessionId !== 'undefined') verifySessionId++;
+          const currentSession = typeof verifySessionId !== 'undefined' ? verifySessionId : 0;
 
-            const checkResult = document.getElementById('deckCheckResult'); // Correct ID
-            if (!checkResult) return;
-            checkResult.style.display = 'block';
-            checkResult.innerHTML = '<div style="color:#f1c40f; text-align:center;">Verifying with DeckShop...</div>';
+          const checkResult = document.getElementById('deckCheckResult'); // Correct ID
+          if (!checkResult) return;
+          checkResult.style.display = 'block';
+          checkResult.innerHTML = '<div style="color:#f1c40f; text-align:center;">Verifying with DeckShop...</div>';
 
-            try {
-              const names = builderDeck.map(c => c.name);
-              const res = await fetch(`/api/check-deck?t=${Date.now()}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ deck: names })
-              });
+          try {
+            const names = builderDeck.map(c => c.name);
+            const res = await fetch(`/api/check-deck?t=${Date.now()}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ deck: names })
+            });
 
-              if (typeof verifySessionId !== 'undefined' && currentSession !== verifySessionId) return; // Stale
+            if (typeof verifySessionId !== 'undefined' && currentSession !== verifySessionId) return; // Stale
 
-              if (!res.ok) throw new Error("Server error");
-              const data = await res.json();
+            if (!res.ok) throw new Error("Server error");
+            const data = await res.json();
 
-              if (typeof verifySessionId !== 'undefined' && currentSession !== verifySessionId) return; // Stale
+            if (typeof verifySessionId !== 'undefined' && currentSession !== verifySessionId) return; // Stale
 
-              if (data.evaluation) {
-                let html = `<div style="text-align:center; margin-bottom:15px; font-weight:bold; color:#f1c40f; letter-spacing:1px;">VERIFIED WITH DECKSHOP.PRO</div>`;
-                html += `<div class="deck-grade-grid">`;
-                for (const [key, val] of Object.entries(data.evaluation)) {
-                  let color = '#95a5a6';
-                  let cleanVal = val.replace('Of', '');
-                  if (val.includes('Godly')) color = '#e74c3c';
-                  else if (val.includes('Great') || val.includes('Good')) color = '#2ecc71';
-                  else if (val.includes('Mediocre')) color = '#f1c40f';
-                  else if (val.includes('Bad')) color = '#7f8c8d';
+            if (data.evaluation) {
+              let html = `<div style="text-align:center; margin-bottom:15px; font-weight:bold; color:#f1c40f; letter-spacing:1px;">VERIFIED WITH DECKSHOP.PRO</div>`;
+              html += `<div class="deck-grade-grid">`;
+              for (const [key, val] of Object.entries(data.evaluation)) {
+                let color = '#95a5a6';
+                let cleanVal = val.replace('Of', '');
+                if (val.includes('Godly')) color = '#e74c3c';
+                else if (val.includes('Great') || val.includes('Good')) color = '#2ecc71';
+                else if (val.includes('Mediocre')) color = '#f1c40f';
+                else if (val.includes('Bad')) color = '#7f8c8d';
 
-                  html += `
+                html += `
                       <div class="grade-box">
                           <div class="grade-label">${key}</div>
                           <div class="grade-val" style="color:${color}">${cleanVal}</div>
                       </div>`;
-                }
-                html += `</div>`;
-                // NEW: Open Report Explicitly Button (Prevents auto-tab unwanted behavior)
-                html += `<div style="margin-top:20px; text-align:center;">
+              }
+              html += `</div>`;
+              // NEW: Open Report Explicitly Button (Prevents auto-tab unwanted behavior)
+              html += `<div style="margin-top:20px; text-align:center;">
                     <a href="${data.url}" target="_blank" class="action-btn" style="background:#2980b9; color:white; text-decoration:none; display:inline-block; padding:8px 16px; border-radius:4px;">
                       📄 Open Full Report (External)
                     </a>
                     <div style="font-size:10px; color:#aaa; margin-top:5px;">Opens validation on DeckShop.pro</div>
                 </div>`;
-                checkResult.innerHTML = html;
-              }
-            } catch (e) {
-              if (typeof verifySessionId !== 'undefined' && currentSession !== verifySessionId) return;
-              console.error("Auto-verify failed", e);
-              checkResult.innerHTML = `<div style="color:#e74c3c; text-align:center;">Verification failed: ${e.message}</div>`;
+              checkResult.innerHTML = html;
             }
-          })();
-        }
-
-        const autoBtn = document.getElementById('autofillBtn');
-        autoBtn.disabled = false;
-        autoBtn.textContent = "✨ Regenerate (Force New Cards)"; // Change text
-
-        document.getElementById('aiStatus').textContent = `Generation Complete!`;
-        aiStatus.textContent = 'Deck Generation Complete.';
-        autofillBtn.disabled = false;
-        autofillBtn.textContent = originalText;
-        autofillBtn.style.background = '#8e44ad';
-      }
-
-
-
-
-      // ENSURE IMPROVE BTN LOGIC IS ATTACHED SAFELY
-      // This wrapper ensures we override any previous listeners that might trigger "Weakness Check"
-      /* attachImproveLogic Removed */
-      const createNewBtn = document.getElementById('createNewBtn');
-
-      // Shared Helper to prepare Builder Mode
-      const ensureBuilderMode = () => {
-        if (!currentPlayerData) {
-          alert('Scan a player first!');
-          return false;
-        }
-        if (!isBuilderMode) toggleBuilderMode();
-
-        // Clear verification results
-        const deckCheckResult = document.getElementById('deckCheckResult');
-        if (deckCheckResult) {
-          deckCheckResult.style.display = 'none';
-          deckCheckResult.innerHTML = '';
-        }
-        return true;
-      };
-
-      // 1. CREATE NEW LOGIC (Full Rebuild)
-      if (createNewBtn) {
-        createNewBtn.addEventListener('click', () => {
-          if (!ensureBuilderMode()) return;
-
-          console.log("Create New: Wiping deck...");
-          // Save history
-          previousDeckNames.clear();
-          builderDeck.forEach(c => previousDeckNames.add(c.name));
-
-          builderDeck = []; // Wipe completely
-          renderBuilderUI();
-          aiStatus.textContent = 'Creating New Deck...';
-
-          // Small delay for UI update
-          setTimeout(() => runExpertAutofill(), 500);
-        });
-      }
-
-
-      // SUBSTITUTIONS LOGIC
-      const subBtn = document.getElementById('substitutionsBtn');
-      const subModal = document.getElementById('substitutionsModal');
-      const subGrid = document.getElementById('subsGrid');
-      const subSearch = document.getElementById('subSearch');
-
-      if (subBtn) {
-        // Show button when improve is shown (or whenever we have a deck)
-        // Ideally trigger this inside runImproveLogic, but we can just unhide it here if deck exists
-        // Observer removed (improveBtn deleted)
-
-        subBtn.onclick = () => {
-          if (!currentPlayerData) {
-            alert("Scan player first!");
-            return;
-          }
-
-          // FIX: Populate builderDeck if empty (e.g. fresh scan)
-          if (builderDeck.length === 0) {
-            console.log("Substitutions: builderDeck empty. Attempting recovery...");
-
-            // Attempt 1: From currentAppDeck (Set by renderDeck - Most Reliable)
-            if (window.currentAppDeck && window.currentAppDeck.length > 0) {
-              console.log("Substitutions: Recovering from currentAppDeck");
-              builderDeck = [...window.currentAppDeck];
-            }
-            // Attempt 2: From currentPlayerData
-            else {
-              const scannedDeck = extractCards(currentPlayerData);
-              if (scannedDeck.length > 0) {
-                console.log("Substitutions: Recovering from extractCards");
-                builderDeck = [...scannedDeck];
-              }
-              // Attempt 3: From DOM (Robust Fallback)
-              else if (document.querySelectorAll('#deckContainer .card-item').length > 0) {
-                console.log('Substitutions: Scraping deck from DOM before open...');
-                const cardItems = document.querySelectorAll('#deckContainer .card-item');
-                const scrapedDeck = [];
-                cardItems.forEach(el => {
-                  const nameEl = el.querySelector('.card-name');
-                  const name = nameEl ? nameEl.textContent : (el.querySelector('img')?.alt || "");
-                  if (name) {
-                    let fullCard = null;
-                    if (currentPlayerData && currentPlayerData.cards) {
-                      fullCard = currentPlayerData.cards.find(c => c.name === name);
-                    }
-                    if (!fullCard) {
-                      fullCard = {
-                        name: name,
-                        elixirCost: 3,
-                        iconUrls: { medium: el.querySelector('img')?.src || '' }
-                      };
-                    }
-                    scrapedDeck.push(fullCard);
-                  }
-                });
-                if (scrapedDeck.length > 0) builderDeck = scrapedDeck;
-              }
-            }
-
-            if (builderDeck.length > 0) {
-              console.log("Substitutions: Deck successfully populated. Length:", builderDeck.length);
-              renderBuilderUI();
-            } else {
-              console.error("Substitutions: Critical Error - Could not populate builderDeck");
-              alert("Error: Could not read deck. Please try scanning the player again.");
-            }
-          }
-
-          subModal.style.display = 'flex';
-          renderSubPicker();
-        };
-
-        subSearch.addEventListener('input', (e) => {
-          renderSubPicker(e.target.value);
-        });
-      }
-
-      const smartRefreshBtn = document.getElementById('smartRefreshBtn');
-      if (smartRefreshBtn) {
-        // Updated Observer to ensure it stays visible if needed, but we also manually show it in renderPlayer
-        // Observer removed (improveBtn deleted)
-
-        smartRefreshBtn.onclick = async () => {
-          // Feature: Support running on current deck if builderDeck is empty
-          if (builderDeck.length === 0 && currentPlayerData) {
-            const deck = extractCards(currentPlayerData);
-            if (deck.length > 0) {
-              builderDeck = [...deck];
-              // Switch to builder mode visually so the transition makes sense
-              if (!isBuilderMode) {
-                toggleBuilderMode();
-              }
-              renderBuilderUI();
-            }
-          }
-
-          if (builderDeck.length === 0) { alert("Deck is empty!"); return; }
-
-          // 1. Score all cards to find the "Core"
-          const scored = builderDeck.map(c => {
-            let s = META_QUALITY[c.name] || 50;
-            const role = getCardRole(c.name);
-            // PRIORITIZE CORE: WinCon (+50), Champion (+40), Evolution (+30)
-            if (role.includes('winCon')) s += 50;
-            if (c.rarity === 'champion') s += 40;
-            if ((c.evolutionLevel || 0) > 0) s += 30;
-            // Penalty for tiny spells (usually replaceable)
-            if (role.includes('spellSmall')) s -= 10;
-
-            return { card: c, score: s };
-          });
-
-          // 2. Sort DESC
-          scored.sort((a, b) => b.score - a.score);
-
-          // 3. Keep Top 4 (Smart Filter)
-          const kept = [];
-          let counts = { miniTank: 0, winCon: 0, building: 0 };
-
-          for (const item of scored) {
-            if (kept.length >= 4) break;
-            const c = item.card;
-            const roles = getCardRole(c.name);
-
-            // Enforce Diversity in the Core
-            let skip = false;
-
-            if (roles.includes('miniTank')) {
-              if (counts.miniTank >= 1) skip = true; // Only keep 1 Core Mini Tank
-            }
-            if (roles.includes('winCon')) {
-              // Exception: Miner + Wall Breakers allows 2
-              if (counts.winCon >= 1) skip = true;
-            }
-            if (roles.includes('building')) {
-              if (counts.building >= 1) skip = true;
-            }
-
-            if (!skip) {
-              kept.push(c);
-              if (roles.includes('miniTank')) counts.miniTank++;
-              if (roles.includes('winCon')) counts.winCon++;
-              if (roles.includes('building')) counts.building++;
-            }
-          }
-
-          // Fallback: If aggressive filtering resulted in < 4 cards, fill with next best regardless (safety net)
-          if (kept.length < 4) {
-            for (const item of scored) {
-              if (kept.length >= 4) break;
-              if (!kept.some(k => k.name === item.card.name)) {
-                kept.push(item.card);
-              }
-            }
-          }
-
-          // 4. Update Deck
-          builderDeck = kept;
-          renderBuilderUI();
-
-          // 5. Fill the rest
-          const originalText = smartRefreshBtn.textContent;
-          smartRefreshBtn.textContent = "Refilling...";
-          smartRefreshBtn.disabled = true;
-
-          // Trigger Autofill
-          try {
-            await runExpertAutofill();
           } catch (e) {
-            console.error("Smart Refresh Error:", e);
-            alert("Error refilling deck. See console.");
+            if (typeof verifySessionId !== 'undefined' && currentSession !== verifySessionId) return;
+            console.error("Auto-verify failed", e);
+            checkResult.innerHTML = `<div style="color:#e74c3c; text-align:center;">Verification failed: ${e.message}</div>`;
           }
-
-          smartRefreshBtn.textContent = originalText;
-          smartRefreshBtn.disabled = false;
-        };
+        })();
       }
 
-      function renderSubPicker(filter = '') {
-        subGrid.innerHTML = '';
-        // Fix: Add spacing via inline style if class fails
-        subGrid.style.display = 'grid';
-        subGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(80px, 1fr))';
-        subGrid.style.gap = '15px';
-        subGrid.style.padding = '10px';
+      const autoBtn = document.getElementById('autofillBtn');
+      autoBtn.disabled = false;
+      autoBtn.textContent = "✨ Regenerate (Force New Cards)"; // Change text
 
-        // Get cards NOT in deck
-        const currentNames = builderDeck.map(c => c.name.trim());
-        // Debug:
-        console.log("Current Deck for Substitutions:", currentNames);
+      document.getElementById('aiStatus').textContent = `Generation Complete!`;
+      aiStatus.textContent = 'Deck Generation Complete.';
+      autofillBtn.disabled = false;
+      autofillBtn.textContent = originalText;
+      autofillBtn.style.background = '#8e44ad';
+    }
 
-        // FIX: PREFER FULL COLLECTION (data.cards) OVER extractCards(which privileges currentDeck)
-        let sourceCards = [];
-        if (currentPlayerData && Array.isArray(currentPlayerData.cards)) {
-          sourceCards = currentPlayerData.cards;
-        } else {
-          sourceCards = extractCards(currentPlayerData);
-        }
 
-        let pool = sourceCards.filter(c => !currentNames.includes(c.name.trim()));
 
-        if (filter) {
-          const lower = filter.toLowerCase();
-          pool = pool.filter(c => c.name.toLowerCase().includes(lower));
-        }
 
-        // Sort by Level (Desc) then Rarity
-        pool.sort((a, b) => normalizeLevel(b) - normalizeLevel(a));
+    // ENSURE IMPROVE BTN LOGIC IS ATTACHED SAFELY
+    // This wrapper ensures we override any previous listeners that might trigger "Weakness Check"
+    /* attachImproveLogic Removed */
+    const createNewBtn = document.getElementById('createNewBtn');
 
-        if (pool.length === 0) {
-          subGrid.innerHTML = '<p style="color:#aaa; text-align:center;">No cards found.</p>';
+    // Shared Helper to prepare Builder Mode
+    const ensureBuilderMode = () => {
+      if (!currentPlayerData) {
+        alert('Scan a player first!');
+        return false;
+      }
+      if (!isBuilderMode) toggleBuilderMode();
+
+      // Clear verification results
+      const deckCheckResult = document.getElementById('deckCheckResult');
+      if (deckCheckResult) {
+        deckCheckResult.style.display = 'none';
+        deckCheckResult.innerHTML = '';
+      }
+      return true;
+    };
+
+    // 1. CREATE NEW LOGIC (Full Rebuild)
+    if (createNewBtn) {
+      createNewBtn.addEventListener('click', () => {
+        if (!ensureBuilderMode()) return;
+
+        console.log("Create New: Wiping deck...");
+        // Save history
+        previousDeckNames.clear();
+        builderDeck.forEach(c => previousDeckNames.add(c.name));
+
+        builderDeck = []; // Wipe completely
+        renderBuilderUI();
+        aiStatus.textContent = 'Creating New Deck...';
+
+        // Small delay for UI update
+        setTimeout(() => runExpertAutofill(), 500);
+      });
+    }
+
+
+    // SUBSTITUTIONS LOGIC
+    const subBtn = document.getElementById('substitutionsBtn');
+    const subModal = document.getElementById('substitutionsModal');
+    const subGrid = document.getElementById('subsGrid');
+    const subSearch = document.getElementById('subSearch');
+
+    if (subBtn) {
+      // Show button when improve is shown (or whenever we have a deck)
+      // Ideally trigger this inside runImproveLogic, but we can just unhide it here if deck exists
+      // Observer removed (improveBtn deleted)
+
+      subBtn.onclick = () => {
+        if (!currentPlayerData) {
+          alert("Scan player first!");
           return;
         }
 
-        pool.forEach(card => {
-          // FIX: Inline card creation with EXPLICIT CLICKABILITY STYLES
-          const wrapper = document.createElement('div');
-          wrapper.style.position = 'relative';
-          wrapper.style.display = 'inline-block';
-          wrapper.style.cursor = 'pointer';
-          wrapper.style.transform = 'scale(0.95)';
-          wrapper.style.zIndex = '2002'; // Force on top of modal
-          wrapper.style.pointerEvents = 'auto'; // Force click capture
-          wrapper.style.margin = '6px';
-          wrapper.style.border = '2px solid transparent';
-          wrapper.style.borderRadius = '8px';
-          wrapper.style.transition = 'all 0.2s';
+        // FIX: Populate builderDeck if empty (e.g. fresh scan)
+        if (builderDeck.length === 0) {
+          console.log("Substitutions: builderDeck empty. Attempting recovery...");
 
-          // Hover effect for visual confirmation
-          wrapper.onmouseenter = () => {
-            wrapper.style.borderColor = '#ffd700';
-            wrapper.style.transform = 'scale(1.05)';
-            wrapper.style.boxShadow = '0 0 10px rgba(255, 215, 0, 0.4)';
-          };
-          wrapper.onmouseleave = () => {
-            wrapper.style.borderColor = 'transparent';
-            wrapper.style.transform = 'scale(0.95)';
-            wrapper.style.boxShadow = 'none';
-          };
-
-          // Image
-          const img = document.createElement('img');
-          img.src = card.iconUrls?.medium || card.iconUrls; // Handle both formats
-          img.className = 'picker-card';
-          img.style.width = '85px'; // Slightly larger for easier clicking
-          img.style.display = 'block';
-          img.style.pointerEvents = 'none'; // FIX: Ensure clicks pass to wrapper
-
-          // Click Handler on Wrapper to be safe
-          wrapper.onclick = (e) => {
-            e.stopPropagation();
-            e.preventDefault(); // Stop any weird default behavior
-            console.log("Substitution Clicked:", card.name);
-            try {
-              suggestRemoval(card);
-            } catch (err) {
-              console.error("Critical Click Error:", err);
-              alert("Error: " + err.message);
+          // Attempt 1: From currentAppDeck (Set by renderDeck - Most Reliable)
+          if (window.currentAppDeck && window.currentAppDeck.length > 0) {
+            console.log("Substitutions: Recovering from currentAppDeck");
+            builderDeck = [...window.currentAppDeck];
+          }
+          // Attempt 2: From currentPlayerData
+          else {
+            const scannedDeck = extractCards(currentPlayerData);
+            if (scannedDeck.length > 0) {
+              console.log("Substitutions: Recovering from extractCards");
+              builderDeck = [...scannedDeck];
             }
-          };
-
-          // Level Badge
-          const badge = document.createElement('div');
-          badge.textContent = normalizeLevel(card);
-          badge.style.position = 'absolute';
-          badge.style.bottom = '2px';
-          badge.style.right = '2px';
-          badge.style.background = 'rgba(0,0,0,0.8)';
-          badge.style.color = '#f1c40f';
-          badge.style.fontSize = '10px';
-          badge.style.padding = '1px 3px';
-          badge.style.borderRadius = '4px';
-          badge.style.pointerEvents = 'none'; // FIX: Ensure clicks pass to wrapper
-
-          wrapper.appendChild(img);
-          wrapper.appendChild(badge);
-          subGrid.appendChild(wrapper);
-        });
-
-      }
-
-      function suggestRemoval(newCard) {
-        try {
-          // AI LOGIC: Find best candidate to remove
-          // 1. Check Role Conflicts (Win Con for Win Con, Spell for Spell)
-          // 2. Check Elixir Cost (keep average similar)
-          // 3. Check Meta Quality (remove lowest quality)
-
-          // FIX: Robustly ensure builderDeck is populated
-          if (!builderDeck || builderDeck.length === 0) {
-            // Attempt 1: Use window.currentAppDeck (set by renderDeck)
-            if (window.currentAppDeck && window.currentAppDeck.length > 0) {
-              console.log("SuggestRemoval: Recovering deck from currentAppDeck...");
-              builderDeck = [...window.currentAppDeck];
-              renderBuilderUI();
-            }
-            // Attempt 2: Use currentPlayerData.currentDeck
-            else if (currentPlayerData && currentPlayerData.currentDeck && currentPlayerData.currentDeck.length > 0) {
-              console.log("SuggestRemoval: Recovering deck from player profile...");
-              builderDeck = [...currentPlayerData.currentDeck];
-              renderBuilderUI();
-            }
-            // Attempt 3: SCRAPE FROM DOM (Last Resort) - NOTE: Might be empty if modal is open unique-view
-            else {
-              console.log("SuggestRemoval: Global state empty. DOM scraping might fail here if modal is open.");
-              const cardItems = document.querySelectorAll('#deckContainer .card-item'); // Assuming .card-item class from deck render
-              if (cardItems.length > 0) {
-                const scrapedDeck = [];
-                cardItems.forEach(el => {
-                  const nameEl = el.querySelector('.card-name'); // Assuming renderDeck creates this
-                  // Or try the title attribute/img alt
-                  let name = "";
-                  if (nameEl) name = nameEl.textContent;
-                  else {
-                    const img = el.querySelector('img');
-                    if (img) name = img.alt;
+            // Attempt 3: From DOM (Robust Fallback)
+            else if (document.querySelectorAll('#deckContainer .card-item').length > 0) {
+              console.log('Substitutions: Scraping deck from DOM before open...');
+              const cardItems = document.querySelectorAll('#deckContainer .card-item');
+              const scrapedDeck = [];
+              cardItems.forEach(el => {
+                const nameEl = el.querySelector('.card-name');
+                const name = nameEl ? nameEl.textContent : (el.querySelector('img')?.alt || "");
+                if (name) {
+                  let fullCard = null;
+                  if (currentPlayerData && currentPlayerData.cards) {
+                    fullCard = currentPlayerData.cards.find(c => c.name === name);
                   }
-
-                  if (name) {
-                    // Create a skeletal card object
-                    // Try to find full data from cards collection if possible
-                    let fullCard = null;
-                    if (currentPlayerData && currentPlayerData.cards) {
-                      fullCard = currentPlayerData.cards.find(c => c.name === name);
-                    }
-                    if (!fullCard) {
-                      // Fallback skeleton
-                      fullCard = {
-                        name: name,
-                        elixirCost: 3, // Default dummy
-                        iconUrls: { medium: el.querySelector('img')?.src || '' }
-                      };
-                    }
-                    scrapedDeck.push(fullCard);
+                  if (!fullCard) {
+                    fullCard = {
+                      name: name,
+                      elixirCost: 3,
+                      iconUrls: { medium: el.querySelector('img')?.src || '' }
+                    };
                   }
-                });
-
-                if (scrapedDeck.length > 0) {
-                  builderDeck = scrapedDeck;
-                  renderBuilderUI(); // Should now be populated
+                  scrapedDeck.push(fullCard);
                 }
-              }
+              });
+              if (scrapedDeck.length > 0) builderDeck = scrapedDeck;
             }
           }
 
-          if (!builderDeck || builderDeck.length === 0) {
-            alert("Your deck is empty! Just adding the card.");
+          if (builderDeck.length > 0) {
+            console.log("Substitutions: Deck successfully populated. Length:", builderDeck.length);
+            renderBuilderUI();
+          } else {
+            console.error("Substitutions: Critical Error - Could not populate builderDeck");
+            alert("Error: Could not read deck. Please try scanning the player again.");
+          }
+        }
+
+        subModal.style.display = 'flex';
+        renderSubPicker();
+      };
+
+      subSearch.addEventListener('input', (e) => {
+        renderSubPicker(e.target.value);
+      });
+    }
+
+    const smartRefreshBtn = document.getElementById('smartRefreshBtn');
+    if (smartRefreshBtn) {
+      // Updated Observer to ensure it stays visible if needed, but we also manually show it in renderPlayer
+      // Observer removed (improveBtn deleted)
+
+      smartRefreshBtn.onclick = async () => {
+        // Feature: Support running on current deck if builderDeck is empty
+        if (builderDeck.length === 0 && currentPlayerData) {
+          const deck = extractCards(currentPlayerData);
+          if (deck.length > 0) {
+            builderDeck = [...deck];
+            // Switch to builder mode visually so the transition makes sense
+            if (!isBuilderMode) {
+              toggleBuilderMode();
+            }
+            renderBuilderUI();
+          }
+        }
+
+        if (builderDeck.length === 0) { alert("Deck is empty!"); return; }
+
+        // 1. Score all cards to find the "Core"
+        const scored = builderDeck.map(c => {
+          let s = META_QUALITY[c.name] || 50;
+          const role = getCardRole(c.name);
+          // PRIORITIZE CORE: WinCon (+50), Champion (+40), Evolution (+30)
+          if (role.includes('winCon')) s += 50;
+          if (c.rarity === 'champion') s += 40;
+          if ((c.evolutionLevel || 0) > 0) s += 30;
+          // Penalty for tiny spells (usually replaceable)
+          if (role.includes('spellSmall')) s -= 10;
+
+          return { card: c, score: s };
+        });
+
+        // 2. Sort DESC
+        scored.sort((a, b) => b.score - a.score);
+
+        // 3. Keep Top 4 (Smart Filter)
+        const kept = [];
+        let counts = { miniTank: 0, winCon: 0, building: 0 };
+
+        for (const item of scored) {
+          if (kept.length >= 4) break;
+          const c = item.card;
+          const roles = getCardRole(c.name);
+
+          // Enforce Diversity in the Core
+          let skip = false;
+
+          if (roles.includes('miniTank')) {
+            if (counts.miniTank >= 1) skip = true; // Only keep 1 Core Mini Tank
+          }
+          if (roles.includes('winCon')) {
+            // Exception: Miner + Wall Breakers allows 2
+            if (counts.winCon >= 1) skip = true;
+          }
+          if (roles.includes('building')) {
+            if (counts.building >= 1) skip = true;
+          }
+
+          if (!skip) {
+            kept.push(c);
+            if (roles.includes('miniTank')) counts.miniTank++;
+            if (roles.includes('winCon')) counts.winCon++;
+            if (roles.includes('building')) counts.building++;
+          }
+        }
+
+        // Fallback: If aggressive filtering resulted in < 4 cards, fill with next best regardless (safety net)
+        if (kept.length < 4) {
+          for (const item of scored) {
+            if (kept.length >= 4) break;
+            if (!kept.some(k => k.name === item.card.name)) {
+              kept.push(item.card);
+            }
+          }
+        }
+
+        // 4. Update Deck
+        builderDeck = kept;
+        renderBuilderUI();
+
+        // 5. Fill the rest
+        const originalText = smartRefreshBtn.textContent;
+        smartRefreshBtn.textContent = "Refilling...";
+        smartRefreshBtn.disabled = true;
+
+        // Trigger Autofill
+        try {
+          await runExpertAutofill();
+        } catch (e) {
+          console.error("Smart Refresh Error:", e);
+          alert("Error refilling deck. See console.");
+        }
+
+        smartRefreshBtn.textContent = originalText;
+        smartRefreshBtn.disabled = false;
+      };
+    }
+
+    function renderSubPicker(filter = '') {
+      subGrid.innerHTML = '';
+      // Fix: Add spacing via inline style if class fails
+      subGrid.style.display = 'grid';
+      subGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(80px, 1fr))';
+      subGrid.style.gap = '15px';
+      subGrid.style.padding = '10px';
+
+      // Get cards NOT in deck
+      const currentNames = builderDeck.map(c => c.name.trim());
+      // Debug:
+      console.log("Current Deck for Substitutions:", currentNames);
+
+      // FIX: PREFER FULL COLLECTION (data.cards) OVER extractCards(which privileges currentDeck)
+      let sourceCards = [];
+      if (currentPlayerData && Array.isArray(currentPlayerData.cards)) {
+        sourceCards = currentPlayerData.cards;
+      } else {
+        sourceCards = extractCards(currentPlayerData);
+      }
+
+      let pool = sourceCards.filter(c => !currentNames.includes(c.name.trim()));
+
+      if (filter) {
+        const lower = filter.toLowerCase();
+        pool = pool.filter(c => c.name.toLowerCase().includes(lower));
+      }
+
+      // Sort by Level (Desc) then Rarity
+      pool.sort((a, b) => normalizeLevel(b) - normalizeLevel(a));
+
+      if (pool.length === 0) {
+        subGrid.innerHTML = '<p style="color:#aaa; text-align:center;">No cards found.</p>';
+        return;
+      }
+
+      pool.forEach(card => {
+        // FIX: Inline card creation with EXPLICIT CLICKABILITY STYLES
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'relative';
+        wrapper.style.display = 'inline-block';
+        wrapper.style.cursor = 'pointer';
+        wrapper.style.transform = 'scale(0.95)';
+        wrapper.style.zIndex = '2002'; // Force on top of modal
+        wrapper.style.pointerEvents = 'auto'; // Force click capture
+        wrapper.style.margin = '6px';
+        wrapper.style.border = '2px solid transparent';
+        wrapper.style.borderRadius = '8px';
+        wrapper.style.transition = 'all 0.2s';
+
+        // Hover effect for visual confirmation
+        wrapper.onmouseenter = () => {
+          wrapper.style.borderColor = '#ffd700';
+          wrapper.style.transform = 'scale(1.05)';
+          wrapper.style.boxShadow = '0 0 10px rgba(255, 215, 0, 0.4)';
+        };
+        wrapper.onmouseleave = () => {
+          wrapper.style.borderColor = 'transparent';
+          wrapper.style.transform = 'scale(0.95)';
+          wrapper.style.boxShadow = 'none';
+        };
+
+        // Image
+        const img = document.createElement('img');
+        img.src = card.iconUrls?.medium || card.iconUrls; // Handle both formats
+        img.className = 'picker-card';
+        img.style.width = '85px'; // Slightly larger for easier clicking
+        img.style.display = 'block';
+        img.style.pointerEvents = 'none'; // FIX: Ensure clicks pass to wrapper
+
+        // Click Handler on Wrapper to be safe
+        wrapper.onclick = (e) => {
+          e.stopPropagation();
+          e.preventDefault(); // Stop any weird default behavior
+          console.log("Substitution Clicked:", card.name);
+          try {
+            suggestRemoval(card);
+          } catch (err) {
+            console.error("Critical Click Error:", err);
+            alert("Error: " + err.message);
+          }
+        };
+
+        // Level Badge
+        const badge = document.createElement('div');
+        badge.textContent = normalizeLevel(card);
+        badge.style.position = 'absolute';
+        badge.style.bottom = '2px';
+        badge.style.right = '2px';
+        badge.style.background = 'rgba(0,0,0,0.8)';
+        badge.style.color = '#f1c40f';
+        badge.style.fontSize = '10px';
+        badge.style.padding = '1px 3px';
+        badge.style.borderRadius = '4px';
+        badge.style.pointerEvents = 'none'; // FIX: Ensure clicks pass to wrapper
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(badge);
+        subGrid.appendChild(wrapper);
+      });
+
+    }
+
+    function suggestRemoval(newCard) {
+      try {
+        // AI LOGIC: Find best candidate to remove
+        // 1. Check Role Conflicts (Win Con for Win Con, Spell for Spell)
+        // 2. Check Elixir Cost (keep average similar)
+        // 3. Check Meta Quality (remove lowest quality)
+
+        // FIX: Robustly ensure builderDeck is populated
+        if (!builderDeck || builderDeck.length === 0) {
+          // Attempt 1: Use window.currentAppDeck (set by renderDeck)
+          if (window.currentAppDeck && window.currentAppDeck.length > 0) {
+            console.log("SuggestRemoval: Recovering deck from currentAppDeck...");
+            builderDeck = [...window.currentAppDeck];
+            renderBuilderUI();
+          }
+          // Attempt 2: Use currentPlayerData.currentDeck
+          else if (currentPlayerData && currentPlayerData.currentDeck && currentPlayerData.currentDeck.length > 0) {
+            console.log("SuggestRemoval: Recovering deck from player profile...");
+            builderDeck = [...currentPlayerData.currentDeck];
+            renderBuilderUI();
+          }
+          // Attempt 3: SCRAPE FROM DOM (Last Resort) - NOTE: Might be empty if modal is open unique-view
+          else {
+            console.log("SuggestRemoval: Global state empty. DOM scraping might fail here if modal is open.");
+            const cardItems = document.querySelectorAll('#deckContainer .card-item'); // Assuming .card-item class from deck render
+            if (cardItems.length > 0) {
+              const scrapedDeck = [];
+              cardItems.forEach(el => {
+                const nameEl = el.querySelector('.card-name'); // Assuming renderDeck creates this
+                // Or try the title attribute/img alt
+                let name = "";
+                if (nameEl) name = nameEl.textContent;
+                else {
+                  const img = el.querySelector('img');
+                  if (img) name = img.alt;
+                }
+
+                if (name) {
+                  // Create a skeletal card object
+                  // Try to find full data from cards collection if possible
+                  let fullCard = null;
+                  if (currentPlayerData && currentPlayerData.cards) {
+                    fullCard = currentPlayerData.cards.find(c => c.name === name);
+                  }
+                  if (!fullCard) {
+                    // Fallback skeleton
+                    fullCard = {
+                      name: name,
+                      elixirCost: 3, // Default dummy
+                      iconUrls: { medium: el.querySelector('img')?.src || '' }
+                    };
+                  }
+                  scrapedDeck.push(fullCard);
+                }
+              });
+
+              if (scrapedDeck.length > 0) {
+                builderDeck = scrapedDeck;
+                renderBuilderUI(); // Should now be populated
+              }
+            }
+          }
+        }
+
+        if (!builderDeck || builderDeck.length === 0) {
+          alert("Your deck is empty! Just adding the card.");
+          builderDeck.push(newCard);
+          renderBuilderUI();
+          subModal.style.display = 'none';
+          return;
+        }
+
+        const newRole = getCardRole(newCard.name);
+        let bestRemove = null;
+        let highestScore = -Infinity;
+
+        builderDeck.forEach(existing => {
+          let score = 0;
+          const existingRole = getCardRole(existing.name);
+
+          // 1. ROLE MATCHING (High Priority)
+          if (newRole.includes('winCon') && existingRole.includes('winCon')) score += 50;
+          if (newRole.includes('spellBig') && existingRole.includes('spellBig')) score += 50;
+          if (newRole.includes('spellSmall') && existingRole.includes('spellSmall')) score += 40;
+          if (newRole.includes('building') && existingRole.includes('building')) score += 30;
+          if (newRole.includes('miniTank') && existingRole.includes('miniTank')) score += 35; // Added Mini Tank logic
+
+          // 2. COST SIMILARITY
+          const costDiff = Math.abs((newCard.elixirCost || 3) - (existing.elixirCost || 3));
+          if (costDiff === 0) score += 20;
+          if (costDiff === 1) score += 10;
+
+          // 3. META TIER (Remove bad cards)
+          // If existing card is low tier, we prefer removing it
+          const quality = META_QUALITY[existing.name] || 50;
+          score -= (quality * 0.2); // Higher quality = lower score to remove
+
+          if (score > highestScore) {
+            highestScore = score;
+            bestRemove = existing;
+          }
+        });
+
+        // Confirm Swap
+        if (bestRemove) {
+          const reason = getSwapReason(newCard, bestRemove);
+          if (confirm(`To add ${newCard.name}, the AI suggests removing ${bestRemove.name}.\n\nReason: ${reason}\n\nProceed?`)) {
+            // Apply Swap
+            builderDeck = builderDeck.filter(c => c.name !== bestRemove.name);
             builderDeck.push(newCard);
             renderBuilderUI();
+            updateStats(); // Update stats immediately
             subModal.style.display = 'none';
-            return;
+
+            // Trigger auto-verify update
+            setTimeout(() => {
+              const deckCheckResult = document.getElementById('deckCheckResult');
+              if (deckCheckResult) deckCheckResult.style.display = 'none'; // reset previous check
+            }, 100);
           }
-
-          const newRole = getCardRole(newCard.name);
-          let bestRemove = null;
-          let highestScore = -Infinity;
-
-          builderDeck.forEach(existing => {
-            let score = 0;
-            const existingRole = getCardRole(existing.name);
-
-            // 1. ROLE MATCHING (High Priority)
-            if (newRole.includes('winCon') && existingRole.includes('winCon')) score += 50;
-            if (newRole.includes('spellBig') && existingRole.includes('spellBig')) score += 50;
-            if (newRole.includes('spellSmall') && existingRole.includes('spellSmall')) score += 40;
-            if (newRole.includes('building') && existingRole.includes('building')) score += 30;
-            if (newRole.includes('miniTank') && existingRole.includes('miniTank')) score += 35; // Added Mini Tank logic
-
-            // 2. COST SIMILARITY
-            const costDiff = Math.abs((newCard.elixirCost || 3) - (existing.elixirCost || 3));
-            if (costDiff === 0) score += 20;
-            if (costDiff === 1) score += 10;
-
-            // 3. META TIER (Remove bad cards)
-            // If existing card is low tier, we prefer removing it
-            const quality = META_QUALITY[existing.name] || 50;
-            score -= (quality * 0.2); // Higher quality = lower score to remove
-
-            if (score > highestScore) {
-              highestScore = score;
-              bestRemove = existing;
-            }
-          });
-
-          // Confirm Swap
-          if (bestRemove) {
-            const reason = getSwapReason(newCard, bestRemove);
-            if (confirm(`To add ${newCard.name}, the AI suggests removing ${bestRemove.name}.\n\nReason: ${reason}\n\nProceed?`)) {
-              // Apply Swap
-              builderDeck = builderDeck.filter(c => c.name !== bestRemove.name);
-              builderDeck.push(newCard);
-              renderBuilderUI();
-              updateStats(); // Update stats immediately
-              subModal.style.display = 'none';
-
-              // Trigger auto-verify update
-              setTimeout(() => {
-                const deckCheckResult = document.getElementById('deckCheckResult');
-                if (deckCheckResult) deckCheckResult.style.display = 'none'; // reset previous check
-              }, 100);
-            }
-          } else {
-            alert("Could not determine a good swap. Deck might be full or inconsistent.");
-          }
-        } catch (err) {
-          console.error("Error in suggestRemoval:", err);
-          alert("An error occurred while suggesting a swap. Check console for details.");
+        } else {
+          alert("Could not determine a good swap. Deck might be full or inconsistent.");
         }
+      } catch (err) {
+        console.error("Error in suggestRemoval:", err);
+        alert("An error occurred while suggesting a swap. Check console for details.");
       }
+    }
 
-      function getSwapReason(newC, oldC) {
-        const newR = getCardRole(newC.name);
-        const oldR = getCardRole(oldC.name); // FIXED: Was using undefined 'oldR' in previous thought? No, logic was just using 'spell' generic
+    function getSwapReason(newC, oldC) {
+      const newR = getCardRole(newC.name);
+      const oldR = getCardRole(oldC.name); // FIXED: Was using undefined 'oldR' in previous thought? No, logic was just using 'spell' generic
 
-        if (newR.includes('winCon') && oldR.includes('winCon')) return "Swapping Win Conditions to maintain deck structure.";
-        if ((newR.includes('spellBig') || newR.includes('spellSmall')) && (oldR.includes('spellBig') || oldR.includes('spellSmall'))) return "Swapping Spells to balance splash/damage.";
-        if (newR.includes('miniTank') && oldR.includes('miniTank')) return "Swapping Mini Tanks to maintain defense.";
-        if (newR.includes('building') && oldR.includes('building')) return "Swapping Buildings.";
+      if (newR.includes('winCon') && oldR.includes('winCon')) return "Swapping Win Conditions to maintain deck structure.";
+      if ((newR.includes('spellBig') || newR.includes('spellSmall')) && (oldR.includes('spellBig') || oldR.includes('spellSmall'))) return "Swapping Spells to balance splash/damage.";
+      if (newR.includes('miniTank') && oldR.includes('miniTank')) return "Swapping Mini Tanks to maintain defense.";
+      if (newR.includes('building') && oldR.includes('building')) return "Swapping Buildings.";
 
-        if (Math.abs((newC.elixirCost || 0) - (oldC.elixirCost || 0)) <= 1) return `Similar elixir cost (${oldC.elixirCost || '?'} vs ${newC.elixirCost || '?'}) to maintain cycle.`;
-        return "This balances your deck's stats and card roles.";
-      }
+      if (Math.abs((newC.elixirCost || 0) - (oldC.elixirCost || 0)) <= 1) return `Similar elixir cost (${oldC.elixirCost || '?'} vs ${newC.elixirCost || '?'}) to maintain cycle.`;
+      return "This balances your deck's stats and card roles.";
+    }
 
 
 
-      // REGENERATE BUTTON HANDLER (Fix for "Same Cards" bug)
-      // The button needs to CLEAR the deck (keeping the Captain) before autofilling.
-      const autoBtn = document.getElementById('autofillBtn');
-      if (autoBtn) {
-        autoBtn.addEventListener('click', () => {
-          // If deck is full, we are in "Regenerate" mode
-          if (builderDeck.length >= 8) {
-            console.log("REGENERATE MODE: Clearing deck for variety...");
+    // REGENERATE BUTTON HANDLER (Fix for "Same Cards" bug)
+    // The button needs to CLEAR the deck (keeping the Captain) before autofilling.
+    const autoBtn = document.getElementById('autofillBtn');
+    if (autoBtn) {
+      autoBtn.addEventListener('click', () => {
+        // If deck is full, we are in "Regenerate" mode
+        if (builderDeck.length >= 8) {
+          console.log("REGENERATE MODE: Clearing deck for variety...");
 
-            // CRITICAL FIX: Snapshot current deck to force variety!
-            previousDeckNames.clear();
-            builderDeck.forEach(c => previousDeckNames.add(c.name));
-            console.log("Banishing Current Cards:", Array.from(previousDeckNames));
+          // CRITICAL FIX: Snapshot current deck to force variety!
+          previousDeckNames.clear();
+          builderDeck.forEach(c => previousDeckNames.add(c.name));
+          console.log("Banishing Current Cards:", Array.from(previousDeckNames));
 
-            // 0. FORCED PLAYSTYLE START (The "Captain" Rule)
-            // CRITICAL FIX: Only force the MAIN CAPTAIN (Win Condition), not the entire support crew.
-            // Previously, this loop was forced-adding "Knight", "Poison", etc. bypassing the variety logic.
+          // 0. FORCED PLAYSTYLE START (The "Captain" Rule)
+          // CRITICAL FIX: Only force the MAIN CAPTAIN (Win Condition), not the entire support crew.
+          // Previously, this loop was forced-adding "Knight", "Poison", etc. bypassing the variety logic.
 
-            let captainName = null;
-            if (selectedPlaystyle === 'miner') captainName = 'Miner';
-            else if (selectedPlaystyle === 'hog') captainName = 'Hog Rider';
-            else if (selectedPlaystyle === 'graveyard') captainName = 'Graveyard';
-            else if (selectedPlaystyle === 'golem') captainName = 'Golem';
-            else if (selectedPlaystyle === 'lava') captainName = 'Lava Hound';
-            else if (selectedPlaystyle === 'xbow') captainName = 'X-Bow';
-            else if (selectedPlaystyle === 'drill') captainName = 'Goblin Drill';
-            else if (selectedPlaystyle === 'wallbreakers') captainName = 'Wall Breakers';
-            else if (selectedPlaystyle === 'giant') captainName = 'Giant';
-            else if (selectedPlaystyle === 'egiant') captainName = 'Electro Giant';
-            else if (selectedPlaystyle === 'bloon') captainName = 'Balloon';
-            else if (selectedPlaystyle === 'mortar') captainName = 'Mortar';
-            else if (selectedPlaystyle === 'rhogs') captainName = 'Royal Hogs';
-            else if (selectedPlaystyle === '3m') captainName = 'Three Musketeers';
+          let captainName = null;
+          if (selectedPlaystyle === 'miner') captainName = 'Miner';
+          else if (selectedPlaystyle === 'hog') captainName = 'Hog Rider';
+          else if (selectedPlaystyle === 'graveyard') captainName = 'Graveyard';
+          else if (selectedPlaystyle === 'golem') captainName = 'Golem';
+          else if (selectedPlaystyle === 'lava') captainName = 'Lava Hound';
+          else if (selectedPlaystyle === 'xbow') captainName = 'X-Bow';
+          else if (selectedPlaystyle === 'drill') captainName = 'Goblin Drill';
+          else if (selectedPlaystyle === 'wallbreakers') captainName = 'Wall Breakers';
+          else if (selectedPlaystyle === 'giant') captainName = 'Giant';
+          else if (selectedPlaystyle === 'egiant') captainName = 'Electro Giant';
+          else if (selectedPlaystyle === 'bloon') captainName = 'Balloon';
+          else if (selectedPlaystyle === 'mortar') captainName = 'Mortar';
+          else if (selectedPlaystyle === 'rhogs') captainName = 'Royal Hogs';
+          else if (selectedPlaystyle === '3m') captainName = 'Three Musketeers';
 
-            // 1. Identify Captain to Keep (if any)
-            const oldLen = builderDeck.length;
-            if (captainName) {
-              // Check if we have it
-              const captainCard = all.find(c => c.name === captainName);
-              const alreadyIn = builderDeck.find(c => c.name === captainName);
+          // 1. Identify Captain to Keep (if any)
+          const oldLen = builderDeck.length;
+          if (captainName) {
+            // Check if we have it
+            const captainCard = all.find(c => c.name === captainName);
+            const alreadyIn = builderDeck.find(c => c.name === captainName);
 
-              if (captainCard && !alreadyIn) {
-                console.log(`👨‍✈️ Captain Found: ${captainName}. Adding to deck.`);
-                builderDeck.push(captainCard);
-                // Mark as used
-                if (!cardUsageHistory[captainName]) cardUsageHistory[captainName] = 0;
-                cardUsageHistory[captainName]++;
-              }
-              // Now, clear the rest of the deck, keeping only the captain if it was just added or already there.
-              builderDeck = builderDeck.filter(c => c.name === captainName);
-            } else {
-              builderDeck = []; // Clear all if no specific captain
+            if (captainCard && !alreadyIn) {
+              console.log(`👨‍✈️ Captain Found: ${captainName}. Adding to deck.`);
+              builderDeck.push(captainCard);
+              // Mark as used
+              if (!cardUsageHistory[captainName]) cardUsageHistory[captainName] = 0;
+              cardUsageHistory[captainName]++;
             }
-            console.log(`Cleared ${oldLen} cards. Kept: ${builderDeck.length}`);
-
-            // 3. Render Status
-            renderBuilderUI();
-            document.getElementById('aiStatus').textContent = "Regenerating with new rotation...";
-
-            // 4. Run Autofill
-            // Small delay to let UI allow repaint
-            setTimeout(runExpertAutofill, 100);
+            // Now, clear the rest of the deck, keeping only the captain if it was just added or already there.
+            builderDeck = builderDeck.filter(c => c.name === captainName);
           } else {
-            // Normal mode (fill empty slots)
-            runExpertAutofill();
+            builderDeck = []; // Clear all if no specific captain
           }
-        });
-      }
+          console.log(`Cleared ${oldLen} cards. Kept: ${builderDeck.length}`);
 
-      function getDeckRoles(deck) {
-        let winConCount = 0;
-        let spellCount = 0;
-        let hasSmallSpell = false;
-        let hasBigSpell = false;
-        let hasAirCounter = false;
-        let hasBuilding = false;
-        let buildingCount = 0;
+          // 3. Render Status
+          renderBuilderUI();
+          document.getElementById('aiStatus').textContent = "Regenerating with new rotation...";
 
-        deck.forEach(c => {
-          if (CARD_ROLES.winCon.includes(c.name)) winConCount++;
-          if (CARD_ROLES.spellSmall.includes(c.name)) { spellCount++; hasSmallSpell = true; }
-          if (CARD_ROLES.spellBig.includes(c.name)) { spellCount++; hasBigSpell = true; }
-          if (CARD_ROLES.airCounter.includes(c.name)) hasAirCounter = true;
-          if (CARD_ROLES.building.includes(c.name)) { hasBuilding = true; buildingCount++; }
-        });
+          // 4. Run Autofill
+          // Small delay to let UI allow repaint
+          setTimeout(runExpertAutofill, 100);
+        } else {
+          // Normal mode (fill empty slots)
+          runExpertAutofill();
+        }
+      });
+    }
 
-        return { winConCount, spellCount, hasSmallSpell, hasBigSpell, hasAirCounter, hasBuilding, buildingCount, hasWinCon: winConCount > 0 };
-      }
+    function getDeckRoles(deck) {
+      let winConCount = 0;
+      let spellCount = 0;
+      let hasSmallSpell = false;
+      let hasBigSpell = false;
+      let hasAirCounter = false;
+      let hasBuilding = false;
+      let buildingCount = 0;
 
-      function getCardRole(name) {
-        const roles = [];
-        // Normalize name: Remove "Evolution" suffix if present to match base role
-        // e.g. "Knight Evolution" -> "Knight"
-        const cleanName = name.replace(/ Evolution$/i, '').trim();
+      deck.forEach(c => {
+        if (CARD_ROLES.winCon.includes(c.name)) winConCount++;
+        if (CARD_ROLES.spellSmall.includes(c.name)) { spellCount++; hasSmallSpell = true; }
+        if (CARD_ROLES.spellBig.includes(c.name)) { spellCount++; hasBigSpell = true; }
+        if (CARD_ROLES.airCounter.includes(c.name)) hasAirCounter = true;
+        if (CARD_ROLES.building.includes(c.name)) { hasBuilding = true; buildingCount++; }
+      });
 
-        if (CARD_ROLES.winCon.includes(cleanName)) roles.push('winCon');
-        if (CARD_ROLES.spellSmall.includes(cleanName)) roles.push('spellSmall');
-        if (CARD_ROLES.spellBig.includes(cleanName)) roles.push('spellBig');
-        if (CARD_ROLES.airCounter.includes(cleanName)) roles.push('airCounter');
-        if (CARD_ROLES.building.includes(cleanName)) roles.push('building');
-        if (CARD_ROLES.tankKiller.includes(cleanName)) roles.push('tankKiller');
-        // CRITICAL MISSING CHECK ADDED:
-        if (CARD_ROLES.miniTank.includes(cleanName)) roles.push('miniTank');
+      return { winConCount, spellCount, hasSmallSpell, hasBigSpell, hasAirCounter, hasBuilding, buildingCount, hasWinCon: winConCount > 0 };
+    }
 
-        return roles;
-      }
+    function getCardRole(name) {
+      const roles = [];
+      // Normalize name: Remove "Evolution" suffix if present to match base role
+      // e.g. "Knight Evolution" -> "Knight"
+      const cleanName = name.replace(/ Evolution$/i, '').trim();
 
-      console.log('Main Script Ended');
-    })();
+      if (CARD_ROLES.winCon.includes(cleanName)) roles.push('winCon');
+      if (CARD_ROLES.spellSmall.includes(cleanName)) roles.push('spellSmall');
+      if (CARD_ROLES.spellBig.includes(cleanName)) roles.push('spellBig');
+      if (CARD_ROLES.airCounter.includes(cleanName)) roles.push('airCounter');
+      if (CARD_ROLES.building.includes(cleanName)) roles.push('building');
+      if (CARD_ROLES.tankKiller.includes(cleanName)) roles.push('tankKiller');
+      // CRITICAL MISSING CHECK ADDED:
+      if (CARD_ROLES.miniTank.includes(cleanName)) roles.push('miniTank');
+
+      return roles;
+    }
+
+    console.log('Main Script Ended');
+    }) ();
   </script>
 
   <!-- MATCHUP CONTROLLER SCRIPT (Dual Manual Mode) -->
