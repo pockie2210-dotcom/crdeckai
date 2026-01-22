@@ -228,7 +228,46 @@ const SmartAI = (() => {
 
     return {
         optimize: optimize,
-        SYNERGY_MAP: SYNERGY_MAP
+        SYNERGY_MAP: SYNERGY_MAP,
+
+        generateCoachNotes: function (deck) {
+            const notes = [];
+
+            // 1. Spell Check
+            const smallSpells = deck.filter(c => ['The Log', 'Zap', 'Giant Snowball', 'Arrows', 'Barbarian Barrel', 'Tornado', 'Rage', 'Royal Delivery'].includes(c.name));
+            const bigSpells = deck.filter(c => ['Fireball', 'Poison', 'Rocket', 'Lightning', 'Earthquake', 'Void'].includes(c.name));
+
+            if (smallSpells.length === 0) notes.push("⚠️ Missing a Small Spell (Log, Zap, etc) for swarms.");
+            if (bigSpells.length === 0) notes.push("⚠️ Missing a Big Spell (Fireball, Poison) to finish towers.");
+            if (smallSpells.length + bigSpells.length > 3) notes.push("💡 You have many spells. Consider swapping one for a troop.");
+
+            // 2. Cycle Check
+            const avg = deck.reduce((a, b) => a + (b.elixirCost || 3), 0) / 8;
+            const winCon = identifyCaptain(deck);
+            if (winCon) {
+                if (['Hog Rider', 'Miner', 'Wall Breakers', 'Goblin Drill', 'Goblin Barrel'].includes(winCon.name)) {
+                    if (avg > 3.6) notes.push(`💡 Your ${winCon.name} deck is heavy (${avg.toFixed(1)}). Try to lower it for faster cycle.`);
+                }
+                if (['Golem', 'Lava Hound', 'Electro Giant'].includes(winCon.name)) {
+                    if (avg < 3.5) notes.push(`💡 Your Beatdown deck is quite light (${avg.toFixed(1)}). Ensure you have enough support punch.`);
+                }
+            } else {
+                notes.push("❌ No clear Win Condition found.");
+            }
+
+            // 3. Air Check
+            const airCounters = deck.filter(c => ['Musketeer', 'Wizard', 'Executioner', 'Hunter', 'Electro Wizard', 'Witch', 'Firecracker', 'Phoenix', 'Archer Queen', 'Little Prince', 'Minions', 'Bats', 'Dart Goblin'].includes(c.name));
+            if (airCounters.length < 2) notes.push("⚠️ Weak Anti-Air. Add a Musketeer or Hunter.");
+
+            // 4. Positive Reinforcement
+            if (notes.length === 0) {
+                notes.push("✅ Solid Balance! Spells and Cycle look good.");
+                notes.push("🔥 Ready for the Arena.");
+            }
+
+            return notes;
+        }
     };
 
 })();
+window.SmartAI = SmartAI;

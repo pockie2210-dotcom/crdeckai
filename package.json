@@ -1,0 +1,7 @@
+{
+  "name": "clash-royale-deck-helper",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "cd backend && npm install && node server.js"
+  }
+}
