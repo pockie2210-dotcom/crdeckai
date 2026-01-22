@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <!-- Build: 2026-01-18-v1 - Improve Deck Fix -->
 <html lang="en">
 
@@ -340,11 +340,11 @@
       <button id="weaknessReportBtn" style="display:none; background: #c0392b;">Weakness Check</button>
       <button id="synergyBtn"
         onclick="if(window.currentAppDeck) window.SynergyMatrix.render(window.currentAppDeck); else alert('Scan a player first!');"
-        style="background: #2980b9;">🔗 Synergy
+        style="background: #2980b9;">ðŸ”— Synergy
         Matrix</button>
       <button id="radarBtn"
         onclick="if(window.currentAppDeck) window.DeckRadar.render(window.currentAppDeck); else alert('Scan a player first!');"
-        style="background: #e67e22; margin-left:5px;">📊 Deck Radar</button>
+        style="background: #e67e22; margin-left:5px;">ðŸ“Š Deck Radar</button>
       <button id="buildBtn" style="display:none; background: linear-gradient(135deg, #e67e22, #d35400);">Build
         Deck</button>
       <button id="demoBtn">Show Demo Deck</button>
@@ -360,7 +360,7 @@
         <!-- EXTERNAL DECK CHECK -->
         <button id="checkDeckBtn" class="action-btn"
           style="width:100%; margin-top:10px; background: #34495e; border: 1px solid #7f8c8d;">
-          🔍 Verification Check (DeckShop)
+          ðŸ” Verification Check (DeckShop)
         </button>
 
         <div id="deckCheckResult"
@@ -370,7 +370,7 @@
         <!-- NEW: Predicted Win Rate -->
         <div
           style="margin: 15px 0; padding: 15px; background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(0, 0, 0, 0.3)); border: 2px solid rgba(46, 204, 113, 0.5); border-radius: 10px; text-align: center;">
-          <div style="color: #2ecc71; font-size: 14px; font-weight: bold; margin-bottom: 5px;">📊 PREDICTED WIN RATE
+          <div style="color: #2ecc71; font-size: 14px; font-weight: bold; margin-bottom: 5px;">ðŸ“Š PREDICTED WIN RATE
           </div>
           <div id="winRateDisplay"
             style="font-size: 32px; font-weight: 900; color: #2ecc71; text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);">--
@@ -379,29 +379,29 @@
         </div>
 
         <div>
-          <div class="stat-row"><span>⚔️ Offense</span> <span id="offScore" class="stat-score">0</span></div>
+          <div class="stat-row"><span>âš”ï¸ Offense</span> <span id="offScore" class="stat-score">0</span></div>
           <div class="stat-bar-bg">
             <div id="offBar" class="stat-bar-fill" style="width:0%; background:#e74c3c"></div>
           </div>
         </div>
 
         <div>
-          <div class="stat-row"><span>🛡️ Defense</span> <span id="defScore" class="stat-score">0</span></div>
+          <div class="stat-row"><span>ðŸ›¡ï¸ Defense</span> <span id="defScore" class="stat-score">0</span></div>
           <div class="stat-bar-bg">
             <div id="defBar" class="stat-bar-fill" style="width:0%; background:#3498db"></div>
           </div>
         </div>
 
         <div>
-          <div class="stat-row"><span>🤝 Synergy</span> <span id="synScore" class="stat-score">0</span></div>
+          <div class="stat-row"><span>ðŸ¤ Synergy</span> <span id="synScore" class="stat-score">0</span></div>
           <div class="stat-bar-bg">
             <div id="synBar" class="stat-bar-fill" style="width:0%; background:#9b59b6"></div>
           </div>
         </div>
 
         <div>
-          <div class="stat-row"><span>🔄 Avg Elixir</span> <span id="avgElixir" class="stat-score">--</span></div>
-          <div class="stat-row"><span>⚡ 4-Card Cycle</span> <span id="cycleCost" class="stat-score">--</span></div>
+          <div class="stat-row"><span>ðŸ”„ Avg Elixir</span> <span id="avgElixir" class="stat-score">--</span></div>
+          <div class="stat-row"><span>âš¡ 4-Card Cycle</span> <span id="cycleCost" class="stat-score">--</span></div>
         </div>
       </div>
 
@@ -416,22 +416,22 @@
         style="margin-top:20px; padding:15px; background:rgba(0,0,0,0.4); border-radius:8px; border:1px solid var(--gold);">
         <h3 style="color:var(--gold); margin-top:0;">Choose Your Playstyle</h3>
         <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
-          <button class="playstyle-btn" data-style="any" style="background:#555;">🎲 Any</button>
-          <button class="playstyle-btn" data-style="cycle" style="background:#3498db;">⚡ Cycle</button>
-          <button class="playstyle-btn" data-style="control" style="background:#9b59b6;">🛡️ Control</button>
-          <button class="playstyle-btn" data-style="beatdown" style="background:#e74c3c;">🐘 Beatdown</button>
-          <button class="playstyle-btn" data-style="bridgespam" style="background:#e67e22;">🚀 Bridge Spam</button>
-          <button class="playstyle-btn" data-style="bait" style="background:#27ae60;">🪤 Log Bait</button>
-          <button class="playstyle-btn" data-style="siege" style="background:#2c3e50;">🏹 Siege</button>
-          <button class="playstyle-btn" data-style="graveyard" style="background:#8e44ad;">💀 Graveyard</button>
-          <button class="playstyle-btn" data-style="miner" style="background:#16a085;">⛏️ Miner</button>
+          <button class="playstyle-btn" data-style="any" style="background:#555;">ðŸŽ² Any</button>
+          <button class="playstyle-btn" data-style="cycle" style="background:#3498db;">âš¡ Cycle</button>
+          <button class="playstyle-btn" data-style="control" style="background:#9b59b6;">ðŸ›¡ï¸ Control</button>
+          <button class="playstyle-btn" data-style="beatdown" style="background:#e74c3c;">ðŸ˜ Beatdown</button>
+          <button class="playstyle-btn" data-style="bridgespam" style="background:#e67e22;">ðŸš€ Bridge Spam</button>
+          <button class="playstyle-btn" data-style="bait" style="background:#27ae60;">ðŸª¤ Log Bait</button>
+          <button class="playstyle-btn" data-style="siege" style="background:#2c3e50;">ðŸ¹ Siege</button>
+          <button class="playstyle-btn" data-style="graveyard" style="background:#8e44ad;">ðŸ’€ Graveyard</button>
+          <button class="playstyle-btn" data-style="miner" style="background:#16a085;">â›ï¸ Miner</button>
         </div>
       </div>
 
       <h3 style="color:var(--gold); margin-top:15px;">Choose Cards from Collection</h3>
-      <p style="color:#aaa; font-size:12px; margin-top:5px;">Left-click to add • Right-click to exclude 🚫</p>
+      <p style="color:#aaa; font-size:12px; margin-top:5px;">Left-click to add â€¢ Right-click to exclude ðŸš«</p>
       <div id="cardPicker" class="picker-grid"></div>
-      <button id="autofillBtn" class="action-btn" style="background:#8e44ad; margin-top:20px;">✨ Auto-Complete
+      <button id="autofillBtn" class="action-btn" style="background:#8e44ad; margin-top:20px;">âœ¨ Auto-Complete
         Deck</button>
       <div id="aiStatus" style="font-size:12px; color:#ccc; margin-top:5px; height:1.2em;"></div>
     </div>
@@ -442,11 +442,11 @@
       style="margin-top: 40px; text-align: center; padding-bottom: 20px; display: flex; gap: 20px; justify-content: center;">
       <button id="winConGuideBtn" class="action-btn"
         style="background: linear-gradient(135deg, #1abc9c, #16a085); padding: 15px 30px; font-size: 18px; border: 2px solid #1abc9c;">
-        🎓 Win Condition Masterclass
+        ðŸŽ“ Win Condition Masterclass
       </button>
       <button id="matchupBtn" class="action-btn"
         style="background: linear-gradient(135deg, #e74c3c, #c0392b); padding: 15px 30px; font-size: 18px; border: 2px solid #e74c3c;">
-        ⚔️ Matchup Analyzer
+        âš”ï¸ Matchup Analyzer
       </button>
       <!-- Weakness Check button is now in the main actions bar -->
     </div>
@@ -458,7 +458,7 @@
   <div id="matchupModal" class="modal-overlay" style="display:none; align-items:flex-start; padding-top:50px;">
     <div class="modal-content" style="width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto;">
       <h2 style="color:var(--gold); display:flex; justify-content:space-between;">
-        <span>⚔️ Matchup Analyzer</span>
+        <span>âš”ï¸ Matchup Analyzer</span>
         <span id="closeMatchup" style="cursor:pointer;">&times;</span>
       </h2>
       <p style="color:#ccc; margin-bottom:20px;">Compare your current deck against an enemy deck.</p>
@@ -513,7 +513,7 @@
       <div style="margin-top:30px; text-align:center;">
         <button id="analyzeBtn" class="action-btn"
           style="background:var(--gold); color:#000; font-weight:bold; font-size:1.2em; padding:15px 40px;">
-          ⚖️ Analyze Matchup
+          âš–ï¸ Analyze Matchup
         </button>
       </div>
 
@@ -528,11 +528,11 @@
 
         <div style="display:flex; gap:20px; flex-wrap:wrap;">
           <div style="flex:1;">
-            <h4 style="color:#e74c3c;">⚠️ Threats</h4>
+            <h4 style="color:#e74c3c;">âš ï¸ Threats</h4>
             <ul id="threatList" style="list-style:none; padding:0; color:#ddd;"></ul>
           </div>
           <div style="flex:1;">
-            <h4 style="color:#f1c40f;">🧠 Strategy Tips</h4>
+            <h4 style="color:#f1c40f;">ðŸ§  Strategy Tips</h4>
             <ul id="tipList" style="list-style:none; padding:0; color:#ddd;"></ul>
           </div>
         </div>
@@ -835,7 +835,7 @@
           let score = META_QUALITY[c.name] || 50;
           const role = getCardRole(c.name);
 
-          // PROTECTIONS 🛡️
+          // PROTECTIONS ðŸ›¡ï¸
           // 1. Never remove the only Win Condition
           if (role.includes('winCon') && winCons.length === 1) score += 999;
 
@@ -852,7 +852,7 @@
           // 5. Level Bias (Don't suggest removing maxed cards if possible)
           if (c.level >= 14) score += 10;
 
-          // PENALTIES 🔻
+          // PENALTIES ðŸ”»
           // 1. Very heavy cards in a cheap deck? (Not implemented yet)
 
           if (score < minScore) {
@@ -875,90 +875,135 @@
        * Suggests a complete fix: Add Card X, Remove Card Y.
        */
       proposeFix: function (deck) {
-        const report = this.detect(deck);
-        if (report.issues.length === 0) return null; // No fix needed
+/**
+ * Calculates a single integer score (0-500) for a deck.
+ */
+getDeckScore: function (deck) {
+    if (!deck || deck.length !== 8) return 0;
+    const stats = this.calculateStats(deck);
+    return stats.offense + stats.defense + stats.versatility + stats.cycle + stats.synergy;
+},
 
-        const issue = report.issues[0]; // Fix top priority issue
-        let fixRole = null;
-        let suggestionText = "";
-        let addReason = "";
+/**
+ * Suggests a complete fix using Brute Force Optimization.
+ * 1. Pick best candidate to ADD.
+ * 2. Simulates swapping it with EVERY card in the deck.
+ * 3. picks the swap that yields the highest Deck Score.
+ */
+proposeFix: function (deck) {
+    const report = this.detect(deck);
+    if (report.issues.length === 0) return null; // No fix needed
 
-        // Heuristic mapping
-        if (issue.includes("Win Condition")) {
-          fixRole = "winCon";
-          suggestionText = "Add a Win Condition";
-          addReason = "You need a dedicated tower-damager to win reliably.";
+    const issue = report.issues[0]; // Fix top priority issue
+    let fixRole = null;
+    let suggestionText = "";
+    let addReason = "";
+
+    // Heuristic mapping for WHAT to add
+    if (issue.includes("Win Condition")) {
+        fixRole = "winCon";
+        suggestionText = "Add a Win Condition";
+        addReason = "You need a dedicated tower-damager to win reliably.";
+    }
+    else if (issue.includes("Small Spell")) {
+        fixRole = "spellSmall";
+        suggestionText = "Add a Small Spell";
+        addReason = "You need a cheap spell (Log/Zap/Arrows) to clear swarms.";
+    }
+    else if (issue.includes("Big Spell")) {
+        fixRole = "spellBig";
+        suggestionText = "Add a Big Spell";
+        addReason = "You need a heavy spell to finish towers and crush pushes.";
+    }
+    else if (issue.includes("Air Defense")) {
+        fixRole = "airDefense";
+        suggestionText = "Add Air Defense";
+        addReason = "You are vulnerable to Balloon and Lava Hound.";
+    }
+    else if (issue.includes("Building")) {
+        fixRole = "building";
+        suggestionText = "Add a Building";
+        addReason = "A building helps distract tanks like Hog Rider and Golem.";
+    }
+
+    if (!fixRole) return null;
+
+    let candidates = [];
+    if (window.currentPlayerData && window.currentPlayerData.cards) {
+        candidates = window.currentPlayerData.cards.filter(c => getCardRole(c.name).includes(fixRole));
+    }
+
+    // Filter candidates
+    const avgElixir = deck.reduce((acc, c) => acc + (c.elixirCost || 3), 0) / 8;
+    const isHeavy = avgElixir > 4.0;
+
+    candidates.sort((a, b) => {
+        let scoreA = (META_QUALITY[a.name] || 50);
+        let scoreB = (META_QUALITY[b.name] || 50);
+        if ((a.level || 0) > (b.level || 0)) scoreA += 5;
+        if ((b.level || 0) > (a.level || 0)) scoreB += 5;
+        if (isHeavy && (a.elixirCost || 3) > 4) scoreA -= 20;
+        if (isHeavy && (b.elixirCost || 3) > 4) scoreB -= 20;
+        return scoreB - scoreA;
+    });
+
+    // Top Candidate to ADD
+    let bestAdd = candidates.length > 0 ? candidates[0] : { name: "Hog Rider", iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/UbuVrj_tAFUulOpA_53oITt7yU8S_eG8wGqgJ8s-yv.png" } };
+
+    // BRUTE FORCE SIMULATION ðŸ¤–
+    let bestSwap = null;
+    let maxScore = -1;
+    let baselineScore = this.getDeckScore(deck);
+
+    // Context check for Spell Protection
+    const winCons = deck.filter(c => getCardRole(c.name).includes('winCon'));
+    const smallSpells = deck.filter(c => getCardRole(c.name).includes('spellSmall'));
+    const bigSpells = deck.filter(c => getCardRole(c.name).includes('spellBig'));
+    const totalSpells = smallSpells.length + bigSpells.length;
+    const addingSpell = getCardRole(bestAdd.name).includes('spell');
+
+    deck.forEach((cardToRemove, index) => {
+        // 1. Create Test Deck
+        const testDeck = [...deck];
+        testDeck[index] = bestAdd; // Swap
+
+        // 2. Score It
+        let score = this.getDeckScore(testDeck);
+
+        // 3. Apply Constraints (Penalties to score)
+        const role = getCardRole(cardToRemove.name);
+
+        // CRITICAL PROTECTION: Never remove only WinCon (unless adding one)
+        if (role.includes('winCon') && winCons.length === 1 && !fixRole.includes('winCon')) {
+            score -= 500;
         }
-        else if (issue.includes("Small Spell")) {
-          fixRole = "spellSmall";
-          suggestionText = "Add a Small Spell";
-          addReason = "You need a cheap spell (Log/Zap/Arrows) to clear swarms.";
-        }
-        else if (issue.includes("Big Spell")) {
-          fixRole = "spellBig";
-          suggestionText = "Add a Big Spell";
-          addReason = "You need a heavy spell to finish towers and crush pushes.";
-        }
-        else if (issue.includes("Air Defense")) {
-          fixRole = "airDefense";
-          suggestionText = "Add Air Defense";
-          addReason = "You are vulnerable to Balloon and Lava Hound.";
-        }
-        else if (issue.includes("Building")) {
-          fixRole = "building";
-          suggestionText = "Add a Building";
-          addReason = "A building helps distract tanks like Hog Rider and Golem.";
+
+        // CRITICAL SPELL PROTECTION
+        // If we are NOT adding a spell, heavily penalize removing a spell if we have <= 2
+        const isRemSpell = role.includes('spell');
+        if (!addingSpell && isRemSpell && totalSpells <= 2) {
+            score -= 300;
         }
 
-        if (!fixRole) return null;
-
-        let candidates = [];
-        if (window.currentPlayerData && window.currentPlayerData.cards) {
-          candidates = window.currentPlayerData.cards.filter(c => getCardRole(c.name).includes(fixRole));
+        if (score > maxScore) {
+            maxScore = score;
+            bestSwap = cardToRemove;
         }
+    });
 
-        // SMART SELECTION:
-        // 1. Sort by Meta Score
-        // 2. Filter by Level (don't suggest lvl 1 cards if possible)
-        // 3. Elixir Check: If deck is heavy (>4.0), prefer cheaper options
+    if (!bestSwap) return null;
 
-        const avgElixir = deck.reduce((acc, c) => acc + (c.elixirCost || 3), 0) / 8;
-        const isHeavy = avgElixir > 4.0;
+    // Construct Reason
+    let removeReason = `Simulations show that swapping ${bestSwap.name} for ${bestAdd.name} increases your deck's overall rating to ${Math.round(maxScore)} (from ${baselineScore}).`;
 
-        candidates.sort((a, b) => {
-          let scoreA = (META_QUALITY[a.name] || 50);
-          let scoreB = (META_QUALITY[b.name] || 50);
-
-          // Boost leveled cards
-          if ((a.level || 0) > (b.level || 0)) scoreA += 5;
-          if ((b.level || 0) > (a.level || 0)) scoreB += 5;
-
-          // Penalize expensive cards if deck is heavy
-          if (isHeavy) {
-            if ((a.elixirCost || 3) > 4) scoreA -= 20;
-            if ((b.elixirCost || 3) > 4) scoreB -= 20;
-          }
-
-          return scoreB - scoreA;
-        });
-
-        let bestAdd = candidates.length > 0 ? candidates[0] : { name: "Hog Rider", iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/UbuVrj_tAFUulOpA_53oITt7yU8S_eG8wGqgJ8s-yv.png" } };
-
-        const removal = this.proposeRemoval(deck, fixRole);
-        if (!removal) return null;
-
-        let removeReason = removal.reason;
-        const removeCard = removal.card;
-
-        return {
-          add: bestAdd,
-          remove: removeCard,
-          addReason: addReason,
-          removeReason: removeReason,
-          reason: `${suggestionText} (${bestAdd.name}) by removing ${removeCard.name}.`
-        };
-      },
-
+    return {
+        add: bestAdd,
+        remove: bestSwap,
+        addReason: addReason,
+        removeReason: removeReason,
+        reason: `${suggestionText} (${bestAdd.name}) by removing ${bestSwap.name}.`
+    };
+},
       /**
        * Calculates detailed 0-100 stats for the Radar Chart.
        */
@@ -1190,7 +1235,7 @@
                         </button>
                     </div>
 
-                    <div style="position:absolute; top:10px; right:15px; cursor:pointer; color:#666; font-size:20px;" onclick="document.getElementById('synergyModal').remove()">✕</div>
+                    <div style="position:absolute; top:10px; right:15px; cursor:pointer; color:#666; font-size:20px;" onclick="document.getElementById('synergyModal').remove()">âœ•</div>
                 </div>
             </div>
         `;
@@ -1477,15 +1522,15 @@
       // Build HTML
       let html = '';
       if (report.issues.length === 0) {
-        html += `<div style="padding:10px; background:rgba(46, 204, 113, 0.2); border-radius:5px;">✅ Your deck is well balanced!</div>`;
+        html += `<div style="padding:10px; background:rgba(46, 204, 113, 0.2); border-radius:5px;">âœ… Your deck is well balanced!</div>`;
       } else {
-        html += `<h4 style="color:#e74c3c; margin-bottom:5px;">⚠️ Critical Issues:</h4><ul>`;
+        html += `<h4 style="color:#e74c3c; margin-bottom:5px;">âš ï¸ Critical Issues:</h4><ul>`;
         report.issues.forEach(i => html += `<li>${i}</li>`);
         html += `</ul>`;
       }
 
       if (report.suggestions.length > 0) {
-        html += `<h4 style="color:#f1c40f; margin-bottom:5px;">💡 Suggestions:</h4><ul>`;
+        html += `<h4 style="color:#f1c40f; margin-bottom:5px;">ðŸ’¡ Suggestions:</h4><ul>`;
         report.suggestions.forEach(s => html += `<li>${s}</li>`);
         html += `</ul>`;
       }
@@ -1500,7 +1545,7 @@
 
       // 1. Suggest Fix Button (NEW)
       const btnFix = document.createElement('button');
-      btnFix.innerText = "🔧 Suggest Fix";
+      btnFix.innerText = "ðŸ”§ Suggest Fix";
       btnFix.className = "action-btn";
       btnFix.style.background = "linear-gradient(135deg, #2ecc71, #27ae60)";
       btnFix.style.fontSize = "14px";
@@ -1518,7 +1563,7 @@
                                 <img src="${fix.remove.iconUrls?.medium || fix.remove.iconUrls || fix.remove.iconUrl}" style="width:50px;">
                                 <div style="font-size:12px;">${fix.remove.name}</div>
                             </div>
-                            <div style="font-size:24px; color:#aaa;">➝</div>
+                            <div style="font-size:24px; color:#aaa;">âž</div>
                             <div style="text-align:center;">
                                 <div style="color:#2ecc71; font-size:12px; font-weight:bold;">ADD</div>
                                 <img src="${fix.add.iconUrls?.medium || fix.add.iconUrls || fix.add.iconUrl}" style="width:50px;">
@@ -1526,7 +1571,7 @@
                             </div>
                         </div>
                         <div style="font-size:0.9em; color:#ddd; margin-bottom:15px; font-style:italic;">"${fix.reason}"</div>
-                        <button id="applyFixBtn" class="action-btn" style="background:#27ae60; width:100%;">✅ Apply Fix</button>
+                        <button id="applyFixBtn" class="action-btn" style="background:#27ae60; width:100%;">âœ… Apply Fix</button>
                         <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin-top:10px; cursor:pointer;">Cancel</button>
                     </div>
                 `;
@@ -1560,7 +1605,7 @@
 
       // 2. Suggest Drop Button (Legacy)
       const btnDrop = document.createElement('button');
-      btnDrop.innerText = "📉 Suggest DropOnly";
+      btnDrop.innerText = "ðŸ“‰ Suggest DropOnly";
       btnDrop.className = "action-btn";
       btnDrop.style.background = "#c0392b";
       btnDrop.style.fontSize = "14px";
@@ -1729,7 +1774,7 @@
               // Notify User
               const aiStatus = document.getElementById('aiStatus');
               if (aiStatus) {
-                aiStatus.textContent = `✨ AI Updated: ${decks.length} new top decks loaded via Live Scraper.`;
+                aiStatus.textContent = `âœ¨ AI Updated: ${decks.length} new top decks loaded via Live Scraper.`;
                 aiStatus.style.color = '#2ecc71';
               }
             }
@@ -1839,11 +1884,11 @@
         let html = '';
         if (result.issues.length === 0) {
           html = `<div style="text-align:center; padding:20px;">
-                    <h3 style="color:#2ecc71; font-size:24px;">✅ Operational</h3>
+                    <h3 style="color:#2ecc71; font-size:24px;">âœ… Operational</h3>
                     <p>All critical systems are functioning within normal parameters.</p>
                 </div>`;
         } else {
-          html = `<h3 style="color:#e74c3c; border-bottom:1px solid #444; padding-bottom:5px;">⚠️ System Weaknesses Detected</h3>`;
+          html = `<h3 style="color:#e74c3c; border-bottom:1px solid #444; padding-bottom:5px;">âš ï¸ System Weaknesses Detected</h3>`;
 
           // PRE-CALCULATE FIX
           let fixHTML = '';
@@ -1853,7 +1898,7 @@
               fixHTML = `
                  <div style="margin-top:12px; margin-bottom:20px; background:rgba(46, 204, 113, 0.1); border:1px solid rgba(46, 204, 113, 0.3); border-radius:12px; padding:15px; margin-left:10px;">
                      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; border-bottom:1px solid rgba(46, 204, 113, 0.2); padding-bottom:8px;">
-                         <div style="font-size:20px;">💡</div>
+                         <div style="font-size:20px;">ðŸ’¡</div>
                          <div style="font-weight:bold; color:#2ecc71; font-size:15px; letter-spacing:0.5px; text-transform:uppercase;">Recommended Action</div>
                      </div>
                      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;">
@@ -1862,12 +1907,12 @@
                              <div style="font-size:10px; color:#e74c3c; font-weight:bold; margin-bottom:4px; letter-spacing:1px; background:rgba(231, 76, 60, 0.2); display:inline-block; padding:2px 6px; border-radius:4px;">OUT</div>
                              <div style="position:relative; width:50px; height:60px; margin:0 auto;">
                                  <img src="${fix.removal.card.iconUrls.medium}" style="width:100%; height:100%; object-fit:contain; filter:grayscale(100%) opacity(0.7);">
-                                 <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:#e74c3c; font-size:30px; font-weight:bold;">✕</div>
+                                 <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:#e74c3c; font-size:30px; font-weight:bold;">âœ•</div>
                              </div>
                              <div style="font-size:10px; margin-top:2px; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${fix.removal.card.name}</div>
                          </div>
                          <!-- ARROW -->
-                         <div style="color:#555; font-size:20px;">➔</div>
+                         <div style="color:#555; font-size:20px;">âž”</div>
                           <!-- IN -->
                          <div style="text-align:center; flex:1;">
                              <div style="font-size:10px; color:#2ecc71; font-weight:bold; margin-bottom:4px; letter-spacing:1px; background:rgba(46, 204, 113, 0.2); display:inline-block; padding:2px 6px; border-radius:4px;">IN</div>
@@ -2245,7 +2290,7 @@
         if (card.starLevel) {
           const sb = document.createElement('div');
           sb.className = 'badge star-badge';
-          sb.textContent = '★' + card.starLevel;
+          sb.textContent = 'â˜…' + card.starLevel;
           el.appendChild(sb);
         }
 
@@ -2265,11 +2310,11 @@
         if (!data) return;
         const name = data.name || data.playerName || 'Unknown';
         const tag = data.tag || data.playerTag || '';
-        const level = data.expLevel ?? data.level ?? '—';
-        const trophies = data.trophies ?? '—';
-        const best = data.bestTrophies ?? '—';
-        const wins = data.wins ?? data.challengeCardsWon ?? '—';
-        const losses = data.losses ?? '—';
+        const level = data.expLevel ?? data.level ?? 'â€”';
+        const trophies = data.trophies ?? 'â€”';
+        const best = data.bestTrophies ?? 'â€”';
+        const wins = data.wins ?? data.challengeCardsWon ?? 'â€”';
+        const losses = data.losses ?? 'â€”';
         const clanName = data.clan?.name ?? '';
 
         const html = `
@@ -2282,7 +2327,7 @@
                     <span style="font-size:16px; color:#888; font-weight:normal; vertical-align:middle; margin-left:10px;">${escapeHtml(tag)}</span>
                 </h2>
                 <div style="color:#bdc3c7; font-size:15px; margin-top:8px; display:flex; align-items:center; justify-content:center; gap:8px;">
-                    <span style="font-size:18px;">🛡️</span> ${escapeHtml(clanName)}
+                    <span style="font-size:18px;">ðŸ›¡ï¸</span> ${escapeHtml(clanName)}
                 </div>
             </div>
 
@@ -2291,35 +2336,35 @@
                 
                 <!-- Level -->
                 <div style="background:rgba(255,255,255,0.03); padding:15px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.05); transition:transform 0.2s;">
-                    <div style="font-size:28px; margin-bottom:5px;">⭐</div>
+                    <div style="font-size:28px; margin-bottom:5px;">â­</div>
                     <div style="font-size:12px; color:#aaa; text-transform:uppercase; letter-spacing:1px;">Level</div>
                     <div style="font-size:22px; color:#fff; font-weight:bold; margin-top:5px;">${level}</div>
                 </div>
 
                 <!-- Trophies -->
                 <div style="background:linear-gradient(180deg, rgba(241, 196, 15, 0.1), rgba(0,0,0,0)); padding:15px 10px; border-radius:12px; border:1px solid rgba(241, 196, 15, 0.2);">
-                    <div style="font-size:28px; margin-bottom:5px; filter:drop-shadow(0 0 5px rgba(241,196,15,0.5));">🏆</div>
+                    <div style="font-size:28px; margin-bottom:5px; filter:drop-shadow(0 0 5px rgba(241,196,15,0.5));">ðŸ†</div>
                     <div style="font-size:12px; color:#e0c96c; text-transform:uppercase; letter-spacing:1px;">Trophies</div>
                     <div style="font-size:22px; color:#f1c40f; font-weight:bold; margin-top:5px;">${trophies}</div>
                 </div>
 
                 <!-- Best -->
                 <div style="background:rgba(255,255,255,0.03); padding:15px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
-                    <div style="font-size:28px; margin-bottom:5px;">🏔️</div>
+                    <div style="font-size:28px; margin-bottom:5px;">ðŸ”ï¸</div>
                     <div style="font-size:12px; color:#aaa; text-transform:uppercase; letter-spacing:1px;">Best</div>
                     <div style="font-size:22px; color:#fff; font-weight:bold; margin-top:5px;">${best}</div>
                 </div>
 
                 <!-- Wins -->
                 <div style="background:linear-gradient(180deg, rgba(46, 204, 113, 0.1), rgba(0,0,0,0)); padding:15px 10px; border-radius:12px; border:1px solid rgba(46, 204, 113, 0.2);">
-                    <div style="font-size:28px; margin-bottom:5px;">⚔️</div>
+                    <div style="font-size:28px; margin-bottom:5px;">âš”ï¸</div>
                     <div style="font-size:12px; color:#95e5b3; text-transform:uppercase; letter-spacing:1px;">Wins</div>
                     <div style="font-size:22px; color:#2ecc71; font-weight:bold; margin-top:5px;">${wins}</div>
                 </div>
 
                 <!-- Losses -->
                 <div style="background:linear-gradient(180deg, rgba(231, 76, 60, 0.1), rgba(0,0,0,0)); padding:15px 10px; border-radius:12px; border:1px solid rgba(231, 76, 60, 0.2);">
-                    <div style="font-size:28px; margin-bottom:5px;">💔</div>
+                    <div style="font-size:28px; margin-bottom:5px;">ðŸ’”</div>
                     <div style="font-size:12px; color:#eaaead; text-transform:uppercase; letter-spacing:1px;">Losses</div>
                     <div style="font-size:22px; color:#e74c3c; font-weight:bold; margin-top:5px;">${losses}</div>
                 </div>
@@ -2517,7 +2562,7 @@
             // Exclusion indicator
             if (isExcluded) {
               const banIcon = document.createElement('div');
-              banIcon.textContent = '🚫';
+              banIcon.textContent = 'ðŸš«';
               banIcon.style.cssText = 'position:absolute; top:5px; right:5px; font-size:20px; pointer-events:none;';
               wrapper.appendChild(banIcon);
             }
@@ -2694,17 +2739,17 @@
         // Sophisticated model based on multiple factors
         let winRate = 50; // Base 50% win rate
 
-        // Factor 1: Average Level (±10%)
+        // Factor 1: Average Level (Â±10%)
         // Higher levels = higher win rate
         const levelBonus = Math.min(10, (avgLevel - 11) * 2.5); // +2.5% per level above 11
         winRate += levelBonus;
 
-        // Factor 2: Synergy (±8%)
+        // Factor 2: Synergy (Â±8%)
         // More synergies = better combos = higher win rate
         const synergyBonus = Math.min(8, synCount * 0.4); // +0.4% per synergy point
         winRate += synergyBonus;
 
-        // Factor 3: Deck Completeness (±12%)
+        // Factor 3: Deck Completeness (Â±12%)
         let completenessBonus = 0;
         if (roles.hasWinCon) completenessBonus += 4;
         if (roles.hasSmallSpell && roles.hasBigSpell) completenessBonus += 4;
@@ -2712,20 +2757,20 @@
         if (hasKiller) completenessBonus += 2;
         winRate += completenessBonus;
 
-        // Factor 4: Meta Quality (±5%)
+        // Factor 4: Meta Quality (Â±5%)
         // Using S-tier cards increases win rate
         let metaBonus = (metaScore - 60) * 0.1; //  +0.1% per point above 60
         metaBonus = Math.max(-5, Math.min(5, metaBonus));
         winRate += metaBonus;
 
-        // Factor 5: Elixir Efficiency (±3%)
+        // Factor 5: Elixir Efficiency (Â±3%)
         // Optimal elixir cost improves win rate
         let elixirBonus = 0;
         if (avgEl >= 2.6 && avgEl <= 4.0) elixirBonus = 3; // Perfect range
         else if (avgEl < 2.3 || avgEl > 4.5) elixirBonus = -3; // Too extreme
         winRate += elixirBonus;
 
-        // Factor 6: Archetype Purity (±2%)
+        // Factor 6: Archetype Purity (Â±2%)
         // Focused decks perform better
         const archetypeBonus = synCount >= 15 ? 2 : 0;
         winRate += archetypeBonus;
@@ -2748,7 +2793,7 @@
           if (levelBonus > 0) factors.push(`+${levelBonus.toFixed(1)}% Levels`);
           if (synergyBonus > 0) factors.push(`+${synergyBonus.toFixed(1)}% Synergy`);
           if (completenessBonus > 0) factors.push(`+${completenessBonus}% Complete`);
-          winRateFactors.textContent = factors.join(' • ') || 'Based on deck analysis';
+          winRateFactors.textContent = factors.join(' â€¢ ') || 'Based on deck analysis';
         }
       }
 
@@ -3057,7 +3102,7 @@
             }
 
             checkBtn.disabled = true;
-            checkBtn.textContent = "⏳ Verifying with DeckShop...";
+            checkBtn.textContent = "â³ Verifying with DeckShop...";
             deckCheckResult.style.display = 'block';
             deckCheckResult.innerHTML = '<div style="text-align:center;color:#ccc;">Connecting to DeckShop Pro...</div>';
 
@@ -3107,11 +3152,11 @@
               // Link
               html += `
                 <div style="margin-top:10px; text-align:center;">
-                    <a href="${data.url}" target="_blank" style="color:#3498db; text-decoration:none; font-size:12px;">View Full Report ↗</a>
+                    <a href="${data.url}" target="_blank" style="color:#3498db; text-decoration:none; font-size:12px;">View Full Report â†—</a>
                 </div>`;
 
               deckCheckResult.innerHTML = html;
-              checkBtn.textContent = "✅ Verified";
+              checkBtn.textContent = "âœ… Verified";
 
             } catch (e) {
               console.error("Verification Error:", e);
@@ -3125,7 +3170,7 @@
               }
 
               deckCheckResult.innerHTML = errorHtml + `<div style="margin-top:10px;"><a href="#" onclick="window.open('https://www.deckshop.pro','_blank')">Try Manual Check</a></div>`;
-              checkBtn.textContent = "❌ Retry Check";
+              checkBtn.textContent = "âŒ Retry Check";
             } finally {
               checkBtn.disabled = false;
             }
@@ -3152,7 +3197,7 @@
           const avgElixir = (deck.reduce((a, c) => a + (c.elixirCost || 0), 0) / 8).toFixed(1);
           const playstyle = avgElixir < 3.3 ? "Cycle" : avgElixir > 4.0 ? "Beatdown" : "Control";
 
-          let html = `<h3>🧠 AI Strategy Coach</h3>`;
+          let html = `<h3>ðŸ§  AI Strategy Coach</h3>`;
 
           // P1: Gameplan (~50 words)
           let gp = [];
@@ -3625,7 +3670,7 @@
                 // NEW: Open Report Explicitly Button (Prevents auto-tab unwanted behavior)
                 html += `<div style="margin-top:20px; text-align:center;">
                     <a href="${data.url}" target="_blank" class="action-btn" style="background:#2980b9; color:white; text-decoration:none; display:inline-block; padding:8px 16px; border-radius:4px;">
-                      📄 Open Full Report (External)
+                      ðŸ“„ Open Full Report (External)
                     </a>
                     <div style="font-size:10px; color:#aaa; margin-top:5px;">Opens validation on DeckShop.pro</div>
                 </div>`;
@@ -3641,7 +3686,7 @@
 
         const autoBtn = document.getElementById('autofillBtn');
         autoBtn.disabled = false;
-        autoBtn.textContent = "✨ Regenerate (Force New Cards)"; // Change text
+        autoBtn.textContent = "âœ¨ Regenerate (Force New Cards)"; // Change text
 
         document.getElementById('aiStatus').textContent = `Generation Complete!`;
         aiStatus.textContent = 'Deck Generation Complete.';
@@ -4163,7 +4208,7 @@
               const alreadyIn = builderDeck.find(c => c.name === captainName);
 
               if (captainCard && !alreadyIn) {
-                console.log(`👨‍✈️ Captain Found: ${captainName}. Adding to deck.`);
+                console.log(`ðŸ‘¨â€âœˆï¸ Captain Found: ${captainName}. Adding to deck.`);
                 builderDeck.push(captainCard);
                 // Mark as used
                 if (!cardUsageHistory[captainName]) cardUsageHistory[captainName] = 0;
@@ -4453,7 +4498,7 @@
             // Remove X button (only if active?)
             if (activeTarget === 'mine') {
               const xBtn = document.createElement('div');
-              xBtn.innerHTML = '×';
+              xBtn.innerHTML = 'Ã—';
               xBtn.style.cssText = 'position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:18px; height:18px; text-align:center; line-height:16px; cursor:pointer; font-weight:bold; font-size:14px; box-shadow:0 2px 5px black;';
               xBtn.onclick = (e) => {
                 e.stopPropagation();
@@ -4512,7 +4557,7 @@
             // Remove logic
             if (activeTarget === 'enemy') {
               const xBtn = document.createElement('div');
-              xBtn.innerHTML = '×';
+              xBtn.innerHTML = 'Ã—';
               xBtn.style.cssText = 'position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:18px; height:18px; text-align:center; line-height:16px; cursor:pointer; font-weight:bold; font-size:14px; box-shadow:0 2px 5px black;';
               xBtn.onclick = (e) => {
                 e.stopPropagation();
@@ -4665,13 +4710,13 @@
 
            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
               <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
-                 <h4 style="color:#e74c3c; margin-top:0;">⚠️ Threats to You</h4>
+                 <h4 style="color:#e74c3c; margin-top:0;">âš ï¸ Threats to You</h4>
                  <ul style="padding-left:20px; margin:0; color:#ddd;">
                     ${result.threats && result.threats.length ? result.threats.map(t => `<li>${t}</li>`).join('') : '<li style="color:#888">None detected</li>'}
                  </ul>
               </div>
               <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
-                 <h4 style="color:#2ecc71; margin-top:0;">💡 Strategy Tips</h4>
+                 <h4 style="color:#2ecc71; margin-top:0;">ðŸ’¡ Strategy Tips</h4>
                  <ul style="padding-left:20px; margin:0; color:#ddd;">
                     ${result.tips && result.tips.length ? result.tips.map(t => `<li>${t}</li>`).join('') : '<li style="color:#888">Play smart!</li>'}
                  </ul>
