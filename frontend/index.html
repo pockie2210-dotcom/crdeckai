@@ -4185,6 +4185,73 @@
       }
 
       console.log('Main Script Ended');
+
+      // --- CRITICAL RESTORATION: SUBSTITUTIONS & BUTTONS (Moved to Correct Scope) ---
+      window.renderSubstitutions = function () {
+        const grid = document.getElementById('subsGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        let pool = [];
+        if (window.currentPlayerData && window.currentPlayerData.cards) {
+          pool = window.currentPlayerData.cards;
+        } else {
+          pool = window.currentAppDeck ? [...window.currentAppDeck] : DEMO_DECK;
+        }
+
+        const inDeckNames = new Set((window.currentAppDeck || []).map(c => c.name));
+        const candidates = pool.filter(c => !inDeckNames.has(c.name));
+        candidates.sort((a, b) => (b.level || 0) - (a.level || 0));
+
+        candidates.forEach(card => {
+          const cardEl = buildCardElement(card); // Now accesses local buildCardElement correctly
+          cardEl.style.cursor = 'pointer';
+          cardEl.onclick = () => {
+            const deck = window.currentAppDeck || [];
+            if (deck.length < 8) {
+              window.currentAppDeck.push(card);
+              renderDeck({ currentDeck: window.currentAppDeck });
+              alert(`Added ${card.name}`);
+              document.getElementById('substitutionsModal').style.display = 'none';
+              return;
+            }
+            if (confirm(`Replace a card with ${card.name}?`)) {
+              window.currentAppDeck.pop();
+              window.currentAppDeck.push(card);
+              renderDeck({ currentDeck: window.currentAppDeck });
+              document.getElementById('substitutionsModal').style.display = 'none';
+            }
+          };
+          grid.appendChild(cardEl);
+        });
+      };
+
+      // Wire up Substitutions Button
+      const subBtn = document.getElementById('substitutionsBtn');
+      if (subBtn) {
+        subBtn.onclick = () => {
+          window.renderSubstitutions();
+          document.getElementById('substitutionsModal').style.display = 'flex';
+        };
+      }
+
+      // Wire up Improve Deck Button (Green)
+      const impBtn = document.getElementById('canImproveDeckBtn');
+      if (impBtn && window.DeckWeakness) {
+        impBtn.onclick = () => {
+          // Use old logic if available or alert
+          if (DeckWeakness.proposeFix) {
+            const fix = DeckWeakness.proposeFix(window.currentAppDeck);
+            if (fix) {
+              alert(`Improvement Suggestion:\nSwap ${fix.remove.name} for ${fix.add.name}\n\nReason: ${fix.reason}`);
+            } else {
+              alert("Your deck looks solid! No obvious weaknesses found.");
+            }
+          } else {
+            console.log("DeckWeakness.proposeFix not found in this version.");
+          }
+        }
+      }
     })();
   </script>
 
@@ -4580,71 +4647,7 @@
       // --- CRITICAL RESTORATION: SUBSTITUTIONS & BUTTONS ---
       // This logic was missing in the reverted commit but is required for buttons to work.
 
-      window.renderSubstitutions = function () {
-        const grid = document.getElementById('subsGrid');
-        if (!grid) return;
-        grid.innerHTML = '';
 
-        let pool = [];
-        if (window.currentPlayerData && window.currentPlayerData.cards) {
-          pool = window.currentPlayerData.cards;
-        } else {
-          pool = window.currentAppDeck ? [...window.currentAppDeck] : DEMO_DECK;
-        }
-
-        const inDeckNames = new Set((window.currentAppDeck || []).map(c => c.name));
-        const candidates = pool.filter(c => !inDeckNames.has(c.name));
-        candidates.sort((a, b) => (b.level || 0) - (a.level || 0));
-
-        candidates.forEach(card => {
-          const cardEl = buildCardElement(card);
-          cardEl.style.cursor = 'pointer';
-          cardEl.onclick = () => {
-            const deck = window.currentAppDeck || [];
-            if (deck.length < 8) {
-              window.currentAppDeck.push(card);
-              renderDeck({ currentDeck: window.currentAppDeck });
-              alert(`Added ${card.name}`);
-              document.getElementById('substitutionsModal').style.display = 'none';
-              return;
-            }
-            if (confirm(`Replace a card with ${card.name}?`)) {
-              window.currentAppDeck.pop();
-              window.currentAppDeck.push(card);
-              renderDeck({ currentDeck: window.currentAppDeck });
-              document.getElementById('substitutionsModal').style.display = 'none';
-            }
-          };
-          grid.appendChild(cardEl);
-        });
-      };
-
-      // Wire up Substitutions Button
-      const subBtn = document.getElementById('substitutionsBtn');
-      if (subBtn) {
-        subBtn.onclick = () => {
-          window.renderSubstitutions();
-          document.getElementById('substitutionsModal').style.display = 'flex';
-        };
-      }
-
-      // Wire up Improve Deck Button (Green)
-      const impBtn = document.getElementById('canImproveDeckBtn');
-      if (impBtn && window.DeckWeakness) {
-        impBtn.onclick = () => {
-          // Use old logic if available or alert
-          if (DeckWeakness.proposeFix) {
-            const fix = DeckWeakness.proposeFix(window.currentAppDeck);
-            if (fix) {
-              alert(`Improvement Suggestion:\nSwap ${fix.remove.name} for ${fix.add.name}\n\nReason: ${fix.reason}`);
-            } else {
-              alert("Your deck looks solid! No obvious weaknesses found.");
-            }
-          } else {
-            console.log("DeckWeakness.proposeFix not found in this version.");
-          }
-        }
-      }
 
       // Expose Globals
       window.DeckRadar = DeckRadar;
