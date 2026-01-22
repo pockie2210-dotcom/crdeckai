@@ -809,40 +809,51 @@
       proposeRemoval: function (deck) {
         if (!deck || deck.length === 0) return null;
 
-        // 1. Identify Redundancies
-        const roles = {
-          winCons: deck.filter(c => this.detect(deck).issues.find(i => i.includes('Win Condition')) ? false : getCardRole(c.name).includes('winCon')),
-          smallSpells: deck.filter(c => getCardRole(c.name).includes('spellSmall')),
-          bigSpells: deck.filter(c => getCardRole(c.name).includes('spellBig')),
-          miniTanks: deck.filter(c => getCardRole(c.name).includes('miniTank')),
-          buildings: deck.filter(c => getCardRole(c.name).includes('building'))
-        };
+        // 1. Identify Roles & Counts
+        const winCons = deck.filter(c => getCardRole(c.name).includes('winCon'));
+        const smallSpells = deck.filter(c => getCardRole(c.name).includes('spellSmall'));
+        const buildings = deck.filter(c => getCardRole(c.name).includes('building'));
 
-        // Rule A: Too many small spells (>=2 is usually max, 3 is bad)
-        if (roles.smallSpells.length >= 2) {
-          // Find worst small spell (lowest meta score)
+        // 2. Identify Synergies (Don't break pairs!)
+        const synergies = window.SynergyMatrix ? window.SynergyMatrix.analyze(deck) : [];
+        const synergizedCards = new Set();
+        synergies.forEach(pair => { synergizedCards.add(pair[0]); synergizedCards.add(pair[1]); });
+
+        // Rule A: Too many small spells (>=3 is bad, 2 is okay but reducible)
+        if (smallSpells.length >= 3) {
           return {
-            card: roles.smallSpells.sort((a, b) => (META_QUALITY[a.name] || 50) - (META_QUALITY[b.name] || 50))[0],
-            reason: "You have multiple small spells. Consolidating them frees up a slot, which allows you to fix other weaknesses."
+            card: smallSpells.sort((a, b) => (META_QUALITY[a.name] || 50) - (META_QUALITY[b.name] || 50))[0],
+            reason: "Having 3+ small spells is overkill. You need more troops for defense/offense."
           };
         }
 
-        // Rule B: Too many Mini Tanks (>=3)
-        if (roles.miniTanks.length >= 3) {
-          return {
-            card: roles.miniTanks[0], // Pick first found
-            reason: "Too many mini-tanks can make your deck clunky. Try swapping one for air defense or a spirit."
-          };
-        }
-
-        // Rule C: Worst Card by Meta Score
-        let worstCard = deck[0];
-        let minScore = 200;
+        // Rule B: Score-based Removal with Protections
+        let worstCard = null;
+        let minScore = 999;
 
         deck.forEach(c => {
           let score = META_QUALITY[c.name] || 50;
-          if (getCardRole(c.name).includes('winCon')) score += 20;
-          if ((c.evolutionLevel || 0) > 0) score += 30; // Protect Evo
+          const role = getCardRole(c.name);
+
+          // PROTECTIONS 🛡️
+          // 1. Never remove the only Win Condition
+          if (role.includes('winCon') && winCons.length === 1) score += 999;
+
+          // 2. Protect Evolutions (User likely wants them)
+          if ((c.evolutionLevel || 0) > 0) score += 50;
+
+          // 3. Protect Synergies
+          if (synergizedCards.has(c.name)) score += 40;
+
+          // 4. Protect vital roles if scarce
+          if (role.includes('spellSmall') && smallSpells.length === 1) score += 20;
+          if (role.includes('building') && buildings.length === 1) score += 20;
+
+          // 5. Level Bias (Don't suggest removing maxed cards if possible)
+          if (c.level >= 14) score += 10;
+
+          // PENALTIES 🔻
+          // 1. Very heavy cards in a cheap deck? (Not implemented yet)
 
           if (score < minScore) {
             minScore = score;
@@ -850,9 +861,13 @@
           }
         });
 
+        if (!worstCard) return null; // Should not happen
+
         return {
           card: worstCard,
-          reason: `This card has a lower win rate in the current meta compared to the rest of your deck.`
+          reason: synergizedCards.has(worstCard.name) ?
+            "This card is weak in the current meta, though it has some synergy." :
+            "This card is the statistically weakest link in your deck configuration."
         };
       },
 
@@ -868,30 +883,31 @@
         let suggestionText = "";
         let addReason = "";
 
+        // Heuristic mapping
         if (issue.includes("Win Condition")) {
           fixRole = "winCon";
           suggestionText = "Add a Win Condition";
-          addReason = "Your deck is missing a reliable tower-targeting card. A win condition is essential because it provides consistent tower damage and forces your opponent to respond. Without one, you'll struggle to break through defensive decks.";
+          addReason = "You need a dedicated tower-damager to win reliably.";
         }
         else if (issue.includes("Small Spell")) {
           fixRole = "spellSmall";
           suggestionText = "Add a Small Spell";
-          addReason = "Small spells like Zap, Log, or Arrows are crucial for dealing with swarm units and finishing low-health towers. They also help reset charging units like Inferno Dragon and provide chip damage throughout the match.";
+          addReason = "You need a cheap spell (Log/Zap/Arrows) to clear swarms.";
         }
         else if (issue.includes("Big Spell")) {
           fixRole = "spellBig";
           suggestionText = "Add a Big Spell";
-          addReason = "Big spells like Fireball, Poison, or Lightning provide crucial value against medium-health troops and buildings. They're essential for punishing clumped units and can clutch tower damage in close games.";
+          addReason = "You need a heavy spell to finish towers and crush pushes.";
         }
         else if (issue.includes("Air Defense")) {
           fixRole = "airDefense";
           suggestionText = "Add Air Defense";
-          addReason = "Without air defense, you'll auto-lose to Lava Hound, Balloon, and Minion Horde pushes. Air-targeting troops like Musketeer, Baby Dragon, or Archers are vital for a balanced defense.";
+          addReason = "You are vulnerable to Balloon and Lava Hound.";
         }
         else if (issue.includes("Building")) {
           fixRole = "building";
           suggestionText = "Add a Building";
-          addReason = "Buildings like Tesla, Cannon, or Tombstone are excellent for pulling tanks (Giant, Golem, Hog Rider) to the center, giving both towers time to attack. They're key to surviving heavy beatdown pushes.";
+          addReason = "A building helps distract tanks like Hog Rider and Golem.";
         }
 
         if (!fixRole) return null;
@@ -901,22 +917,38 @@
           candidates = window.currentPlayerData.cards.filter(c => getCardRole(c.name).includes(fixRole));
         }
 
-        candidates.sort((a, b) => (META_QUALITY[b.name] || 50) - (META_QUALITY[a.name] || 50));
+        // SMART SELECTION:
+        // 1. Sort by Meta Score
+        // 2. Filter by Level (don't suggest lvl 1 cards if possible)
+        // 3. Elixir Check: If deck is heavy (>4.0), prefer cheaper options
+
+        const avgElixir = deck.reduce((acc, c) => acc + (c.elixirCost || 3), 0) / 8;
+        const isHeavy = avgElixir > 4.0;
+
+        candidates.sort((a, b) => {
+          let scoreA = (META_QUALITY[a.name] || 50);
+          let scoreB = (META_QUALITY[b.name] || 50);
+
+          // Boost leveled cards
+          if ((a.level || 0) > (b.level || 0)) scoreA += 5;
+          if ((b.level || 0) > (a.level || 0)) scoreB += 5;
+
+          // Penalize expensive cards if deck is heavy
+          if (isHeavy) {
+            if ((a.elixirCost || 3) > 4) scoreA -= 20;
+            if ((b.elixirCost || 3) > 4) scoreB -= 20;
+          }
+
+          return scoreB - scoreA;
+        });
 
         let bestAdd = candidates.length > 0 ? candidates[0] : { name: "Hog Rider", iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/UbuVrj_tAFUulOpA_53oITt7yU8S_eG8wGqgJ8s-yv.png" } };
 
         const removal = this.proposeRemoval(deck);
         if (!removal) return null;
 
-        // Enhanced removal reasons
         let removeReason = removal.reason;
         const removeCard = removal.card;
-        const metaScore = META_QUALITY[removeCard.name] || 50;
-        if (metaScore < 60) {
-          removeReason = `${removeCard.name} currently has a low win rate (${metaScore > 50 ? 'below average' : 'weak'}) in the current meta. Better alternatives exist that synergize with your deck's strategy. ${removal.reason}`;
-        } else {
-          removeReason = `While ${removeCard.name} is a decent card, it's the least essential in your current build. Removing it allows you to address a critical weakness. ${removal.reason}`;
-        }
 
         return {
           add: bestAdd,
