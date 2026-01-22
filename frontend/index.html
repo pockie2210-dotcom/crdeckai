@@ -1712,6 +1712,13 @@
       const btn = document.getElementById('scanBtn');
       const demoBtn = document.getElementById('demoBtn');
       const output = document.getElementById('output');
+      const input = document.getElementById('tagInput');
+
+      // Pre-fill from LocalStorage
+      const cachedTag = localStorage.getItem('cachedPlayerTag');
+      if (cachedTag && input) {
+        input.value = cachedTag;
+      }
 
       // --- META QUALITY TIER LIST (Using Global Scope Version) ---
       // Removed local duplicate to ensure consistency with DeckWeakness
@@ -1990,6 +1997,11 @@
             renderPlayer(data);
             renderDeck(data);
             success = true;
+
+            // Save to LocalStorage
+            if (playerTag) {
+              localStorage.setItem('cachedPlayerTag', playerTag);
+            }
 
           } catch (err) {
             log('fetch error', err && err.name ? err.name : err);
