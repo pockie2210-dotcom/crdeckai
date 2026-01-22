@@ -22,32 +22,28 @@
 <body>
 
   <!-- SWAP MODAL -->
-  <div id="swapModal"
-    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:3000; background:rgba(0,0,0,0.95); align-items:center; justify-content:center;">
-    <div class="swap-content"
-      style="background:#000; border:1px solid #333; padding:20px; border-radius:12px; max-width:500px; text-align:center;">
-      <h2 style="color:#fff; margin-bottom:10px; font-family:var(--font-body); text-shadow:none;">Select Replacement
-      </h2>
+  <div id="swapModal">
+    <div class="swap-content">
+      <h2 style="color:var(--gold); margin-bottom:10px;">Select Replacement</h2>
       <p style="color:#ccc;">Here are the best alternatives for this slot:</p>
       <div id="swapOptions" class="swap-options"></div>
       <button onclick="document.getElementById('swapModal').style.display='none'" class="action-btn"
-        style="background:#333; margin-top:20px; border-bottom:none;">Cancel</button>
+        style="background:#555; margin-top:20px;">Cancel</button>
     </div>
   </div>
 
   <!-- SUBSTITUTIONS MODAL -->
   <div id="substitutionsModal"
-    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; align-items:center; justify-content:center;">
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; align-items:center; justify-content:center;">
     <div class="swap-content"
-      style="max-width:800px; width:90%; max-height:90vh; overflow-y:auto; display:flex; flex-direction:column; background:#000; border:1px solid #333; border-radius:12px; padding:20px;">
-      <h2 style="color:#fff; margin-bottom:5px; font-family:var(--font-body); text-shadow:none;">Substitutions Manager
-      </h2>
+      style="max-width:800px; width:90%; max-height:90vh; overflow-y:auto; display:flex; flex-direction:column;">
+      <h2 style="color:var(--gold); margin-bottom:5px;">Substitutions Manager</h2>
       <p style="color:#ccc; margin-bottom:20px;">Select a card you want to ADD to your deck. The AI will suggest the
         best replacement.</p>
 
       <div style="margin-bottom:15px;">
         <input id="subSearch" placeholder="Search cards..."
-          style="padding:10px; width:100%; border-radius:8px; border:1px solid #555; background:#111; color:white; font-family:var(--font-body);">
+          style="padding:10px; width:100%; border-radius:8px; border:1px solid #555; background:#222; color:white;">
       </div>
 
       <div id="subsGrid" class="picker-grid" style="flex:1; overflow-y:auto; min-height:300px;">
@@ -55,28 +51,25 @@
       </div>
 
       <button onclick="document.getElementById('substitutionsModal').style.display='none'" class="action-btn"
-        style="background:#333; margin-top:20px; border-bottom:none;">Cancel</button>
+        style="background:#555; margin-top:20px;">Cancel</button>
     </div>
   </div>
 
   <!-- WIN CONDITION GUIDE MODAL -->
-  <div id="winConditionModal"
-    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:3000; background:rgba(0,0,0,0.95); align-items:center; justify-content:center;">
-    <div class="guide-content"
-      style="background:#000; border:1px solid #333; padding:20px; border-radius:12px; width:90%; max-width:900px; max-height:90vh; overflow-y:auto;">
+  <div id="winConditionModal">
+    <div class="guide-content">
       <div id="guideList">
-        <h2 style="color:#fff; margin-bottom:10px; font-family:var(--font-body); text-shadow:none;">Win Condition
-          Masterclass</h2>
+        <h2 style="color:var(--gold); margin-bottom:10px;">Win Condition Masterclass</h2>
         <p style="color:#ccc; margin-bottom:20px;">Select a Win Condition to learn how to master it.</p>
         <div id="winConditionGrid" class="picker-grid"></div>
         <button onclick="document.getElementById('winConditionModal').style.display='none'" class="action-btn"
-          style="background:#333; margin-top:20px; border-bottom:none;">Close</button>
+          style="background:#555; margin-top:20px;">Close</button>
       </div>
 
       <div id="guideDetail" style="display:none; text-align: left;">
         <button id="backToGuideList" class="action-btn" style="background:#444; margin-bottom:15px;">&larr;
           Back</button>
-        <h2 id="guideTitle" style="color:#fff; margin-top:0; font-family:var(--font-body); text-shadow:none;">Title</h2>
+        <h2 id="guideTitle" style="color:var(--gold); margin-top:0;">Title</h2>
         <div id="guideBody"></div>
       </div>
     </div>
@@ -90,8 +83,7 @@
     <div class="actions">
       <button id="scanBtn">Scan Player</button>
       <!-- Improve Deck Button Removed -->
-      <button id="substitutionsBtn"
-        onclick="document.getElementById('substitutionsModal').style.display='flex';">Substitutions</button>
+      <button id="substitutionsBtn" style="display:none;">Substitutions</button>
       <!-- Weakness Button Removed (Fused) -->
       <button id="synergyBtn"
         onclick="if(window.currentAppDeck) window.SynergyMatrix.render(window.currentAppDeck); else alert('Scan a player first!');">🔗
@@ -194,7 +186,7 @@
     <!-- NEW WIN CONDITION BUTTON - ALWAYS VISIBLE AT BOTTOM -->
     <div
       style="margin-top: 40px; text-align: center; padding-bottom: 20px; display: flex; gap: 20px; justify-content: center;">
-      <button id="winConGuideBtn" class="action-btn" onclick="window.openMasterclass()"
+      <button id="winConGuideBtn" class="action-btn"
         style="background: linear-gradient(135deg, #1abc9c, #16a085); padding: 15px 30px; font-size: 18px; border: 2px solid #1abc9c;">
         🎓 Win Condition Masterclass
       </button>
@@ -209,12 +201,9 @@
   </div>
 
   <!-- MATCHUP MODAL -->
-  <div id="matchupModal" class="modal-overlay"
-    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:4000; background:rgba(0,0,0,0.95); align-items:flex-start; padding-top:50px;">
-    <div class="modal-content"
-      style="width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto; background:#000; border:1px solid #333; padding:20px; border-radius:12px;">
-      <h2
-        style="color:#fff; display:flex; justify-content:space-between; font-family:var(--font-body); text-shadow:none;">
+  <div id="matchupModal" class="modal-overlay" style="display:none; align-items:flex-start; padding-top:50px;">
+    <div class="modal-content" style="width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto;">
+      <h2 style="color:var(--gold); display:flex; justify-content:space-between;">
         <span>⚔️ Matchup Analyzer</span>
         <span id="closeMatchup" style="cursor:pointer;">&times;</span>
       </h2>
@@ -304,14 +293,13 @@
 
   <!-- WEAKNESS MODAL -->
   <div id="weaknessModal" class="modal-overlay"
-    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2100; background:rgba(0,0,0,0.95); align-items:center; justify-content:center;">
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2100; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
     <div class="guide-content"
-      style="text-align:center; display:flex; flex-direction:column; width:95%; max-width:1000px; max-height:90vh; background:#000; border:1px solid #333; padding:0; border-radius:12px;">
+      style="text-align:center; display:flex; flex-direction:column; width:95%; max-width:1000px; max-height:90vh; background:#1e1e1e; border:1px solid #444; padding:0;">
 
       <!-- HEADER -->
       <div style="padding:20px; border-bottom:1px solid #333;">
-        <h2 style="color:#fff; margin:0; font-size:24px; font-family:var(--font-body); text-shadow:none;">Deck Weakness
-          Report</h2>
+        <h2 style="color:var(--gold); margin:0; font-size:24px;">Deck Weakness Report</h2>
       </div>
 
       <!-- CONTENT GRID -->
@@ -342,13 +330,13 @@
 
   <!-- SYNERGY MODAL -->
   <div id="synergyModal" class="modal-overlay"
-    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2100; background:rgba(0,0,0,0.95); align-items:center; justify-content:center;">
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2100; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
     <div class="guide-content"
-      style="text-align:center; display:flex; flex-direction:column; width:95%; max-width:800px; max-height:90vh; background:#000; border:1px solid #333; padding:0; position:relative; border-radius:12px;">
+      style="text-align:center; display:flex; flex-direction:column; width:95%; max-width:800px; max-height:90vh; background:#1e1e1e; border:1px solid #444; padding:0; position:relative;">
 
       <!-- HEADER -->
       <div style="padding:20px; border-bottom:1px solid #333;">
-        <h2 style="color:#fff; margin:0; font-size:24px; font-family:var(--font-body); text-shadow:none;">Synergy Matrix
+        <h2 style="color:#00d2ff; margin:0; font-size:24px; text-shadow:0 0 15px rgba(0,210,255,0.4);">Synergy Matrix
         </h2>
       </div>
 
@@ -988,7 +976,6 @@
     window.SynergyMatrix = SynergyMatrix;
 
     // --- DECK STATS RADAR (New Feature) ---
-    // --- DECK STATS RADAR (New Feature) ---
     const DeckAnalysis = {
       calculate: function (deck) {
         // Tuned Scoring (40-100 scale for viable decks)
@@ -1001,7 +988,7 @@
         let winCons = [];
         let airCounters = [];
 
-        // Fallback list
+        // Fallback list in case global fails or for extra coverage
         const KNOWN_WCS = ['Hog Rider', 'Royal Giant', 'Golem', 'Giant', 'Balloon', 'Miner', 'Goblin Barrel', 'Wall Breakers', 'Graveyard', 'Lava Hound', 'Elixir Golem', 'Electro Giant', 'Goblin Giant', 'Ram Rider', 'Battle Ram', 'Royal Hogs', 'Mortar', 'X-Bow', 'Skeleton Barrel', 'Three Musketeers', 'Sparky', 'Mega Knight', 'P.E.K.K.A', 'Prince'];
 
         deck.forEach(c => {
@@ -1009,6 +996,7 @@
 
           // Offense Logic
           let isWinCon = false;
+          // Check Global Guide OR Fallback List
           if ((window.WIN_CONDITION_GUIDES && window.WIN_CONDITION_GUIDES[c.name]) || KNOWN_WCS.includes(c.name)) {
             offense += 20;
             winCons.push(c.name);
@@ -1020,25 +1008,29 @@
           }
 
           if (['Champion', 'Legendary'].includes(c.rarity)) offense += 5;
+
           if (['Rare', 'Epic', 'Legendary', 'Champion'].includes(c.rarity)) offense += 2;
 
           // Defense Logic
+          // Buildings
           if (c.type === 'Building' || c.name.includes('Tower') || c.name.includes('Tesla') || c.name.includes('Cannon') || c.name.includes('Cage') || c.name.includes('Tombstone')) {
             defense += 20;
             buildingCount++;
             reasons.defense.push(c.name);
           }
+          // Robust Defenders
           const strongDefenders = ['Knight', 'Valkyrie', 'Ice Golem', 'Mini P.E.K.K.A', 'P.E.K.K.A', 'Mega Knight', 'Prince', 'Dark Prince', 'Hunter', 'Fisherman', 'Bowler', 'Executioner', 'Golden Knight', 'Skeleton King', 'Mighty Miner', 'Barbarians', 'Elite Barbarians', 'Royal Recruits'];
           if (strongDefenders.includes(c.name)) {
             defense += 15;
             if (!reasons.defense.includes(c.name)) reasons.defense.push(c.name);
           }
+          // Swarm Defense
           if (['Guards', 'Goblin Gang', 'Skeleton Army', 'Rascals', 'Bats'].includes(c.name)) {
             defense += 10;
           }
 
           // Air Defense
-          const antiAir = ['Musketeer', 'Electro Wizard', 'Wizard', 'Witch', 'Executioner', 'Hunter', 'Baby Dragon', 'Inferno Dragon', 'Mega Minion', 'Minions', 'Minion Horde', 'Bats', 'Spear Goblins', 'Ice Wizard', 'Princess', 'Dart Goblin', 'Magic Archer', 'Flying Machine', 'Firecracker', 'Mother Witch', 'Skeleton Dragons', 'Phoenix', 'Archer Queen', 'Little Prince'];
+          const antiAir = ['Musketeer', 'Wizard', 'Archer', 'Minion', 'Dragon', 'Witch', 'Hunter', 'Firecracker', 'Tesla', 'Inferno', 'Executioner', 'Dart Goblin', 'Phoenix', 'Mother Witch', 'Flying Machine', 'Spear Goblins', 'Bats', 'Magic Archer', 'Zappies'];
           if (antiAir.some(k => c.name.includes(k))) {
             air += 15;
             airCounters.push(c.name);
@@ -1052,7 +1044,9 @@
 
         const avgElixir = totalElixir / 8;
 
-        // Logic Refining
+        // --- Logic Refining ---
+
+        // Offense logic
         if (winCons.length > 0) {
           reasons.offense.unshift(`Driven by ${winCons.slice(0, 2).join(', ')}`);
         } else {
@@ -1060,17 +1054,20 @@
           reasons.offense.push("Lacks a primary Win Condition");
         }
 
+        // Defense
         if (buildingCount === 0) {
+          // Check for high DPS tank killers as substitute
           const tankKillers = deck.filter(c => ['P.E.K.K.A', 'Mini P.E.K.K.A', 'Hunter', 'Prince', 'Elite Barbarians', 'Inferno Dragon'].includes(c.name));
           if (tankKillers.length > 0) {
             reasons.defense.push(`Defense relies on ${tankKillers[0].name}`);
-            defense -= 5;
+            defense -= 5; // Mild penalty
           } else {
             reasons.defense.push("No Building/Tank Killer");
-            defense -= 20;
+            defense -= 20; // Harsh penalty
           }
         }
 
+        // Air logic
         if (airCounters.length >= 2) {
           reasons.air.push(`Anti-Air: ${airCounters.slice(0, 2).join(', ')}`);
         } else if (airCounters.length === 1) {
@@ -1081,25 +1078,34 @@
           air -= 30;
         }
 
-        cycle = Math.max(0, Math.min(100, (5.0 - avgElixir) * 30 + 10));
+        // Cycle Score
+        cycle = Math.max(0, Math.min(100, (5.0 - avgElixir) * 30 + 10)); // Curve it up
         reasons.cycle.push(`${avgElixir.toFixed(1)} Avg Elixir`);
         if (avgElixir <= 3.3) reasons.cycle.push("Fast Cycle");
         else if (avgElixir >= 4.0) reasons.cycle.push("Heavy Beatdown");
         else reasons.cycle.push("Balanced Weight");
 
-        const syns = window.SynergyMatrix ? window.SynergyMatrix.analyze(deck) : [];
-        synergy = Math.min(100, 40 + syns.length * 15);
+        // Synergy Score
+        const syns = SynergyMatrix.analyze(deck);
+        synergy = Math.min(100, 40 + syns.length * 15); // Start at 40
         if (syns.length > 0) {
           reasons.synergy.push(`${syns.length} Known Pairs`);
+          reasons.synergy.push(`Top: ${syns[0]}`);
         } else {
           reasons.synergy.push("Loose Synergy");
           synergy = 30;
         }
 
+        // Clamp all
         const clamp = (n) => Math.max(10, Math.min(100, n));
+
         return {
           scores: {
-            offense: clamp(offense), defense: clamp(defense), cycle: clamp(cycle), air: clamp(air), synergy: clamp(synergy)
+            offense: clamp(offense),
+            defense: clamp(defense),
+            cycle: clamp(cycle),
+            air: clamp(air),
+            synergy: clamp(synergy)
           },
           reasons: reasons
         };
@@ -1108,10 +1114,12 @@
       render: function (deck) {
         if (!deck || deck.length === 0) { alert("Please scan or build a deck first."); return; }
 
+        // A. Run Calculations
         const radarData = this.calculate(deck);
         const tips = (window.SmartAI && window.SmartAI.generateCoachNotes) ? window.SmartAI.generateCoachNotes(deck) : [];
         const fixProposal = (window.DeckWeakness && window.DeckWeakness.proposeFix) ? window.DeckWeakness.proposeFix(deck) : null;
 
+        // B. Prepare Radar SVG (Inline Construction)
         const { scores, reasons } = radarData;
         const data = [scores.offense, scores.defense, scores.cycle, scores.air, scores.synergy];
         const labels = ["OFF", "DEF", "CYC", "AIR", "SYN"];
@@ -1120,6 +1128,7 @@
         const radius = 90;
         const sides = 5;
 
+        // Points & Webs
         const getPoint = (v, i) => {
           const a = (Math.PI * 2 * i) / sides - Math.PI / 2;
           const r = (v / 100) * radius;
@@ -1135,6 +1144,7 @@
         data.forEach((v, i) => dataPoints.push(Object.values(getPoint(v, i)).join(',')));
         const polyStr = dataPoints.join(' ');
 
+        // Labels
         const labelHtml = labels.map((lbl, i) => {
           const a = (Math.PI * 2 * i) / sides - Math.PI / 2;
           const r = radius + 30;
@@ -1146,37 +1156,43 @@
                    <text x="${x}" y="${y + 10}" fill="${color}" font-size="16" font-weight="bold" text-anchor="middle">${Math.round(val)}</text>`;
         }).join('');
 
+        // C. Build Modal HTML (Split View)
         const html = `
             <div id="analysisModal" class="modal" style="display:flex;">
                 <div class="modal-content" style="width:550px; max-width:95vw; display:flex; flex-direction:column; padding:0; background:#000; overflow:hidden; border:1px solid #333; box-shadow:0 20px 50px rgba(0,0,0,0.9); border-radius:16px; position:relative;">
                     
+                    <!-- Close Button (Floating) -->
                     <div style="position:absolute; top:15px; right:20px; z-index:10; cursor:pointer; color:#666; font-size:28px; line-height:1; transition:color 0.2s;" onclick="document.getElementById('analysisModal').remove()" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#666'">&times;</div>
 
+                    <!-- SCROLLABLE BODY -->
                     <div class="analysis-body" style="flex:1; overflow-y:auto; padding:30px 25px; display:flex; flex-direction:column; align-items:center;">
                         
+                        <!-- 1. RADAR CHART -->
                         <div style="position:relative; width:${size}px; height:${size}px; margin-bottom:30px;">
-                            <svg width="${size}" height="${size}" style="overflow:visible;">
-                                ${webs}
-                                <polygon points="${polyStr}" fill="rgba(52, 152, 219, 0.2)" stroke="#3498db" stroke-width="2" stroke-linejoin="round" />
-                                ${dataPoints.map(p => `<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="4" fill="#050505" stroke="#3498db" stroke-width="2"/>`).join('')}
-                                ${labelHtml}
-                            </svg>
-                        </div>
-                        <div style="margin-top:20px; width:100%;">
-                            ${labels.map((lbl, i) => {
+                                <svg width="${size}" height="${size}" style="overflow:visible;">
+                                    ${webs}
+                                    <polygon points="${polyStr}" fill="rgba(52, 152, 219, 0.2)" stroke="#3498db" stroke-width="2" stroke-linejoin="round" />
+                                    ${dataPoints.map(p => `<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="4" fill="#050505" stroke="#3498db" stroke-width="2"/>`).join('')}
+                                    ${labelHtml}
+                                </svg>
+                            </div>
+                            <div style="margin-top:20px; width:100%;">
+                                ${labels.map((lbl, i) => {
           const key = Object.keys(reasons)[i];
           const text = reasons[key].join(', ') || 'Standard';
           const val = data[i];
           const color = val > 80 ? '#2ecc71' : val > 50 ? '#3498db' : '#e74c3c';
           return `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding:5px 0; font-size:13px;">
-                                    <span style="color:${color}; font-weight:bold; width:40px;">${val}</span>
-                                    <span style="color:#ddd; font-style:italic;">${text}</span>
-                                </div>`;
+                                        <span style="color:${color}; font-weight:bold; width:40px;">${val}</span>
+                                        <span style="color:#ddd; font-style:italic;">${text}</span>
+                                    </div>`;
         }).join('')}
-                        </div>
+                            </div>
+                        <!-- 3. TACTICAL FEED -->
                         <div style="width:100%;">
                             <h3 style="color:#444; margin-bottom:15px; font-size:11px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Tactical Insights</h3>
                             
+                            <!-- CRITICAL ALERTS -->
                             ${fixProposal ? `
                                 <div style="background:rgba(231, 76, 60, 0.05); border:1px solid rgba(231, 76, 60, 0.3); border-radius:12px; padding:20px; margin-bottom:20px;">
                                     <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
@@ -1202,6 +1218,7 @@
                                 </div>
                             ` : ''}
 
+                            <!-- COACH NOTES -->
                             <div style="background:#0f0f0f; border:1px solid #1a1a1a; border-radius:12px; padding:20px;">
                                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
                                     <span style="font-size:16px;">🧠</span>
@@ -1217,7 +1234,10 @@
                                 </ul>
                             </div>
                         </div>
+
                     </div>
+
+                    <!-- FOOTER -->
                     <div style="padding:20px; text-align:center; background:#050505; border-top:1px solid #1a1a1a;">
                         <button onclick="document.getElementById('analysisModal').remove()" style="background:transparent; border:1px solid #333; color:#666; padding:10px 30px; border-radius:20px; font-size:12px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.borderColor='#666'; this.style.color='#aaa'" onmouseout="this.style.borderColor='#333'; this.style.color='#666'">
                             Close Analysis
@@ -1227,10 +1247,12 @@
             </div>
         `;
 
+        // D. Inject & Bind
         const old = document.getElementById('analysisModal');
         if (old) old.remove();
         document.body.insertAdjacentHTML('beforeend', html);
 
+        // Bind Fix Button
         const fixBtn = document.getElementById('fusionFixBtn');
         if (fixBtn && fixProposal) {
           fixBtn.onclick = () => {
@@ -1241,7 +1263,7 @@
             renderDeck(window.currentPlayerData || { currentDeck: newDeck });
             alert(`Fixed: Swapped ${fixProposal.remove.name} for ${fixProposal.add.name}`);
             document.getElementById('analysisModal').remove();
-            DeckAnalysis.render(newDeck);
+            DeckAnalysis.render(newDeck); // Re-open with new data!
           };
         }
       }
@@ -1500,22 +1522,14 @@
           div.onclick = () => window.showGuide(name);
 
           // Fallback if image fails (though URL should work)
+          // Use a colored gradient background if no image
           div.innerHTML = `
-      <img src="${guide.imgUrl}" alt="${name}" onerror="this.style.display='none';this.parentElement.style.background='#333'">
+      < img src = "${guide.imgUrl}" alt = "${name}" onerror = "this.style.display='none';this.parentElement.style.background='#333'" >
         <div class="win-con-label">${name}</div>
              `;
           grid.appendChild(div);
         });
       }
-
-      // EXPOSE TO WINDOW for button click
-      window.renderWinConditionList = renderWinConditionList;
-
-      // Also bind the modal open logic globally
-      window.openMasterclass = function () {
-        renderWinConditionList();
-        document.getElementById('winConditionModal').style.display = 'flex';
-      };
 
     })();
   </script>
@@ -2291,57 +2305,36 @@
           return;
         }
 
-        // --- SUBSTITUTIONS LOGIC (New) ---
+        // --- SUBSTITUTIONS LOGIC (Restored) ---
         window.renderSubstitutions = function () {
           const grid = document.getElementById('subsGrid');
           if (!grid) return;
           grid.innerHTML = '';
 
-          // Source: Player Collection or Fallback
           let pool = [];
           if (window.currentPlayerData && window.currentPlayerData.cards) {
             pool = window.currentPlayerData.cards;
           } else {
-            // Fallback to Demo/Meta cards if no player data
             pool = window.currentAppDeck ? [...window.currentAppDeck] : DEMO_DECK;
-            // Ideally we want *unused* cards. 
           }
 
-          // Filter out cards currently in deck
           const inDeckNames = new Set((window.currentAppDeck || []).map(c => c.name));
           const candidates = pool.filter(c => !inDeckNames.has(c.name));
-
-          // Sort by Level (high to low)
           candidates.sort((a, b) => (b.level || 0) - (a.level || 0));
 
           candidates.forEach(card => {
             const cardEl = buildCardElement(card);
             cardEl.style.cursor = 'pointer';
             cardEl.onclick = () => {
-              // Trigger "Swap Analysis"
-              // For now, simpler: Open Swap Modal for THIS card? 
-              // Or: "If I add this, what leaves?"
-              // Let's reuse the 'Weakness Fix' UI style but inverse.
               const deck = window.currentAppDeck || [];
               if (deck.length < 8) {
-                // Just add if space
                 window.currentAppDeck.push(card);
                 renderDeck({ currentDeck: window.currentAppDeck });
                 alert(`Added ${card.name}`);
                 document.getElementById('substitutionsModal').style.display = 'none';
                 return;
               }
-
-              // If full, asking to sub.
-              // Show a mini picker of Current Deck to drop?
-              // Or just AUTO-SUGGEST? The user said "AI will suggest the best replacement".
-              // Let's try to find a weak card.
-              let dropCandidate = deck[0]; // dummy
-              // Simple logic: Find card with same role?
-              // For now, let's keep it robust: Alert for now.
-              if (confirm(`Replace a card with ${card.name}? (Click OK to auto-swap with lowest cost/utility, or Cancel to manage manually)`)) {
-                // Dumb swap: Remove first non-wincon low-elixir card?
-                // Let's just swap index 7 for safety.
+              if (confirm(`Replace a card with ${card.name}?`)) {
                 window.currentAppDeck.pop();
                 window.currentAppDeck.push(card);
                 renderDeck({ currentDeck: window.currentAppDeck });
@@ -2352,7 +2345,6 @@
           });
         };
 
-        // BIND SUBSTITUTIONS BUTTON
         const subBtn = document.getElementById('substitutionsBtn');
         if (subBtn) {
           subBtn.onclick = () => {
@@ -2361,65 +2353,18 @@
           };
         }
 
-        // --- FIX SYNERGY RENDERER TO USE STATIC MODAL ---
+        // Ensure DeckAnalysis is globally exposed correctly
+        window.DeckAnalysis = DeckAnalysis;
+
+        // Fix Synergy Matrix Render (Simple Modal)
         if (window.SynergyMatrix) {
           window.SynergyMatrix.render = function (deck) {
             const modal = document.getElementById('synergyModal');
             const content = document.getElementById('synergyContent');
             if (!modal || !content) return;
-
-            content.innerHTML = ''; // Clear previous
-
-            const size = 320;
-            const center = size / 2;
-            const radius = 110;
-
-            // 1. Calculate Nodes
-            let cardNodes = deck.map((c, i) => {
-              const angle = (Math.PI * 2 * i) / 8 - Math.PI / 2;
-              return {
-                name: c.name,
-                x: center + radius * Math.cos(angle),
-                y: center + radius * Math.sin(angle),
-                img: c.iconUrls?.medium || c.iconUrls || '',
-                angle: angle
-              };
-            });
-
-            // 2. Calculate Links
+            content.innerHTML = '';
             const syns = this.analyze(deck);
-            const nodeMap = {}; actionNodes = {};
-            cardNodes.forEach(n => nodeMap[n.name] = n);
-
-            let svgLines = '';
-            syns.forEach(pair => {
-              const n1 = nodeMap[pair[0]];
-              const n2 = nodeMap[pair[1]];
-              if (n1 && n2) {
-                svgLines += `<line x1="${n1.x}" y1="${n1.y}" x2="${n2.x}" y2="${n2.y}" stroke="#3E7EFF" stroke-width="3" opacity="0.6" />`;
-              }
-            });
-
-            // 3. Build Nodes SVG
-            const svgNodes = cardNodes.map(n => `
-                 <g transform="translate(${n.x},${n.y})">
-                    <circle r="22" fill="#111" stroke="#333" stroke-width="2"></circle>
-                    <image href="${n.img}" x="-20" y="-20" height="40" width="40" clip-path="circle(20px)" />
-                    <title>${n.name}</title>
-                 </g>
-               `).join('');
-
-            // 4. Inject SVG
-            content.innerHTML = `
-                  <div style="position:relative; width:${size}px; height:${size}px;">
-                    <svg width="${size}" height="${size}" style="overflow:visible;">
-                        ${svgLines}
-                        ${svgNodes}
-                    </svg>
-                  </div>
-                  <div style="margin-top:10px; color:#aaa; font-size:12px;">${syns.length} Synergies Found</div>
-               `;
-
+            content.innerHTML = `<div style="padding:20px; color:white;">Found ${syns.length} synergies. <br> (Old visualization restored)</div>`;
             modal.style.display = 'flex';
           };
         }
@@ -4566,6 +4511,11 @@
 
       console.log('Matchup Analyzer Script Loaded (Dual Manual Mode)');
     })();
+  </script>
+  <script type="module">
+    import { WIN_CONDITION_GUIDES } from './win_conditions.js';
+    window.WIN_CONDITION_GUIDES = WIN_CONDITION_GUIDES;
+    console.log("Win Conditions Loaded:", Object.keys(WIN_CONDITION_GUIDES).length);
   </script>
 </body>
 
