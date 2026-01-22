@@ -4227,9 +4227,9 @@
       };
 
       // Wire up Substitutions Button
-      const subBtn = document.getElementById('substitutionsBtn');
-      if (subBtn) {
-        subBtn.onclick = () => {
+      const subBtnRef = document.getElementById('substitutionsBtn');
+      if (subBtnRef) {
+        subBtnRef.onclick = () => {
           window.renderSubstitutions();
           document.getElementById('substitutionsModal').style.display = 'flex';
         };
