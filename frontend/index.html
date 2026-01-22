@@ -4509,6 +4509,70 @@
         resultArea.scrollIntoView({ behavior: 'smooth' });
       };
 
+      // --- SUBSTITUTIONS LOGIC (Restored & Scoped) ---
+      window.renderSubstitutions = function () {
+        const grid = document.getElementById('subsGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        let pool = [];
+        if (window.currentPlayerData && window.currentPlayerData.cards) {
+          pool = window.currentPlayerData.cards;
+        } else {
+          pool = window.currentAppDeck ? [...window.currentAppDeck] : DEMO_DECK;
+        }
+
+        const inDeckNames = new Set((window.currentAppDeck || []).map(c => c.name));
+        const candidates = pool.filter(c => !inDeckNames.has(c.name));
+        candidates.sort((a, b) => (b.level || 0) - (a.level || 0));
+
+        candidates.forEach(card => {
+          const cardEl = buildCardElement(card);
+          cardEl.style.cursor = 'pointer';
+          cardEl.onclick = () => {
+            const deck = window.currentAppDeck || [];
+            if (deck.length < 8) {
+              window.currentAppDeck.push(card);
+              renderDeck({ currentDeck: window.currentAppDeck });
+              alert(`Added ${card.name}`);
+              document.getElementById('substitutionsModal').style.display = 'none';
+              return;
+            }
+            if (confirm(`Replace a card with ${card.name}?`)) {
+              window.currentAppDeck.pop();
+              window.currentAppDeck.push(card);
+              renderDeck({ currentDeck: window.currentAppDeck });
+              document.getElementById('substitutionsModal').style.display = 'none';
+            }
+          };
+          grid.appendChild(cardEl);
+        });
+      };
+
+      const subBtn = document.getElementById('substitutionsBtn');
+      if (subBtn) {
+        subBtn.onclick = () => {
+          window.renderSubstitutions();
+          document.getElementById('substitutionsModal').style.display = 'flex';
+        };
+      }
+
+      // Ensure DeckAnalysis is globally exposed correctly
+      window.DeckAnalysis = DeckAnalysis;
+
+      // Fix Synergy Matrix Render (Simple Modal)
+      if (window.SynergyMatrix) {
+        window.SynergyMatrix.render = function (deck) {
+          const modal = document.getElementById('synergyModal');
+          const content = document.getElementById('synergyContent');
+          if (!modal || !content) return;
+          content.innerHTML = '';
+          const syns = this.analyze(deck);
+          content.innerHTML = `<div style="padding:20px; color:white;">Found ${syns.length} synergies. <br> (Old visualization restored)</div>`;
+          modal.style.display = 'flex';
+        };
+      }
+
       console.log('Matchup Analyzer Script Loaded (Dual Manual Mode)');
     })();
   </script>
