@@ -801,21 +801,34 @@
     // --- SYNERGY MATRIX MODULE V3 (Interactive & Premium) ---
     const SynergyMatrix = {
       PAIRS: [
-        ['Tornado', 'Executioner'], ['Tornado', 'Ice Wizard'], ['Tornado', 'Magic Archer'], ['Tornado', 'Sparky'],
-        ['Hog Rider', 'Ice Golem'], ['Hog Rider', 'Earthquake'], ['Hog Rider', 'Fireball'], ['Hog Rider', 'The Log'],
-        ['Golem', 'Night Witch'], ['Golem', 'Baby Dragon'], ['Golem', 'Lightning'], ['Golem', 'Lumberjack'],
-        ['Lava Hound', 'Balloon'], ['Lava Hound', 'Mega Minion'], ['Lava Hound', 'Inferno Dragon'], ['Lava Hound', 'Skeleton Dragons'],
-        ['Miner', 'Wall Breakers'], ['Miner', 'Poison'], ['Miner', 'Bats'], ['Miner', 'Skeleton Barrel'],
-        ['Graveyard', 'Poison'], ['Graveyard', 'Baby Dragon'], ['Graveyard', 'Knight'], ['Graveyard', 'Freeze'],
-        ['X-Bow', 'Tesla'], ['X-Bow', 'The Log'], ['X-Bow', 'Ice Spirit'],
-        ['Royal Giant', 'Fisherman'], ['Royal Giant', 'Mother Witch'], ['Royal Giant', 'Lightning'],
-        ['Goblin Barrel', 'Princess'], ['Goblin Barrel', 'Goblin Gang'], ['Goblin Barrel', 'Rocket'],
-        ['P.E.K.K.A', 'Battle Ram'], ['P.E.K.K.A', 'Electro Wizard'], ['P.E.K.K.A', 'Bandit'],
-        ['Giant', 'Sparky'], ['Giant', 'Prince'], ['Giant', 'Witch'],
-        ['Balloon', 'Lumberjack'], ['Balloon', 'Freeze'],
-        ['Electro Giant', 'Tornado'], ['Electro Giant', 'Lightning'],
-        ['Elixir Golem', 'Battle Healer'], ['Elixir Golem', 'Electro Dragon'],
-        ['Goblin Drill', 'Wall Breakers'], ['Goblin Drill', 'Bomber']
+        // Spells & Support
+        ['Tornado', 'Executioner'], ['Tornado', 'Ice Wizard'], ['Tornado', 'Magic Archer'], ['Tornado', 'Sparky'], ['Tornado', 'Baby Dragon'],
+        ['Poison', 'Miner'], ['Poison', 'Graveyard'], ['Poison', 'P.E.K.K.A'], ['Poison', 'Battle Ram'],
+        ['Freeze', 'Balloon'], ['Freeze', 'Graveyard'], ['Freeze', 'Hog Rider'],
+        ['Clone', 'Giant Skeleton'], ['Clone', 'Golem'], ['Clone', 'Lava Hound'], ['Clone', 'Skeleton Barrel'],
+
+        // Win Conditions & Tanks
+        ['Hog Rider', 'Ice Golem'], ['Hog Rider', 'Earthquake'], ['Hog Rider', 'Fireball'], ['Hog Rider', 'The Log'], ['Hog Rider', 'Ice Spirit'], ['Hog Rider', 'Valkyrie'],
+        ['Golem', 'Night Witch'], ['Golem', 'Baby Dragon'], ['Golem', 'Lightning'], ['Golem', 'Lumberjack'], ['Golem', 'Tornado'], ['Golem', 'Mega Minion'],
+        ['Lava Hound', 'Balloon'], ['Lava Hound', 'Mega Minion'], ['Lava Hound', 'Inferno Dragon'], ['Lava Hound', 'Skeleton Dragons'], ['Lava Hound', 'Flying Machine'], ['Lava Hound', 'Miner'],
+        ['Miner', 'Wall Breakers'], ['Miner', 'Poison'], ['Miner', 'Bats'], ['Miner', 'Skeleton Barrel'], ['Miner', 'Mortar'], ['Miner', 'Lava Hound'], ['Miner', 'Spear Goblins'],
+        ['Graveyard', 'Poison'], ['Graveyard', 'Baby Dragon'], ['Graveyard', 'Knight'], ['Graveyard', 'Freeze'], ['Graveyard', 'Ice Wizard'], ['Graveyard', 'Tombstone'], ['Graveyard', 'Bowler'],
+        ['X-Bow', 'Tesla'], ['X-Bow', 'The Log'], ['X-Bow', 'Ice Spirit'], ['X-Bow', 'Knight'], ['X-Bow', 'Archers'],
+        ['Royal Giant', 'Fisherman'], ['Royal Giant', 'Mother Witch'], ['Royal Giant', 'Lightning'], ['Royal Giant', 'Hunter'], ['Royal Giant', 'Electro Spirit'],
+        ['Goblin Barrel', 'Princess'], ['Goblin Barrel', 'Goblin Gang'], ['Goblin Barrel', 'Rocket'], ['Goblin Barrel', 'Dart Goblin'], ['Goblin Barrel', 'Skeleton Army'],
+        ['Goblin Drill', 'Wall Breakers'], ['Goblin Drill', 'Bomber'], ['Goblin Drill', 'Fireball'], ['Goblin Drill', 'Magic Archer'],
+
+        // Bridgespam & Beatdown
+        ['P.E.K.K.A', 'Battle Ram'], ['P.E.K.K.A', 'Electro Wizard'], ['P.E.K.K.A', 'Bandit'], ['P.E.K.K.A', 'Royal Ghost'], ['P.E.K.K.A', 'Minions'],
+        ['Giant', 'Sparky'], ['Giant', 'Prince'], ['Giant', 'Witch'], ['Giant', 'Double Prince'], ['Giant', 'Dark Prince'], ['Giant', 'Miner'], ['Giant', 'Graveyard'],
+        ['Goblin Giant', 'Sparky'], ['Goblin Giant', 'Rage'], ['Goblin Giant', 'Dark Prince'],
+        ['Electro Giant', 'Tornado'], ['Electro Giant', 'Lightning'], ['Electro Giant', 'Bomber'],
+        ['Elixir Golem', 'Battle Healer'], ['Elixir Golem', 'Electro Dragon'], ['Elixir Golem', 'Night Witch'],
+
+        // Defensive Cores
+        ['Ice Wizard', 'Tornado'], ['Executioner', 'Tornado'], ['Baby Dragon', 'Tornado'],
+        ['Knight', 'Archers'], ['Knight', 'Musketeer'],
+        ['Buildings', 'Spells'] // Placeholder logic handled dynamically elsewhere? No, strict pairs here.
       ],
 
       analyze: function (deck) {
