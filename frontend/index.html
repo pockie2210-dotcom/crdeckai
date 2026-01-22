@@ -806,7 +806,7 @@
        * @param {Array} deck - Current deck
        * @returns {Object} { card: CardObject, reason: string } or null
        */
-      proposeRemoval: function (deck) {
+      proposeRemoval: function (deck, intendedAddRole = null) {
         if (!deck || deck.length === 0) return null;
 
         // 1. Identify Roles & Counts
@@ -944,7 +944,7 @@
 
         let bestAdd = candidates.length > 0 ? candidates[0] : { name: "Hog Rider", iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/UbuVrj_tAFUulOpA_53oITt7yU8S_eG8wGqgJ8s-yv.png" } };
 
-        const removal = this.proposeRemoval(deck);
+        const removal = this.proposeRemoval(deck, fixRole);
         if (!removal) return null;
 
         let removeReason = removal.reason;
