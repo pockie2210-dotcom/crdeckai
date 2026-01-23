@@ -266,6 +266,174 @@ const SmartAI = (() => {
             }
 
             return notes;
+        },
+
+        diagnose: function (deck, fullCollection) {
+            console.log("🩺 AI Doctor: Diagnosing deck...", deck);
+
+            // 1. Run Basic Weakeness Check first
+            // We assume DeckWeakness is available globally or we re-implement logic
+            // For robust 'Doctor' mode, let's use the optimized logic + hard checks.
+
+            const results = {
+                score: 85, // Start high
+                issues: [],
+                suggestions: []
+            };
+
+            if (!deck || deck.length !== 8) {
+                results.score = 0;
+                results.issues.push("Deck incomplete (Hit 'Auto-Complete').");
+                return results;
+            }
+
+            // --- A. ESSENTIALS CHECK ---
+            const cardNames = deck.map(c => c.name);
+            const roles = deck.map(c => ({ name: c.name, roles: getCardRole(c.name) }));
+
+            // 1. Win Condition
+            const winCons = roles.filter(r => r.roles.includes('winCon'));
+            if (winCons.length === 0) {
+                results.score -= 25;
+                results.issues.push("Missing Win Condition");
+                // Suggest top win cons
+                results.suggestions.push({
+                    slot: 0, // Suggest replacing first card? Or add to empty?
+                    reason: "You need a tower-taker.",
+                    choices: ['Hog Rider', 'Miner', 'Goblin Barrel']
+                });
+            }
+
+            // 2. Spells
+            const smallSpells = roles.filter(r => r.roles.includes('spellSmall'));
+            const bigSpells = roles.filter(r => r.roles.includes('spellBig'));
+
+            if (smallSpells.length === 0) {
+                results.score -= 15;
+                results.issues.push("No Small Spell");
+                results.suggestions.push({
+                    reason: "Add a small spell to clear swarms.",
+                    choices: ['The Log', 'Zap', 'Arrows']
+                });
+            }
+
+            if (bigSpells.length === 0) {
+                results.score -= 10;
+                results.issues.push("No Big Spell");
+                results.suggestions.push({
+                    reason: "Add a big spell to finish off towers/troops.",
+                    choices: ['Fireball', 'Poison']
+                });
+            }
+
+            // 3. Air Defense
+            const airDef = roles.filter(r => r.roles.includes('airDefense'));
+            if (airDef.length < 2) {
+                results.score -= 15;
+                results.issues.push("Weak Air Defense");
+                results.suggestions.push({
+                    reason: "You are vulnerable to Balloon/Lava Hound.",
+                    choices: ['Musketeer', 'Electro Wizard', 'Hunter']
+                });
+            }
+
+            // --- B. SYNERGY CHECK ---
+            // If we have a captain, are we missing their best friends?
+            const captain = identifyCaptain(deck);
+            if (captain && SYNERGY_MAP[captain.name]) {
+                const synergy = SYNERGY_MAP[captain.name];
+                const missingMustHaves = synergy.mustHave.filter(name => !cardNames.includes(name));
+
+                if (missingMustHaves.length > 0) {
+                    results.score -= (missingMustHaves.length * 5);
+                    const missingNames = missingMustHaves.join(", ");
+                    results.issues.push(`Missing synergy for ${captain.name}`);
+
+                    // Specific suggestion
+                    results.suggestions.push({
+                        reason: `${captain.name} works best with ${missingNames}.`,
+                        choices: missingMustHaves
+                    });
+                }
+            }
+
+            // --- C. META SCORE IMPACT ---
+            // Calculate average meta score
+            const totalMeta = deck.reduce((sum, c) => sum + getMetaScore(c.name), 0);
+            const avgMeta = totalMeta / 8;
+
+            if (avgMeta < 80) {
+                results.issues.push("Low Meta Quality Cards");
+                results.score -= 10;
+            }
+
+            // Clamp Score
+            results.score = Math.max(0, Math.min(100, results.score));
+
+            // Return formalized response
+            return results;
+        },
+
+        fix: function (deck, fullCollection) {
+            console.log("💊 AI Doctor: Applying Fixes...");
+            // 1. Diagnose to get suggestions
+            const diagnosis = this.diagnose(deck, fullCollection);
+
+            // 2. Clone deck to modify
+            let newDeck = [...deck];
+
+            // 3. Apply changes conservatively
+            // Priority: Win Con > Spells > Synergy
+
+            // Helper to swap: find worst card, replace with best choice
+            const swap = (choices) => {
+                const bestChoiceName = choices[0];
+                const newCard = findCard(bestChoiceName, fullCollection);
+
+                if (!newCard) return; // Can't find card to add
+
+                // Identify worst card to remove
+                // Heuristic: Lowest Meta Score that is NOT a Win Condition (unless swapping WC) and NOT a Key Synergy
+                // Actually, let's keep it simple: Lowest Meta Score
+
+                // Sort deck by 'value' (Meta Score + Priority)
+                // We define 'Priority' as: Is it a WinCon? Is it a Speciailst?
+
+                let worstIdx = -1;
+                let minScore = 999;
+
+                newDeck.forEach((card, i) => {
+                    let score = getMetaScore(card.name);
+                    const roles = getCardRole(card.name);
+
+                    // Protect Win Conditions slightly
+                    if (roles.includes('winCon')) score += 50;
+
+                    // Protect Captain?
+                    const captain = identifyCaptain(newDeck);
+                    if (captain && captain.name === card.name) score += 100;
+
+                    // Protect already added Synergy?
+                    // ...
+
+                    if (score < minScore) {
+                        minScore = score;
+                        worstIdx = i;
+                    }
+                });
+
+                if (worstIdx !== -1) {
+                    console.log(`Swapping ${newDeck[worstIdx].name} for ${newCard.name}`);
+                    newDeck[worstIdx] = newCard;
+                }
+            };
+
+            // Iterate suggestions
+            diagnosis.suggestions.forEach(sugg => {
+                swap(sugg.choices);
+            });
+
+            return newDeck;
         }
     };
 

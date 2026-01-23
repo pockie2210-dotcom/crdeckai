@@ -284,6 +284,48 @@
     </div>
   </div>
 
+  <!-- DOCTOR MODAL -->
+  <div id="doctorModal" class="modal-overlay doctor-modal" style="display:none;">
+    <div class="doctor-content">
+      <div class="doctor-header">
+        <h2>🩺 AI Deck Doctor</h2>
+        <span onclick="document.getElementById('doctorModal').style.display='none'" class="close-doctor">&times;</span>
+      </div>
+
+      <div class="doctor-body">
+        <!-- LEFT: DIAGNOSIS -->
+        <div class="diagnosis-section">
+          <h3>Diagnosis Report</h3>
+          <div class="health-score-container">
+            <div id="doctorScoreRing" class="score-ring">
+              <span id="doctorScoreValue">85</span>
+            </div>
+            <p id="doctorScoreLabel">Healthy Deck</p>
+          </div>
+          <ul id="doctorIssuesList" class="issues-list">
+            <!-- JS Populates -->
+          </ul>
+        </div>
+
+        <!-- RIGHT: PRESCRIPTIONS -->
+        <div class="prescription-section">
+          <h3>💊 Prescriptions</h3>
+          <p style="color:#aaa; font-size:13px; margin-bottom:15px;">Suggested swaps to fix issues:</p>
+          <div id="doctorSuggestions" class="suggestions-container">
+            <!-- JS Populates -->
+          </div>
+        </div>
+      </div>
+
+      <div class="doctor-footer">
+        <button id="applyDoctorFixesBtn" class="action-btn"
+          style="background:var(--gold); color:black; font-weight:800; font-size:16px;">✅ Apply All Fixes</button>
+        <button onclick="document.getElementById('doctorModal').style.display='none'" class="action-btn"
+          style="background:#555;">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
   <!-- SUBSTITUTIONS MODAL -->
   <div id="substitutionsModal"
     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; align-items:center; justify-content:center;">
@@ -334,17 +376,19 @@
     <br><br>
     <div class="actions">
       <button id="scanBtn">Scan Player</button>
-      <button id="canImproveDeckBtn" style="display:none; background: #27ae60;">Improve Deck</button>
+      <button id="aiDoctorBtn"
+        style="display:none; background: linear-gradient(135deg, #7B3FE4, #8e54e9); border: 1px solid #c0a1f5; box-shadow: 0 0 15px rgba(123, 63, 228, 0.5);">✨
+        AI Deck Doctor</button>
       <button id="substitutionsBtn" style="display:none; background: #9b59b6;">Substitutions</button>
       <!-- Weakness Check button (Renamed & Restored) -->
       <button id="weaknessReportBtn" style="display:none; background: #c0392b;">Weakness Check</button>
       <button id="synergyBtn"
         onclick="if(window.currentAppDeck) window.SynergyMatrix.render(window.currentAppDeck); else alert('Scan a player first!');"
-        style="background: #2980b9;">&#128279; Synergy
+        style="background: #2980b9;">🔗 Synergy
         Matrix</button>
       <button id="radarBtn"
         onclick="if(window.currentAppDeck) window.DeckRadar.render(window.currentAppDeck); else alert('Scan a player first!');"
-        style="background: #e67e22; margin-left:5px;">&#128202; Deck Radar</button>
+        style="background: #e67e22; margin-left:5px;">📊 Deck Radar</button>
       <button id="buildBtn" style="display:none; background: linear-gradient(135deg, #e67e22, #d35400);">Build
         Deck</button>
       <button id="demoBtn">Show Demo Deck</button>
@@ -360,7 +404,7 @@
         <!-- EXTERNAL DECK CHECK -->
         <button id="checkDeckBtn" class="action-btn"
           style="width:100%; margin-top:10px; background: #34495e; border: 1px solid #7f8c8d;">
-          ðŸ” Verification Check (DeckShop)
+          🔍 Verification Check (DeckShop)
         </button>
 
         <div id="deckCheckResult"
@@ -370,7 +414,7 @@
         <!-- NEW: Predicted Win Rate -->
         <div
           style="margin: 15px 0; padding: 15px; background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(0, 0, 0, 0.3)); border: 2px solid rgba(46, 204, 113, 0.5); border-radius: 10px; text-align: center;">
-          <div style="color: #2ecc71; font-size: 14px; font-weight: bold; margin-bottom: 5px;">ðŸ“Š PREDICTED WIN RATE
+          <div style="color: #2ecc71; font-size: 14px; font-weight: bold; margin-bottom: 5px;">📊 PREDICTED WIN RATE
           </div>
           <div id="winRateDisplay"
             style="font-size: 32px; font-weight: 900; color: #2ecc71; text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);">--
@@ -379,30 +423,30 @@
         </div>
 
         <div>
-          <div class="stat-row"><span>âš”ï¸ Offense</span> <span id="offScore" class="stat-score">0</span></div>
+          <div class="stat-row"><span>⚔️ Offense</span> <span id="offScore" class="stat-score">0</span></div>
           <div class="stat-bar-bg">
             <div id="offBar" class="stat-bar-fill" style="width:0%; background:#e74c3c"></div>
           </div>
         </div>
 
         <div>
-          <div class="stat-row"><span>ðŸ›¡ï¸ Defense</span> <span id="defScore" class="stat-score">0</span></div>
+          <div class="stat-row"><span>🛡️ Defense</span> <span id="defScore" class="stat-score">0</span></div>
           <div class="stat-bar-bg">
             <div id="defBar" class="stat-bar-fill" style="width:0%; background:#3498db"></div>
           </div>
         </div>
 
         <div>
-          <div class="stat-row"><span>ðŸ¤ Synergy</span> <span id="synScore" class="stat-score">0</span></div>
+          <div class="stat-row"><span>🤝 Synergy</span> <span id="synScore" class="stat-score">0</span></div>
           <div class="stat-bar-bg">
             <div id="synBar" class="stat-bar-fill" style="width:0%; background:#9b59b6"></div>
           </div>
         </div>
 
         <div>
-          <div class="stat-row"><span>&#128260; Avg Elixir</span> <span id="avgElixir" class="stat-score">--</span>
+          <div class="stat-row"><span>🔄 Avg Elixir</span> <span id="avgElixir" class="stat-score">--</span>
           </div>
-          <div class="stat-row"><span>&#9889; 4-Card Cycle</span> <span id="cycleCost" class="stat-score">--</span>
+          <div class="stat-row"><span>⚡ 4-Card Cycle</span> <span id="cycleCost" class="stat-score">--</span>
           </div>
         </div>
       </div>
@@ -418,22 +462,22 @@
         style="margin-top:20px; padding:15px; background:rgba(0,0,0,0.4); border-radius:8px; border:1px solid var(--gold);">
         <h3 style="color:var(--gold); margin-top:0;">Choose Your Playstyle</h3>
         <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
-          <button class="playstyle-btn" data-style="any" style="background:#555;">ðŸŽ² Any</button>
-          <button class="playstyle-btn" data-style="cycle" style="background:#3498db;">âš¡ Cycle</button>
-          <button class="playstyle-btn" data-style="control" style="background:#9b59b6;">ðŸ›¡ï¸ Control</button>
-          <button class="playstyle-btn" data-style="beatdown" style="background:#e74c3c;">ðŸ˜ Beatdown</button>
-          <button class="playstyle-btn" data-style="bridgespam" style="background:#e67e22;">ðŸš€ Bridge Spam</button>
-          <button class="playstyle-btn" data-style="bait" style="background:#27ae60;">ðŸª¤ Log Bait</button>
-          <button class="playstyle-btn" data-style="siege" style="background:#2c3e50;">ðŸ¹ Siege</button>
-          <button class="playstyle-btn" data-style="graveyard" style="background:#8e44ad;">ðŸ’€ Graveyard</button>
-          <button class="playstyle-btn" data-style="miner" style="background:#16a085;">â›ï¸ Miner</button>
+          <button class="playstyle-btn" data-style="any" style="background:#555;">🎲 Any</button>
+          <button class="playstyle-btn" data-style="cycle" style="background:#3498db;">⚡ Cycle</button>
+          <button class="playstyle-btn" data-style="control" style="background:#9b59b6;">🛡️ Control</button>
+          <button class="playstyle-btn" data-style="beatdown" style="background:#e74c3c;">👊 Beatdown</button>
+          <button class="playstyle-btn" data-style="bridgespam" style="background:#e67e22;">🚀 Bridge Spam</button>
+          <button class="playstyle-btn" data-style="bait" style="background:#27ae60;">🪤 Log Bait</button>
+          <button class="playstyle-btn" data-style="siege" style="background:#2c3e50;">🏹 Siege</button>
+          <button class="playstyle-btn" data-style="graveyard" style="background:#8e44ad;">💀 Graveyard</button>
+          <button class="playstyle-btn" data-style="miner" style="background:#16a085;">⛏️ Miner</button>
         </div>
       </div>
 
       <h3 style="color:var(--gold); margin-top:15px;">Choose Cards from Collection</h3>
-      <p style="color:#aaa; font-size:12px; margin-top:5px;">Left-click to add â€¢ Right-click to exclude ðŸš«</p>
+      <p style="color:#aaa; font-size:12px; margin-top:5px;">Left-click to add • Right-click to exclude 🚫</p>
       <div id="cardPicker" class="picker-grid"></div>
-      <button id="autofillBtn" class="action-btn" style="background:#8e44ad; margin-top:20px;">âœ¨ Auto-Complete
+      <button id="autofillBtn" class="action-btn" style="background:#8e44ad; margin-top:20px;">✨ Auto-Complete
         Deck</button>
       <div id="aiStatus" style="font-size:12px; color:#ccc; margin-top:5px; height:1.2em;"></div>
     </div>
@@ -444,11 +488,11 @@
       style="margin-top: 40px; text-align: center; padding-bottom: 20px; display: flex; gap: 20px; justify-content: center;">
       <button id="winConGuideBtn" class="action-btn"
         style="background: linear-gradient(135deg, #1abc9c, #16a085); padding: 15px 30px; font-size: 18px; border: 2px solid #1abc9c;">
-        &#127891; Win Condition Masterclass
+        🎓 Win Condition Masterclass
       </button>
       <button id="matchupBtn" class="action-btn"
         style="background: linear-gradient(135deg, #e74c3c, #c0392b); padding: 15px 30px; font-size: 18px; border: 2px solid #e74c3c;">
-        âš”ï¸ Matchup Analyzer
+        ⚔️ Matchup Analyzer
       </button>
       <!-- Weakness Check button is now in the main actions bar -->
     </div>
@@ -460,7 +504,7 @@
   <div id="matchupModal" class="modal-overlay" style="display:none; align-items:flex-start; padding-top:50px;">
     <div class="modal-content" style="width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto;">
       <h2 style="color:var(--gold); display:flex; justify-content:space-between;">
-        <span>âš”ï¸ Matchup Analyzer</span>
+        <span>⚔️ Matchup Analyzer</span>
         <span id="closeMatchup" style="cursor:pointer;">&times;</span>
       </h2>
       <p style="color:#ccc; margin-bottom:20px;">Compare your current deck against an enemy deck.</p>
@@ -515,7 +559,7 @@
       <div style="margin-top:30px; text-align:center;">
         <button id="analyzeBtn" class="action-btn"
           style="background:var(--gold); color:#000; font-weight:bold; font-size:1.2em; padding:15px 40px;">
-          âš–ï¸ Analyze Matchup
+          ⚖️ Analyze Matchup
         </button>
       </div>
 
@@ -530,11 +574,11 @@
 
         <div style="display:flex; gap:20px; flex-wrap:wrap;">
           <div style="flex:1;">
-            <h4 style="color:#e74c3c;">âš ï¸ Threats</h4>
+            <h4 style="color:#e74c3c;">⚠️ Threats</h4>
             <ul id="threatList" style="list-style:none; padding:0; color:#ddd;"></ul>
           </div>
           <div style="flex:1;">
-            <h4 style="color:#f1c40f;">ðŸ§  Strategy Tips</h4>
+            <h4 style="color:#f1c40f;">🧠 Strategy Tips</h4>
             <ul id="tipList" style="list-style:none; padding:0; color:#ddd;"></ul>
           </div>
         </div>
@@ -686,13 +730,11 @@
       'Rage': -100, 'Freeze': 50, 'Heal Spirit': 80,
       'Elixir Collector': 35, 'Void': 100
     };
-    window.META_QUALITY = META_QUALITY; // Expose explicit
-
-    const DeckWeakness = {
+    window.META_QUALITY = META_QUALITY; //        exp           const DeckWeakness = {
       /**
-       * Analyzes a deck and returns a health report.
-       * @param {Array} deck - Array of card objects {name, ...}
-       * @returns {Object} { health: number, issues: [], suggestions: [] }
+       * A        a deck and returns a health report.
+       * @param {Arra        - Array of card objects {name, ...}
+       * @returns {Object} { he       umber, issues: [], suggestions: [] }
        */
       detect: function (deck) {
         if (!deck || deck.length !== 8) {
@@ -798,15 +840,14 @@
         }
 
         // Final Clamp
-        report.health = Math.max(0, report.health);
-
-        return report;
+        report.health = Math.max(0, report      h);
+         return report;
       },
 
       /**
-       * Suggests a card to remove based on analysis.
+       * S        a card to remove based on analysis.
        * @param {Array} deck - Current deck
-       * @returns {Object} { card: CardObject, reason: string } or null
+       * @returns {Object} {       CardObject, reason: string } or null
        */
       proposeRemoval: function (deck, intendedAddRole = null) {
         if (!deck || deck.length === 0) return null;
@@ -869,28 +910,26 @@
           card: worstCard,
           reason: synergizedCards.has(worstCard.name) ?
             "This card is weak in the current meta, though it has some synergy." :
-            "This card is the statistically weakest link in your deck configuration."
+            "This card is the statistically weakest link in you       con       ion."
         };
       },
 
       /**
-       * Suggests a complete fix: Add Card X, Remove Card Y.
-       */
-      proposeFix: function (deck) {
+       * Suggests       lete fix: Add Card X, Remove Card Y.
+                       Fix: function (deck) {
         /**
-         * Calculates a single integer score (0-500) for a deck.
+         * Calculates          integer score (0-500) for a deck.
          */
         getDeckScore: function (deck) {
           if (!deck || deck.length !== 8) return 0;
           const stats = this.calculateStats(deck);
-          return stats.offense + stats.defense + stats.versatility + stats.cycle + stats.synergy;
+          return stats.offense + stats.defense + stats.versatility        .cyc         s.synergy;
         },
 
         /**
-         * Suggests a complete fix using Brute Force Optimization.
-         * 1. Pick best candidate to ADD.
-         * 2. Simulates swapping it with EVERY card in the deck.
-         * 3. picks the swap that yields the highest Deck Score.
+         * Suggests a c         ix using Brute Force Optimization           * 1. Pick best candidate to ADD.
+         * 2. Simulat         ng it with EVERY card in the deck.
+         * 3. picks t         hat yields the highest Deck Score.
          */
         proposeFix: function (deck) {
           const report = this.detect(deck);
@@ -1003,11 +1042,10 @@
             remove: bestSwap,
             addReason: addReason,
             removeReason: removeReason,
-            reason: `${suggestionText} (${bestAdd.name}) by removing ${bestSwap.name}.`
-          };
+            reason: `${suggestionText} (${bestAdd.name}) by removing        wap.                  };
         },
         /**
-         * Calculates detailed 0-100 stats for the Radar Chart.
+         * Calculate         d 0-100 stats for the Radar Chart.
          */
         calculateStats: function (deck) {
           const cardNames = deck.map(c => c.name);
@@ -1053,12 +1091,10 @@
             defense: clamp(def),
             cycle: clamp(cyc),
             versatility: clamp(vers),
-            synergy: clamp(syn)
-          };
+            s        clam                 };
         },
 
-        /**
-         * Generates SVG for Radar Chart
+        /            * Generates SVG for Radar Chart
          */
         renderRadarChart: function (stats) {
           const size = 280; // Increased from 220 to prevent clipping
@@ -1487,8 +1523,7 @@
           if (old) old.remove();
           document.body.insertAdjacentHTML('beforeend', html);
         }
-      };
-      window.DeckRadar = DeckRadar;
+   ar = DeckRadar;
   </script>
 
   <script type="module">
@@ -1500,143 +1535,104 @@
       // Weakness Button Logic - DISABLED
       const wBtn = document.getElementById('weaknessBtn');
       if(wBtn) wBtn.onclick = () => {
-        console.log("Weakness Button Clicked - Disabled");
+        console.log("Wea      But      icked - Disabled");
       };
       /*
-      document.getElementById('weaknessBtn').onclick = () => {
-        if (!window.currentAppDeck || window.currentAppDeck.length === 0) {
-          alert("Scan a deck first!");
+      document.getE        Id('weaknessBtn').onclick = () => {
+        if (!window.currentAppDe          ow.currentAppDeck.length ===                ale         a de        !");
           return;
         }
   
-        const report = DeckWeakness.detect(window.currentAppDeck);
-        const scoreEl = document.getElementById('weaknessScore');
-        const bodyEl = document.getElementById('weaknessBody');
+        const report =         ness.detect(window.currentAppDeck);
+        const scoreEl         nt.getElementById('weaknessScore');
+        const bodyEl =         .getElementById('wea        y');
   
-        // Color Code Score
+        // Colo        core
         let color = '#e74c3c';
-        if (report.health > 80) color = '#2ecc71';
-        else if (report.health > 50) color = '#f1c40f';
+               ort.health > 80) color = '#2ecc71';
+        else if        .health > 50) color = '#f1c40f';
   
-        scoreEl.innerText = `${report.health}% Health`;
-        scoreEl.style.color = color;
+        scor        rText = `${report.health}% He lt            scoreEl.st        r = color;
   
-        // Build HTML
-        let html = '';
-        if (report.issues.length === 0) {
-          html += `<div style="padding:10px; background:rgba(46, 204, 113, 0.2); border-radius:5px;">âœ… Your deck is well balanced!</div>`;
+         / Build HTML
+        let html = ''          if (report.issues.length === 0) {
+          html += `<div style="padding:10px; background:rgba(46, 204, 113, 0.2); border-radius:5p        Your deck          alanced!</div>`;
         } else {
-          html += `<h4 style="color:#e74c3c; margin-bottom:5px;">âš ï¸ Critical Issues:</h4><ul>`;
-          report.issues.forEach(i => html += `<li>${i}</li>`);
-          html += `</ul>`;
+          html += `<h4 style="color:#e74c3c; margin-bott          š ï¸ Critical Issues:</h4><ul>`;
+          report.is          ch(i => html += `        </ i>              html += `</ul>`;
         }
   
-        if (report.suggestions.length > 0) {
-          html += `<h4 style="color:#f1c40f; margin-bottom:5px;">ðŸ’¡ Suggestions:</h4><ul>`;
-          report.suggestions.forEach(s => html += `<li>${s}</li>`);
-          html += `</ul>`;
-        }
-  
-        // INJECT SUGGEST DROP AREA
-        html += `<div id="suggestDropArea" style="margin-top:20px; text-align:center; padding-top:15px; border-top:1px solid #444; display:flex; gap:10px; justify-content:center;"></div>`;
-  
-        bodyEl.innerHTML = html;
+           (report.suggestions.length > 0) {
+          html += `<h4 style="color:#f1c40f; margi          px;">ðŸ’¡ Suggestions:</h4><ul>`;
+          report.suggest          ch(s => html += `        </ i>              html += `</ul>`;
+                     // INJECT SUGGEST DROP AREA
+        html += `<div id="suggestDropArea" style="margin-top:20px; text-align:center; padding-top:15px; border-top:1px solid #444; display:flex;  ap        ustify-content:center;">< di                bodyEl.        L = html;
   
         // Add Buttons
-        const area = document.getElementById('suggestDropArea');
-  
-        // 1. Suggest Fix Button (NEW)
-        const btnFix = document.createElement('button');
-        btnFix.innerText = "ðŸ”§ Suggest Fix";
-        btnFix.className = "action-btn";
-        btnFix.style.background = "linear-gradient(135deg, #2ecc71, #27ae60)";
-        btnFix.style.fontSize = "14px";
-        btnFix.style.padding = "8px 16px";
-        btnFix.onclick = () => {
+        const area =  oc        tElementById('suggestDropArea')             // 1. Suggest Fix Button (NEW)
+        const        = document.createElement('button');
+           Fix.innerText = "ðŸ”§ Suggest Fix           btnFix.className = "action-btn";
+        btnFix.style.background = "        radient(135deg, #2ecc71, #27ae60            btnFix.style.fontSize = "14px";         btnFix.style.padding = "          
+                 click = () => {
           try {
-            const fix = DeckWeakness.proposeFix(window.currentAppDeck);
-            if (fix) {
-              area.innerHTML = `
-                      <div style="background:rgba(39, 174, 96, 0.2); padding:15px; border-radius:8px; margin-top:10px; border:1px solid #27ae60; width:100%;">
-                          <div style="font-weight:bold; color:#2ecc71; margin-bottom:10px; font-size:1.1em;">Recommended Fix:</div>
-                          <div style="display:flex; align-items:center; justify-content:center; gap:15px; margin-bottom:10px;">
-                              <div style="text-align:center;">
-                                  <div style="color:#e74c3c; font-size:12px; font-weight:bold;">REMOVE</div>
-                                  <img src="${fix.remove.iconUrls?.medium || fix.remove.iconUrls || fix.remove.iconUrl}" style="width:50px;">
-                                  <div style="font-size:12px;">${fix.remove.name}</div>
-                              </div>
-                              <div style="font-size:24px; color:#aaa;">âž</div>
-                              <div style="text-align:center;">
-                                  <div style="color:#2ecc71; font-size:12px; font-weight:bold;">ADD</div>
-                                  <img src="${fix.add.iconUrls?.medium || fix.add.iconUrls || fix.add.iconUrl}" style="width:50px;">
-                                  <div style="font-size:12px;">${fix.add.name}</div>
-                              </div>
-                          </div>
-                          <div style="font-size:0.9em; color:#ddd; margin-bottom:15px; font-style:italic;">"${fix.reason}"</div>
-                          <button id="applyFixBtn" class="action-btn" style="background:#27ae60; width:100%;">âœ… Apply Fix</button>
-                          <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin-top:10px; cursor:pointer;">Cancel</button>
-                      </div>
+            const fix = Deck            poseFix(win              Deck);
+                                     area.innerHTML = `
+                      <div style="background:rgba(39, 174, 96, 0.2); padding:15px; border-radius:8px; margin-top:10                          60; width:100%;">
+                          <div style="font-weight:bold; color:#2ecc71; margin-bottom:10p                          mended Fix:</div>
+                          <div style="display:flex; align-items:center; justify-cont                              ottom:10px;">
+                                                     center;">
+                                  <div style="color:#e74c3c; font                                  OVE</div>
+                                  <img src="${fix.remove.iconUrls?.medium || fix.remove.iconUrls |                                  h:50px;">
+                                  <div style                              e.name}                                     </div>
+                              <div st                              a;">âž</div>
+                                                     center;">
+                                  <div style="color:#2ecc71; f                                  ADD</div>
+                                  <img src="${fix.add.iconUrls?.medium || fix.add.iconUrl                                  h:50px;">
+                                  <div st                              d.name}                                                                      </div>
+                          <div style="font-size:0.9em; color:#ddd; margin-bottom:15px                          ix.reason}"</div>
+                          <button id="applyFixBtn" class="action-btn" style="background:#                          pply Fix</button>
+                          <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin                      ter;">C                                      /div>
                   `;
   
-              document.getElementById('applyFixBtn').onclick = () => {
-                // Update Deck
-                const newDeck = window.currentAppDeck.filter(c => c.name !== fix.remove.name);
-                newDeck.push(fix.add);
-  
-                // Update Globals
-                window.currentAppDeck = newDeck;
-                window.builderDeck = newDeck; // Sync builder too
-                if (window.currentPlayerData) window.currentPlayerData.currentDeck = newDeck;
-  
+              document.getE                yFixBtn').oncli                             // Update Deck
+                const newDeck = window.currentAppDe                .name !== fix.remove.na e)                  newDeck.push(fix                          // Update Globals
+                     w.currentAppDeck = newDeck;
+                window                ewDeck; // Sync builder too
+                if (window.currentPlayerData) wind w.                a.currentD                 
                 // Render
-                renderDeck(window.currentPlayerData || { currentDeck: newDeck }); // Hacky but works for UI update
-  
-                // Close Modal
-                document.getElementById('weaknessModal').style.display = 'none';
-                alert(`Swapped ${fix.remove.name} with ${fix.add.name}!`);
-              };
+                renderDeck(window.currentPlayerData || { currentDeck: n wD                 but works for                              // Close Modal
+                document.getElementBy                l').style.display = 'none';
+                alert(`Swapped               ame  w            d.name}!`                 };
   
             } else {
-              area.innerHTML = `<div style="color:#aaa; margin-top:10px;">No clear fix found. Try manual adjustments.</div>`;
-            }
+              area.innerHTML = `<div style="color:#aaa; margin-top:10px;">No clear            Tr          djustments.</d                  }
           } catch (e) {
-            console.error("Suggest Fix Error:", e);
-            area.innerHTML = `<div style="color:#e74c3c; margin-top:10px;">Error finding fix: ${e.message}</div>`;
+                    error("Suggest Fix Error:", e);
+            area.innerHTML = `<div style="color:#e74c3c; margin-top:10p          fi        x:  {e        }</div>`;
           }
         };
-  
-        // 2. Suggest Drop Button (Legacy)
-        const btnDrop = document.createElement('button');
-        btnDrop.innerText = "ðŸ“‰ Suggest DropOnly";
-        btnDrop.className = "action-btn";
-        btnDrop.style.background = "#c0392b";
-        btnDrop.style.fontSize = "14px";
-        btnDrop.style.padding = "8px 16px";
-        btnDrop.onclick = () => {
-          const suggestion = DeckWeakness.proposeRemoval(window.currentAppDeck);
-          if (suggestion && suggestion.card) {
-            area.innerHTML = `
-                      <div style="background:rgba(192, 57, 43, 0.2); padding:10px; border-radius:8px; margin-top:10px; border:1px solid #c0392b; width:100%;">
-                          <div style="font-weight:bold; color:#e74c3c; margin-bottom:5px;">Recommended Cut:</div>
-                          <div style="display:flex; align-items:center; gap:10px; justify-content:center;">
-                              <img src="${suggestion.card.iconUrls?.medium || suggestion.card.iconUrls || suggestion.card.iconUrl}" style="width:40px;">
-                              <span style="font-size:1.2em; font-weight:bold;">${suggestion.card.name}</span>
-                          </div>
-                          <div style="font-size:0.9em; color:#ddd; margin-top:5px; font-style:italic;">"${suggestion.reason}"</div>
-                          <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin-top:10px; cursor:pointer;">Reset</button>
-                      </div>
-                   `;
+           // 2. Suggest Drop Button (Legacy)
+        const         = document.createElement('button');
+        b        nnerText = "ðŸ“‰ Suggest DropOnly"          btnDrop.className = "action-btn";
+          nDrop.style.background = "#c0392b           btnDrop.style.fontSize = "14px";
+        btnDrop.style.padding = "8                  btnDrop.onclick = () => {
+          const suggestion = DeckWeak          seRemoval(window.currentAppDeck);
+               uggestion && sugges                         area.innerHTML = `
+                      <div style="background:rgba(192, 57, 43, 0.2); padding:10px; border-radius:8px; margin-top:10                          2b; width:100%;">
+                          <div style="font-weight:bold; color:#e74c3c;                          mended Cut:</div>
+                          <div style="display:flex; align-items:                              ent:center;">
+                              <img src="${suggestion.card.iconUrls?.medium || suggestion.card.iconUrls || sug                              width:40px;">
+                              <span style="font-size:1.2em; font-w                          card.na                                     </div>
+                          <div style="font-size:0.9em; color:#ddd; margin-top:5px; font-                          on.reason}"</div>
+                          <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margi                      nter;">                                     </di                      `;
           } else {
-            area.innerHTML = `<div style="color:#aaa; margin-top:10px;">No specific remove suggestions. Try standard substitutions.</div>`;
+            area.innerHTML = `<div style="color:#aaa; margin-top:10px;">No specific remove sugge          y          su st        .</div>`;
           }
-        };
+             
+        area.appendChild( tn              area.appendChild(btnDrop);
   
-        area.appendChild(btnFix);
-        area.appendChild(btnDrop);
-  
-        // document.getElementById('weaknessModal').style.display = 'flex';
-        console.log('Weakness Modal suppressed by user request.');
-      };
+        // document.getElementBy        nessModal').style.display = 'flex';
+        console.log('We       Mo      pprs     };
       */
   </script>
   <script type="module">
@@ -1746,8 +1742,7 @@
       < img src = "${guide.imgUrl}" alt = "${name}" onerror = "this.style.display='none';this.parentElement.style.background='#333'" >
         <div class="win-con-label">${name}</div>
              `;
-            grid.appendChild(div);
-          });
+            grid.appendChildi    });
         }
 
       })();
@@ -1832,6 +1827,124 @@
       // SYNERGY BTN SETUP (Inline for reliability)
       // SYNERGY BTN SETUP (Global function for reliability)
       // openSynergyMatrix wrapper removed
+
+      // AI DECK DOCTOR SETUP
+      const doctorBtn = document.getElementById('aiDoctorBtn');
+      if (doctorBtn) {
+        doctorBtn.onclick = () => {
+          if (!window.currentAppDeck || window.currentAppDeck.length === 0) {
+            alert("Please scan a player or build a deck first!");
+            return;
+          }
+
+          // 1. Run Diagnosis
+          // We pass current deck + collection (simulated for now by meta cache)
+          // Ideally we pass the user's full collection if we had it, but for now we trust `META_QUALITY` or similar.
+          // In simpler terms, we just need the deck to check issues.
+          const diagnosis = window.SmartAI.diagnose(window.currentAppDeck);
+          
+          // 2. Render Score Ring
+          const scoreVal = document.getElementById('doctorScoreValue');
+          const scoreLabel = document.getElementById('doctorScoreLabel');
+          const ring = document.getElementById('doctorScoreRing');
+          
+          scoreVal.innerText = diagnosis.score;
+          
+          let color = '#2ecc71'; // Green
+          let label = "Healthy Deck";
+          
+          if (diagnosis.score < 60) {
+            color = '#e74c3c'; // Red
+            label = "Critical Condition";
+          } else if (diagnosis.score < 85) {
+            color = '#f1c40f'; // Yellow
+            label = "Needs Improvement";
+          }
+          
+          ring.style.borderColor = color;
+          scoreVal.style.color = color;
+          scoreLabel.innerText = label;
+          scoreLabel.style.color = color;
+
+          // 3. Render Issues
+          const issuesList = document.getElementById('doctorIssuesList');
+          if (diagnosis.issues.length === 0) {
+             issuesList.innerHTML = `<li style="border-left-color:#2ecc71; background:rgba(46,204,113,0.1); color:#2ecc71;">✅ No critical issues found!</li>`;
+          } else {
+             issuesList.innerHTML = diagnosis.issues.map(issue => `<li>${issue}</li>`).join('');
+          }
+
+          // 4. Render Prescriptions
+          const suggestionsEl = document.getElementById('doctorSuggestions');
+          suggestionsEl.innerHTML = '';
+          
+          if (diagnosis.suggestions.length === 0) {
+            suggestionsEl.innerHTML = `<div style="text-align:center; padding:20px; color:#aaa;">No specific prescriptions needed. You represent the meta! 🏆</div>`;
+            document.getElementById('applyDoctorFixesBtn').style.display = 'none';
+          } else {
+             document.getElementById('applyDoctorFixesBtn').style.display = 'inline-block';
+             
+             diagnosis.suggestions.forEach(sugg => {
+                // If it's a generic "Add X" suggestion
+                const choice = sugg.choices[0]; // Take top choice
+                // Find icon logic (simplified)
+                const metaCard = window.allCards ? window.allCards.find(c=>c.name===choice) : { iconUrls: {medium: ''} }; 
+                const iconUrl = metaCard ? metaCard.iconUrls.medium : ''; 
+                
+                const html = `
+                  <div class="suggestion-card">
+                     <div class="suggestion-info">
+                        <div style="font-weight:bold; color:#fff;">💊 Suggested: <span style="color:${color}">${choice}</span></div>
+                        <div class="suggestion-reason">${sugg.reason}</div>
+                     </div>
+                  </div>
+                `;
+                suggestionsEl.innerHTML += html;
+             });
+          }
+
+          // Show Modal
+          document.getElementById('doctorModal').style.display = 'flex';
+        };
+      } else {
+          console.error("AI Doctor Button not found!");
+      }
+
+      // 5. APPLY FIXES BUTTON
+      const applyFixBtn = document.getElementById('applyDoctorFixesBtn');
+      if (applyFixBtn) {
+         applyFixBtn.onclick = () => {
+             if (!window.currentAppDeck) return;
+             
+             // Run Fix
+             const newDeck = window.SmartAI.fix(window.currentAppDeck, window.allCards || []);
+             
+             // Update Global State
+             window.currentAppDeck = newDeck;
+             if (window.currentPlayerData) {
+                 window.currentPlayerData.currentDeck = newDeck;
+             }
+             
+             // Re-Render App
+             // 1. Deck Builder
+             if (window.renderDeck) window.renderDeck(window.currentPlayerData || {currentDeck: newDeck});
+             // 2. Refresh Doctor if still open? Or close it?
+             // Let's close it and show a success toast
+             document.getElementById('doctorModal').style.display = 'none';
+             
+             // Toast/Notify
+             const status = document.getElementById('aiStatus');
+             if (status) {
+                 status.innerHTML = "✨ AI Doctor: Applied prescriptions to your deck!";
+                 status.style.color = "#2ecc71";
+                 setTimeout(() => { status.innerHTML = ""; }, 4000);
+             }
+             
+             // Trigger Synergy/Stats update
+             if (window.updateDeckStats) window.updateDeckStats(newDeck);
+         };
+      }
+
 
       // SYNC SYNERGY BUTTON VISIBILITY
       const weaknessBtn = document.getElementById('weaknessReportBtn');
@@ -4339,8 +4452,8 @@
               alert("Your deck looks solid! No obvious weaknesses found.");
             }
           } else {
-            console.log("DeckWeakness.proposeFix not found in this version.");
-          }
+            console.log("DeckWeakness.proposeFix not found in this version.;
+ 
         }
       }
     })();
@@ -4736,11 +4849,7 @@
       console.log('Matchup Analyzer Script Loaded (Dual Manual Mode)');
 
       // --- CRITICAL RESTORATION: SUBSTITUTIONS & BUTTONS ---
-      // This logic was missing in the reverted commit but is required for buttons to work.
-
-
-
-      // Expose Globals
+      // This logic was missing in the reverted commit but is required for buttons to wo.als
 
 
 
@@ -4749,7 +4858,7 @@
   <script type="module">
     import { WIN_CONDITION_GUIDES } from './win_conditions.js';
     window.WIN_CONDITION_GUIDES = WIN_CONDITION_GUIDES;
-    console.log("Win Conditions Loaded:", Object.keys(WIN_CONDITION_GUIDES).length);
+    console.log("Win Conditions Loaded:",bje(WIN_CONDITION_GUIDES).length);
   </script>
 </body>
 
