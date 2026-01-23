@@ -730,11 +730,13 @@
       'Rage': -100, 'Freeze': 50, 'Heal Spirit': 80,
       'Elixir Collector': 35, 'Void': 100
     };
-    window.META_QUALITY = META_QUALITY; //        exp           const DeckWeakness = {
+    window.META_QUALITY = META_QUALITY; 
+    
+    const DeckWeakness = {
       /**
-       * A        a deck and returns a health report.
-       * @param {Arra        - Array of card objects {name, ...}
-       * @returns {Object} { he       umber, issues: [], suggestions: [] }
+       * Analyze a deck and returns a health report.
+       * @param {Array} deck - Array of card objects {name, ...}
+       * @returns {Object} { health: number, issues: [], suggestions: [] }
        */
       detect: function (deck) {
         if (!deck || deck.length !== 8) {
@@ -840,14 +842,14 @@
         }
 
         // Final Clamp
-        report.health = Math.max(0, report      h);
-         return report;
+        report.health = Math.max(0, report.health);
+        return report;
       },
 
       /**
-       * S        a card to remove based on analysis.
+       * Suggest a card to remove based on analysis.
        * @param {Array} deck - Current deck
-       * @returns {Object} {       CardObject, reason: string } or null
+       * @returns {Object} { card: CardObject, reason: string } or null
        */
       proposeRemoval: function (deck, intendedAddRole = null) {
         if (!deck || deck.length === 0) return null;
@@ -1528,112 +1530,17 @@
 
   <script type="module">
       import { MatchupAnalyzer } from './matchup_analyzer.js';
-      // DeckWeakness is now inlined above to fix local file loading
-
+      
+      // Expose to window
       window.MatchupAnalyzer = MatchupAnalyzer;
 
-      // Weakness Button Logic - DISABLED
+      // Weakness Button Logic - Disabled/Legacy Code Removed
       const wBtn = document.getElementById('weaknessBtn');
-      if(wBtn) wBtn.onclick = () => {
-        console.log("Wea      But      icked - Disabled");
-      };
-      /*
-      document.getE        Id('weaknessBtn').onclick = () => {
-        if (!window.currentAppDe          ow.currentAppDeck.length ===                ale         a de        !");
-          return;
-        }
-  
-        const report =         ness.detect(window.currentAppDeck);
-        const scoreEl         nt.getElementById('weaknessScore');
-        const bodyEl =         .getElementById('wea        y');
-  
-        // Colo        core
-        let color = '#e74c3c';
-               ort.health > 80) color = '#2ecc71';
-        else if        .health > 50) color = '#f1c40f';
-  
-        scor        rText = `${report.health}% He lt            scoreEl.st        r = color;
-  
-         / Build HTML
-        let html = ''          if (report.issues.length === 0) {
-          html += `<div style="padding:10px; background:rgba(46, 204, 113, 0.2); border-radius:5p        Your deck          alanced!</div>`;
-        } else {
-          html += `<h4 style="color:#e74c3c; margin-bott          š ï¸ Critical Issues:</h4><ul>`;
-          report.is          ch(i => html += `        </ i>              html += `</ul>`;
-        }
-  
-           (report.suggestions.length > 0) {
-          html += `<h4 style="color:#f1c40f; margi          px;">ðŸ’¡ Suggestions:</h4><ul>`;
-          report.suggest          ch(s => html += `        </ i>              html += `</ul>`;
-                     // INJECT SUGGEST DROP AREA
-        html += `<div id="suggestDropArea" style="margin-top:20px; text-align:center; padding-top:15px; border-top:1px solid #444; display:flex;  ap        ustify-content:center;">< di                bodyEl.        L = html;
-  
-        // Add Buttons
-        const area =  oc        tElementById('suggestDropArea')             // 1. Suggest Fix Button (NEW)
-        const        = document.createElement('button');
-           Fix.innerText = "ðŸ”§ Suggest Fix           btnFix.className = "action-btn";
-        btnFix.style.background = "        radient(135deg, #2ecc71, #27ae60            btnFix.style.fontSize = "14px";         btnFix.style.padding = "          
-                 click = () => {
-          try {
-            const fix = Deck            poseFix(win              Deck);
-                                     area.innerHTML = `
-                      <div style="background:rgba(39, 174, 96, 0.2); padding:15px; border-radius:8px; margin-top:10                          60; width:100%;">
-                          <div style="font-weight:bold; color:#2ecc71; margin-bottom:10p                          mended Fix:</div>
-                          <div style="display:flex; align-items:center; justify-cont                              ottom:10px;">
-                                                     center;">
-                                  <div style="color:#e74c3c; font                                  OVE</div>
-                                  <img src="${fix.remove.iconUrls?.medium || fix.remove.iconUrls |                                  h:50px;">
-                                  <div style                              e.name}                                     </div>
-                              <div st                              a;">âž</div>
-                                                     center;">
-                                  <div style="color:#2ecc71; f                                  ADD</div>
-                                  <img src="${fix.add.iconUrls?.medium || fix.add.iconUrl                                  h:50px;">
-                                  <div st                              d.name}                                                                      </div>
-                          <div style="font-size:0.9em; color:#ddd; margin-bottom:15px                          ix.reason}"</div>
-                          <button id="applyFixBtn" class="action-btn" style="background:#                          pply Fix</button>
-                          <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin                      ter;">C                                      /div>
-                  `;
-  
-              document.getE                yFixBtn').oncli                             // Update Deck
-                const newDeck = window.currentAppDe                .name !== fix.remove.na e)                  newDeck.push(fix                          // Update Globals
-                     w.currentAppDeck = newDeck;
-                window                ewDeck; // Sync builder too
-                if (window.currentPlayerData) wind w.                a.currentD                 
-                // Render
-                renderDeck(window.currentPlayerData || { currentDeck: n wD                 but works for                              // Close Modal
-                document.getElementBy                l').style.display = 'none';
-                alert(`Swapped               ame  w            d.name}!`                 };
-  
-            } else {
-              area.innerHTML = `<div style="color:#aaa; margin-top:10px;">No clear            Tr          djustments.</d                  }
-          } catch (e) {
-                    error("Suggest Fix Error:", e);
-            area.innerHTML = `<div style="color:#e74c3c; margin-top:10p          fi        x:  {e        }</div>`;
-          }
-        };
-           // 2. Suggest Drop Button (Legacy)
-        const         = document.createElement('button');
-        b        nnerText = "ðŸ“‰ Suggest DropOnly"          btnDrop.className = "action-btn";
-          nDrop.style.background = "#c0392b           btnDrop.style.fontSize = "14px";
-        btnDrop.style.padding = "8                  btnDrop.onclick = () => {
-          const suggestion = DeckWeak          seRemoval(window.currentAppDeck);
-               uggestion && sugges                         area.innerHTML = `
-                      <div style="background:rgba(192, 57, 43, 0.2); padding:10px; border-radius:8px; margin-top:10                          2b; width:100%;">
-                          <div style="font-weight:bold; color:#e74c3c;                          mended Cut:</div>
-                          <div style="display:flex; align-items:                              ent:center;">
-                              <img src="${suggestion.card.iconUrls?.medium || suggestion.card.iconUrls || sug                              width:40px;">
-                              <span style="font-size:1.2em; font-w                          card.na                                     </div>
-                          <div style="font-size:0.9em; color:#ddd; margin-top:5px; font-                          on.reason}"</div>
-                          <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margi                      nter;">                                     </di                      `;
-          } else {
-            area.innerHTML = `<div style="color:#aaa; margin-top:10px;">No specific remove sugge          y          su st        .</div>`;
-          }
-             
-        area.appendChild( tn              area.appendChild(btnDrop);
-  
-        // document.getElementBy        nessModal').style.display = 'flex';
-        console.log('We       Mo      pprs     };
-      */
+      if(wBtn) {
+          wBtn.onclick = () => {
+            console.log("Weakness Button Clicked - Disabled");
+          };
+      }
   </script>
   <script type="module">
       import { WIN_CONDITION_GUIDES } from './win_conditions.js?v=6';
