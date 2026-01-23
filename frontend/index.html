@@ -375,7 +375,7 @@
     <input id="tagInput" placeholder="#PLAYER TAG">
     <br><br>
     <div class="actions">
-      <button id="scanBtn">Scan Player</button>
+      <button id="scanBtn" onclick="window.scanPlayerFromInput()">Scan Player</button>
       <button id="aiDoctorBtn"
         style="display:none; background: linear-gradient(135deg, #7B3FE4, #8e54e9); border: 1px solid #c0a1f5; box-shadow: 0 0 15px rgba(123, 63, 228, 0.5);">✨
         AI Deck Doctor</button>
@@ -1734,8 +1734,47 @@
         };
       }
 
-      // SYNERGY BTN SETUP (Inline for reliability)
-      // SYNERGY BTN SETUP (Global function for reliability)
+
+      // --- LOUD DEBUGGING & GLOBAL HANDLERS ---
+      window.onerror = function(msg, url, line, col, error) {
+         // Ignore minor irrelevant errors
+         if (msg.includes("ResizeObserver")) return;
+         alert("Create Error: " + msg + "\nLine: " + line);
+         return false;
+      };
+
+      // Exposed Global Function for HTML onclick
+      window.scanPlayerFromInput = async function() {
+          console.log("Global Scan Triggered");
+          const btn = document.getElementById('scanBtn');
+          const input = document.getElementById('tagInput');
+          
+          if (!input || !btn) {
+              alert("Critical: Input or Button element missing from DOM");
+              return;
+          }
+
+          let tag = input.value.trim();
+          if (!tag) {
+              alert("Please enter a player tag (e.g. #2P090J0V)");
+              return;
+          }
+           if (!tag.startsWith('#')) {
+              tag = '#' + tag.toUpperCase();
+              input.value = tag;
+          }
+
+          // Save to LocalStorage
+          localStorage.setItem('cachedPlayerTag', tag);
+          
+          btn.disabled = true;
+          btn.textContent = 'Scanning...';
+          
+          await fetchPlayer(tag);
+          
+          btn.disabled = false;
+          btn.textContent = 'Scan Player';
+      };
 
       // --- RESTORED SCAN LOGIC ---
       async function fetchPlayer(tag) {
@@ -1775,38 +1814,12 @@
           }
       }
 
-      const scanBtn = document.getElementById('scanBtn');
       const scanInput = document.getElementById('tagInput');
-      
-      if (scanBtn && scanInput) {
-          scanBtn.onclick = async () => {
-              console.log("Scan Clicked");
-              let tag = scanInput.value.trim();
-              if (!tag) {
-                  alert("Please enter a player tag (e.g. #2P090J0V)");
-                  return;
-              }
-              if (!tag.startsWith('#')) {
-                  tag = '#' + tag.toUpperCase();
-                  scanInput.value = tag;
-              }
-
-              // Save to LocalStorage
-              localStorage.setItem('cachedPlayerTag', tag);
-              
-              scanBtn.disabled = true;
-              scanBtn.textContent = 'Scanning...';
-              
-              await fetchPlayer(tag);
-              
-              scanBtn.disabled = false;
-              scanBtn.textContent = 'Scan Player';
-          };
-          
+      if (scanInput) {
           // Enter Key
           scanInput.addEventListener('keypress', function (e) {
               if (e.key === 'Enter') {
-                  scanBtn.click();
+                  window.scanPlayerFromInput();
               }
           });
           
@@ -1815,9 +1828,8 @@
           if (cachedTag) {
               scanInput.value = cachedTag;
           }
-      } else {
-        console.error("Scan Button or Input not found in DOM");
       }
+
 
 
       // AI DECK DOCTOR SETUP
