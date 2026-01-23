@@ -1816,6 +1816,78 @@
 
       // GLOBAL DECK TRACKER
       window.currentAppDeck = [];
+
+      // --- RESTORED SCAN LOGIC ---
+      async function fetchPlayer(tag) {
+          try {
+              const safeTag = tag.replace('#', '');
+              const res = await fetch(`/api/player/${safeTag}`);
+              if (!res.ok) throw new Error('Player not found or API error');
+              
+              const data = await res.json();
+              window.currentPlayerData = data;
+              
+              // Validate Deck
+              if(!data.currentDeck || data.currentDeck.length === 0) {
+                  alert("Player found, but no current deck!");
+                  return;
+              }
+
+              // Update Global
+              window.currentAppDeck = data.currentDeck;
+
+              // Render
+              renderDeck(data);
+              
+              // Helper: Update Stats
+              if(window.updateDeckStats) window.updateDeckStats(data.currentDeck);
+
+              // Update UI
+              const output = document.getElementById('output');
+              if(output) output.innerHTML = `Loaded <b>${data.name}</b> (${data.clan ? data.clan.name : 'No Clan'})`;
+
+          } catch (err) {
+              console.error(err);
+              alert("Failed to load player: " + err.message);
+              const output = document.getElementById('output');
+              if(output) output.innerHTML = `<span style="color:red">${err.message}</span>`;
+          }
+      }
+
+      if (btn) {
+          btn.onclick = async () => {
+              let tag = input.value.trim();
+              if (!tag) {
+                  alert("Please enter a player tag (e.g. #2P090J0V)");
+                  return;
+              }
+              if (!tag.startsWith('#')) {
+                  tag = '#' + tag.toUpperCase();
+                  input.value = tag;
+              }
+
+              // Save to LocalStorage
+              localStorage.setItem('cachedPlayerTag', tag);
+              
+              btn.disabled = true;
+              btn.textContent = 'Scanning...';
+              
+              await fetchPlayer(tag);
+              
+              btn.disabled = false;
+              btn.textContent = 'Scan Player';
+          };
+      }
+      
+      // Enter Key Support
+      if (input) {
+          input.addEventListener('keypress', function (e) {
+              if (e.key === 'Enter') {
+                  btn.click();
+              }
+          });
+      }
+
       // WEAKNESS CHECK BUTTON HANDLER
       const weaknessBtnSetup = document.getElementById('weaknessReportBtn');
       if (weaknessBtnSetup) {
