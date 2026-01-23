@@ -1724,6 +1724,19 @@
       // GLOBAL DECK TRACKER
       window.currentAppDeck = [];
 
+
+
+      // WEAKNESS CHECK BUTTON HANDLER
+      const weaknessBtnSetup = document.getElementById('weaknessReportBtn');
+      if (weaknessBtnSetup) {
+        weaknessBtnSetup.onclick = () => {
+          window.dispatchEvent(new Event('SHOW_WEAKNESS_REPORT'));
+        };
+      }
+
+      // SYNERGY BTN SETUP (Inline for reliability)
+      // SYNERGY BTN SETUP (Global function for reliability)
+
       // --- RESTORED SCAN LOGIC ---
       async function fetchPlayer(tag) {
           try {
@@ -1732,6 +1745,7 @@
               if (!res.ok) throw new Error('Player not found or API error');
               
               const data = await res.json();
+              console.log("Player Loaded:", data);
               window.currentPlayerData = data;
               
               // Validate Deck
@@ -1761,51 +1775,50 @@
           }
       }
 
-      if (btn) {
-          btn.onclick = async () => {
-              let tag = input.value.trim();
+      const scanBtn = document.getElementById('scanBtn');
+      const scanInput = document.getElementById('tagInput');
+      
+      if (scanBtn && scanInput) {
+          scanBtn.onclick = async () => {
+              console.log("Scan Clicked");
+              let tag = scanInput.value.trim();
               if (!tag) {
                   alert("Please enter a player tag (e.g. #2P090J0V)");
                   return;
               }
               if (!tag.startsWith('#')) {
                   tag = '#' + tag.toUpperCase();
-                  input.value = tag;
+                  scanInput.value = tag;
               }
 
               // Save to LocalStorage
               localStorage.setItem('cachedPlayerTag', tag);
               
-              btn.disabled = true;
-              btn.textContent = 'Scanning...';
+              scanBtn.disabled = true;
+              scanBtn.textContent = 'Scanning...';
               
               await fetchPlayer(tag);
               
-              btn.disabled = false;
-              btn.textContent = 'Scan Player';
+              scanBtn.disabled = false;
+              scanBtn.textContent = 'Scan Player';
           };
-      }
-      
-      // Enter Key Support
-      if (input) {
-          input.addEventListener('keypress', function (e) {
+          
+          // Enter Key
+          scanInput.addEventListener('keypress', function (e) {
               if (e.key === 'Enter') {
-                  btn.click();
+                  scanBtn.click();
               }
           });
+          
+          // Pre-fill
+          const cachedTag = localStorage.getItem('cachedPlayerTag');
+          if (cachedTag) {
+              scanInput.value = cachedTag;
+          }
+      } else {
+        console.error("Scan Button or Input not found in DOM");
       }
 
-      // WEAKNESS CHECK BUTTON HANDLER
-      const weaknessBtnSetup = document.getElementById('weaknessReportBtn');
-      if (weaknessBtnSetup) {
-        weaknessBtnSetup.onclick = () => {
-          window.dispatchEvent(new Event('SHOW_WEAKNESS_REPORT'));
-        };
-      }
-
-      // SYNERGY BTN SETUP (Inline for reliability)
-      // SYNERGY BTN SETUP (Global function for reliability)
-      // openSynergyMatrix wrapper removed
 
       // AI DECK DOCTOR SETUP
       const doctorBtn = document.getElementById('aiDoctorBtn');
