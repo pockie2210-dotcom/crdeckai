@@ -1,736 +1,4 @@
-﻿<!DOCTYPE html>
-<!-- Build: 2026-01-18-v1 - Improve Deck Fix -->
-<html lang="en">
-
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Clash Royale Deck Helper</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    /* small inline spacing fix for demo button */
-    .card .actions {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      align-items: center;
-    }
-
-    /* Swap Modal */
-    #swapModal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      z-index: 2000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .swap-content {
-      background: #1a1a1a;
-      padding: 20px;
-      border-radius: 12px;
-      border: 2px solid var(--gold);
-      max-width: 600px;
-      width: 90%;
-      text-align: center;
-    }
-
-    .swap-options {
-      display: flex;
-      gap: 15px;
-      justify-content: center;
-      margin-top: 20px;
-      flex-wrap: wrap;
-    }
-
-    .swap-card {
-      cursor: pointer;
-      position: relative;
-      transition: transform 0.2s, border-color 0.2s;
-      border: 2px solid transparent;
-      border-radius: 8px;
-      padding: 5px;
-      background: #222;
-    }
-
-    .swap-card:hover {
-      transform: scale(1.05);
-      border-color: var(--accent);
-    }
-
-    .swap-score {
-      position: absolute;
-      top: -10px;
-      right: -10px;
-      background: var(--gold);
-      color: black;
-      font-weight: bold;
-      padding: 2px 6px;
-      border-radius: 10px;
-      font-size: 12px;
-    }
-
-    /* Strategy Guide */
-    #strategyGuide {
-      background: #1e1e1e;
-      border: 1px solid var(--gold);
-      box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
-      border-radius: 8px;
-      padding: 20px;
-      margin-top: 25px;
-      display: none;
-      line-height: 1.6;
-      font-size: 1rem;
-    }
-
-    #strategyGuide h3 {
-      margin-top: 0;
-      color: var(--gold);
-      font-size: 1.3rem;
-      border-bottom: 1px solid #444;
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-    }
-
-    /* Force Paragraphs to be BIG */
-    #strategyGuide p {
-      margin-bottom: 15px;
-      color: #ddd;
-    }
-
-    #strategyGuide strong {
-      color: var(--accent);
-    }
-
-    /* Playstyle Selector */
-    .playstyle-btn {
-      padding: 12px 20px;
-      border: 2px solid transparent;
-      border-radius: 8px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-size: 14px;
-    }
-
-    .playstyle-btn:hover {
-      transform: scale(1.05);
-      border-color: var(--gold);
-    }
-
-    .playstyle-btn.active {
-      border-color: var(--gold);
-      box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
-    }
-
-    /* WIN CONDITION GUIDE MODAL */
-    #winConditionModal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      z-index: 2000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .guide-content {
-      background: #1a1a1a;
-      padding: 25px;
-      border-radius: 12px;
-      border: 2px solid var(--gold);
-      max-width: 700px;
-      width: 90%;
-      max-height: 90vh;
-      overflow-y: auto;
-      text-align: center;
-    }
-
-    .guide-block {
-      background: rgba(0, 0, 0, 0.3);
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      border-left: 3px solid var(--accent);
-    }
-
-    /* ROLE CARD VISUALS */
-    .role-grid-container {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 15px;
-      justify-items: center;
-      margin-bottom: 25px;
-      max-width: 400px;
-      /* 4 * 80px card + gaps ~ 400px is safe */
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .role-card {
-      width: 80px;
-      height: 100px;
-      border-radius: 12px;
-      border: 3px solid #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Arial Black', sans-serif;
-      /* Impact/Thick font */
-      font-size: 28px;
-      color: white;
-      text-shadow:
-        2px 2px 0 #000,
-        -1px -1px 0 #000,
-        1px -1px 0 #000,
-        -1px 1px 0 #000,
-        1px 1px 0 #000;
-      cursor: pointer;
-      transition: transform 0.2s, filter 0.2s;
-      box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5);
-      /* 3D effect */
-    }
-
-    .role-card:hover {
-      transform: translateY(-5px);
-      filter: brightness(1.2);
-    }
-
-    .role-card.selected {
-      border-color: white;
-      box-shadow: 0 0 15px white;
-    }
-
-    #roleDetailArea {
-      min-height: 120px;
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 8px;
-      padding: 15px;
-      border: 1px solid var(--gold);
-      margin-bottom: 20px;
-      display: none;
-      /* Hidden until clicked */
-    }
-
-    /* SELECTION GRID (Win Condition Menu) */
-    #winConditionGrid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-      gap: 15px;
-      padding: 10px;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-
-    .win-con-card {
-      position: relative;
-      cursor: pointer;
-      border-radius: 6px;
-      overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.2s;
-      border: 2px solid #333;
-      background: #111;
-      aspect-ratio: 0.8;
-      /* Card shape */
-    }
-
-    .win-con-card:hover {
-      transform: scale(1.05);
-      border-color: var(--gold);
-      box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
-    }
-
-    .win-con-card img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .win-con-label {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      color: #fff;
-      font-size: 11px;
-      padding: 4px;
-      text-align: center;
-      font-weight: bold;
-      pointer-events: none;
-    }
-  </style>
-</head>
-
-<body>
-
-  <!-- SWAP MODAL -->
-  <div id="swapModal">
-    <div class="swap-content">
-      <h2 style="color:var(--gold); margin-bottom:10px;">Select Replacement</h2>
-      <p style="color:#ccc;">Here are the best alternatives for this slot:</p>
-      <div id="swapOptions" class="swap-options"></div>
-      <button onclick="document.getElementById('swapModal').style.display='none'" class="action-btn"
-        style="background:#555; margin-top:20px;">Cancel</button>
-    </div>
-  </div>
-
-  <!-- DOCTOR MODAL -->
-  <div id="doctorModal" class="modal-overlay doctor-modal" style="display:none;">
-    <div class="doctor-content">
-      <div class="doctor-header">
-        <h2>🩺 AI Deck Doctor</h2>
-        <span onclick="document.getElementById('doctorModal').style.display='none'" class="close-doctor">&times;</span>
-      </div>
-
-      <div class="doctor-body">
-        <!-- LEFT: DIAGNOSIS -->
-        <div class="diagnosis-section">
-          <h3>Diagnosis Report</h3>
-          <div class="health-score-container">
-            <div id="doctorScoreRing" class="score-ring">
-              <span id="doctorScoreValue">85</span>
-            </div>
-            <p id="doctorScoreLabel">Healthy Deck</p>
-          </div>
-          <ul id="doctorIssuesList" class="issues-list">
-            <!-- JS Populates -->
-          </ul>
-        </div>
-
-        <!-- RIGHT: PRESCRIPTIONS -->
-        <div class="prescription-section">
-          <h3>💊 Prescriptions</h3>
-          <p style="color:#aaa; font-size:13px; margin-bottom:15px;">Suggested swaps to fix issues:</p>
-          <div id="doctorSuggestions" class="suggestions-container">
-            <!-- JS Populates -->
-          </div>
-        </div>
-      </div>
-
-      <div class="doctor-footer">
-        <button id="applyDoctorFixesBtn" class="action-btn"
-          style="background:var(--gold); color:black; font-weight:800; font-size:16px;">✅ Apply All Fixes</button>
-        <button onclick="document.getElementById('doctorModal').style.display='none'" class="action-btn"
-          style="background:#555;">Dismiss</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SUBSTITUTIONS MODAL -->
-  <div id="substitutionsModal"
-    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; align-items:center; justify-content:center;">
-    <div class="swap-content"
-      style="max-width:800px; width:90%; max-height:90vh; overflow-y:auto; display:flex; flex-direction:column;">
-      <h2 style="color:var(--gold); margin-bottom:5px;">Substitutions Manager</h2>
-      <p style="color:#ccc; margin-bottom:20px;">Select a card you want to ADD to your deck. The AI will suggest the
-        best replacement.</p>
-
-      <div style="margin-bottom:15px;">
-        <input id="subSearch" placeholder="Search cards..."
-          style="padding:10px; width:100%; border-radius:8px; border:1px solid #555; background:#222; color:white;">
-      </div>
-
-      <div id="subsGrid" class="picker-grid" style="flex:1; overflow-y:auto; min-height:300px;">
-        <!-- Filled by JS -->
-      </div>
-
-      <button onclick="document.getElementById('substitutionsModal').style.display='none'" class="action-btn"
-        style="background:#555; margin-top:20px;">Cancel</button>
-    </div>
-  </div>
-
-  <!-- WIN CONDITION GUIDE MODAL -->
-  <div id="winConditionModal">
-    <div class="guide-content">
-      <div id="guideList">
-        <h2 style="color:var(--gold); margin-bottom:10px;">Win Condition Masterclass</h2>
-        <p style="color:#ccc; margin-bottom:20px;">Select a Win Condition to learn how to master it.</p>
-        <div id="winConditionGrid" class="picker-grid"></div>
-        <button onclick="document.getElementById('winConditionModal').style.display='none'" class="action-btn"
-          style="background:#555; margin-top:20px;">Close</button>
-      </div>
-
-      <div id="guideDetail" style="display:none; text-align: left;">
-        <button id="backToGuideList" class="action-btn" style="background:#444; margin-bottom:15px;">&larr;
-          Back</button>
-        <h2 id="guideTitle" style="color:var(--gold); margin-top:0;">Title</h2>
-        <div id="guideBody"></div>
-      </div>
-    </div>
-  </div>
-
-  <h1>Player tag (insert player tag) <span style="font-size:12px; color:#aaa;">v2.1 (Fix)</span></h1>
-
-  <div class="card">
-    <input id="tagInput" placeholder="#PLAYER TAG">
-    <br><br>
-    <div class="actions">
-      <button id="scanBtn" onclick="window.scanPlayerFromInput()">Scan Player</button>
-      <button id="aiDoctorBtn"
-        style="display:none; background: linear-gradient(135deg, #7B3FE4, #8e54e9); border: 1px solid #c0a1f5; box-shadow: 0 0 15px rgba(123, 63, 228, 0.5);">✨
-        AI Deck Doctor</button>
-      <button id="substitutionsBtn" style="display:none; background: #9b59b6;">Substitutions</button>
-      <!-- Weakness Check button (Renamed & Restored) -->
-      <button id="weaknessReportBtn" style="display:none; background: #c0392b;">Weakness Check</button>
-      <button id="synergyBtn"
-        onclick="if(window.currentAppDeck) window.SynergyMatrix.render(window.currentAppDeck); else alert('Scan a player first!');"
-        style="background: #2980b9;">🔗 Synergy
-        Matrix</button>
-      <button id="radarBtn"
-        onclick="if(window.currentAppDeck) window.DeckRadar.render(window.currentAppDeck); else alert('Scan a player first!');"
-        style="background: #e67e22; margin-left:5px;">📊 Deck Radar</button>
-      <button id="buildBtn" style="display:none; background: linear-gradient(135deg, #e67e22, #d35400);">Build
-        Deck</button>
-      <button id="demoBtn">Show Demo Deck</button>
-    </div>
-    <div id="statsContainer" class="stats"></div>
-    <div id="deckContainer" class="deck"></div>
-    <div id="builderControls" style="display:none; margin-top: 20px;">
-
-      <!-- Live Stats Panel -->
-      <div id="statsPanel" class="stats-panel" style="display:none;">
-        <div class="badge-score" id="metaScoreBadge">Meta Score: --</div>
-
-        <!-- EXTERNAL DECK CHECK -->
-        <button id="checkDeckBtn" class="action-btn"
-          style="width:100%; margin-top:10px; background: #34495e; border: 1px solid #7f8c8d;">
-          🔍 Verification Check (DeckShop)
-        </button>
-
-        <div id="deckCheckResult"
-          style="margin-top:10px; font-size:12px; display:none; padding:10px; background:rgba(0,0,0,0.6); border-radius:8px;">
-        </div>
-
-        <!-- NEW: Predicted Win Rate -->
-        <div
-          style="margin: 15px 0; padding: 15px; background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(0, 0, 0, 0.3)); border: 2px solid rgba(46, 204, 113, 0.5); border-radius: 10px; text-align: center;">
-          <div style="color: #2ecc71; font-size: 14px; font-weight: bold; margin-bottom: 5px;">📊 PREDICTED WIN RATE
-          </div>
-          <div id="winRateDisplay"
-            style="font-size: 32px; font-weight: 900; color: #2ecc71; text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);">--
-          </div>
-          <div id="winRateFactors" style="font-size: 11px; color: #95a5a6; margin-top: 5px;">Calculating...</div>
-        </div>
-
-        <div>
-          <div class="stat-row"><span>⚔️ Offense</span> <span id="offScore" class="stat-score">0</span></div>
-          <div class="stat-bar-bg">
-            <div id="offBar" class="stat-bar-fill" style="width:0%; background:#e74c3c"></div>
-          </div>
-        </div>
-
-        <div>
-          <div class="stat-row"><span>🛡️ Defense</span> <span id="defScore" class="stat-score">0</span></div>
-          <div class="stat-bar-bg">
-            <div id="defBar" class="stat-bar-fill" style="width:0%; background:#3498db"></div>
-          </div>
-        </div>
-
-        <div>
-          <div class="stat-row"><span>🤝 Synergy</span> <span id="synScore" class="stat-score">0</span></div>
-          <div class="stat-bar-bg">
-            <div id="synBar" class="stat-bar-fill" style="width:0%; background:#9b59b6"></div>
-          </div>
-        </div>
-
-        <div>
-          <div class="stat-row"><span>🔄 Avg Elixir</span> <span id="avgElixir" class="stat-score">--</span>
-          </div>
-          <div class="stat-row"><span>⚡ 4-Card Cycle</span> <span id="cycleCost" class="stat-score">--</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- NEW STRATEGY SECTION - Enhanced -->
-      <div id="strategyGuide"
-        style="display:none; background:linear-gradient(135deg, rgba(123, 63, 228, 0.2), rgba(0,0,0,0.7)); margin-top:25px; padding:25px; border-radius:12px; border-left: 4px solid var(--gold); border: 2px solid rgba(212, 175, 55, 0.3); box-shadow: 0 4px 16px rgba(0,0,0,0.4); color:#ecf0f1; font-size:15px; line-height:1.8;">
-        <!-- AI Content Goes Here -->
-      </div>
-
-      <!-- PLAYSTYLE SELECTOR -->
-      <div
-        style="margin-top:20px; padding:15px; background:rgba(0,0,0,0.4); border-radius:8px; border:1px solid var(--gold);">
-        <h3 style="color:var(--gold); margin-top:0;">Choose Your Playstyle</h3>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
-          <button class="playstyle-btn" data-style="any" style="background:#555;">🎲 Any</button>
-          <button class="playstyle-btn" data-style="cycle" style="background:#3498db;">⚡ Cycle</button>
-          <button class="playstyle-btn" data-style="control" style="background:#9b59b6;">🛡️ Control</button>
-          <button class="playstyle-btn" data-style="beatdown" style="background:#e74c3c;">👊 Beatdown</button>
-          <button class="playstyle-btn" data-style="bridgespam" style="background:#e67e22;">🚀 Bridge Spam</button>
-          <button class="playstyle-btn" data-style="bait" style="background:#27ae60;">🪤 Log Bait</button>
-          <button class="playstyle-btn" data-style="siege" style="background:#2c3e50;">🏹 Siege</button>
-          <button class="playstyle-btn" data-style="graveyard" style="background:#8e44ad;">💀 Graveyard</button>
-          <button class="playstyle-btn" data-style="miner" style="background:#16a085;">⛏️ Miner</button>
-        </div>
-      </div>
-
-      <h3 style="color:var(--gold); margin-top:15px;">Choose Cards from Collection</h3>
-      <p style="color:#aaa; font-size:12px; margin-top:5px;">Left-click to add • Right-click to exclude 🚫</p>
-      <div id="cardPicker" class="picker-grid"></div>
-      <button id="autofillBtn" class="action-btn" style="background:#8e44ad; margin-top:20px;">✨ Auto-Complete
-        Deck</button>
-      <div id="aiStatus" style="font-size:12px; color:#ccc; margin-top:5px; height:1.2em;"></div>
-    </div>
-    <pre id="output" style="display:none; white-space: pre-wrap;"></pre>
-
-    <!-- NEW WIN CONDITION BUTTON - ALWAYS VISIBLE AT BOTTOM -->
-    <div
-      style="margin-top: 40px; text-align: center; padding-bottom: 20px; display: flex; gap: 20px; justify-content: center;">
-      <button id="winConGuideBtn" class="action-btn"
-        style="background: linear-gradient(135deg, #1abc9c, #16a085); padding: 15px 30px; font-size: 18px; border: 2px solid #1abc9c;">
-        🎓 Win Condition Masterclass
-      </button>
-      <button id="matchupBtn" class="action-btn"
-        style="background: linear-gradient(135deg, #e74c3c, #c0392b); padding: 15px 30px; font-size: 18px; border: 2px solid #e74c3c;">
-        ⚔️ Matchup Analyzer
-      </button>
-      <!-- Weakness Check button is now in the main actions bar -->
-    </div>
-
-
-  </div>
-
-  <!-- MATCHUP MODAL -->
-  <div id="matchupModal" class="modal-overlay" style="display:none; align-items:flex-start; padding-top:50px;">
-    <div class="modal-content" style="width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto;">
-      <h2 style="color:var(--gold); display:flex; justify-content:space-between;">
-        <span>⚔️ Matchup Analyzer</span>
-        <span id="closeMatchup" style="cursor:pointer;">&times;</span>
-      </h2>
-      <p style="color:#ccc; margin-bottom:20px;">Compare your current deck against an enemy deck.</p>
-
-      <div style="display:flex; flex-wrap:wrap; gap:20px;">
-        <!-- YOUR DECK (Read Only) -->
-        <div style="flex:1; min-width:300px;">
-          <h3 style="color:#2ecc71;">Your Deck</h3>
-          <div id="myDeckPreview"
-            style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; pointer-events:auto; opacity:1;">
-            <!-- Synergy Modal -->
-            <div id="synergyModalMatchup" class="modal">
-              <div class="modal-content"
-                style="background:rgba(10, 10, 20, 0.95); border:1px solid #00d2ff; box-shadow:0 0 50px rgba(0, 210, 255, 0.2);">
-                <span class="close"
-                  onclick="document.getElementById('synergyModalMatchup').style.display='none'">&times;</span>
-                <div id="synergyContentMatchup"></div>
-              </div>
-            </div>
-
-            <!-- Builder Mode & Modal Script -->
-          </div>
-        </div>
-
-        <!-- VS -->
-        <div
-          style="display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:bold; color:#aaa;">
-          VS
-        </div>
-
-        <!-- ENEMY DECK (Editable) -->
-        <div style="flex:1; min-width:300px;">
-          <h3 style="color:#e74c3c;">Enemy Deck</h3>
-          <div id="enemyDeckWrapper"
-            style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; border: 2px dashed #444; padding:10px; min-height:100px;">
-            <!-- Enemy Cards -->
-          </div>
-          <button id="clearEnemyBtn"
-            style="margin-top:10px; padding:5px 10px; background:#444; border:none; color:#fff; cursor:pointer;">Clear
-            Enemy Deck</button>
-        </div>
-      </div>
-
-      <!-- ENEMY CARD PICKER -->
-      <div style="margin-top:20px;">
-        <h4 style="color:#aaa;">Add Enemy Cards:</h4>
-        <div id="enemyCardPicker" class="picker-grid" style="max-height:200px; overflow-y:auto; border:1px solid #444;">
-          <!-- Re-use picker logic -->
-        </div>
-      </div>
-
-      <div style="margin-top:30px; text-align:center;">
-        <button id="analyzeBtn" class="action-btn"
-          style="background:var(--gold); color:#000; font-weight:bold; font-size:1.2em; padding:15px 40px;">
-          ⚖️ Analyze Matchup
-        </button>
-      </div>
-
-      <!-- RESULTS AREA -->
-      <div id="analysisResult"
-        style="display:none; margin-top:30px; background:rgba(0,0,0,0.5); padding:20px; border-radius:8px;">
-        <h3 id="resultTitle" style="text-align:center; font-size:2em; margin-bottom:10px;">Even Matchup</h3>
-        <div class="stat-bar-bg" style="height:20px; margin-bottom:20px;">
-          <div id="advantageBar" class="stat-bar-fill" style="width:50%; background:#aaa; transition: width 0.5s;">
-          </div>
-        </div>
-
-        <div style="display:flex; gap:20px; flex-wrap:wrap;">
-          <div style="flex:1;">
-            <h4 style="color:#e74c3c;">⚠️ Threats</h4>
-            <ul id="threatList" style="list-style:none; padding:0; color:#ddd;"></ul>
-          </div>
-          <div style="flex:1;">
-            <h4 style="color:#f1c40f;">🧠 Strategy Tips</h4>
-            <ul id="tipList" style="list-style:none; padding:0; color:#ddd;"></ul>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-
-
-
-
-  <!-- WEAKNESS MODAL -->
-  <div id="weaknessModal" class="modal-overlay"
-    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2100; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
-    <div class="guide-content"
-      style="text-align:center; display:flex; flex-direction:column; width:95%; max-width:1000px; max-height:90vh; background:#1e1e1e; border:1px solid #444; padding:0;">
-
-      <!-- HEADER -->
-      <div style="padding:20px; border-bottom:1px solid #333;">
-        <h2 style="color:var(--gold); margin:0; font-size:24px;">Deck Weakness Report</h2>
-      </div>
-
-      <!-- CONTENT GRID -->
-      <div style="display:flex; flex:1; overflow:visible; flex-wrap:wrap;">
-
-        <!-- LEFT: SCORE & RADAR -->
-        <div
-          style="flex:1; min-width:300px; background:rgba(0,0,0,0.2); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; border-right:1px solid #333;">
-          <div id="weaknessScore">
-            <!-- Injected via JS -->
-          </div>
-        </div>
-
-        <!-- RIGHT: TEXT REPORT -->
-        <div id="weaknessBody"
-          style="flex:1.5; min-width:300px; padding:25px; text-align:left; color:#ddd; overflow-y:auto;">
-          <!-- Results here -->
-        </div>
-      </div>
-
-      <!-- FOOTER -->
-      <div id="weaknessFooter" style="padding:15px; border-top:1px solid #333; background:#252525;">
-        <button onclick="document.getElementById('weaknessModal').style.display='none'" class="action-btn"
-          style="background:#555; padding:10px 30px;">Close Report</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SYNERGY MODAL -->
-  <div id="synergyModal" class="modal-overlay"
-    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:2100; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
-    <div class="guide-content"
-      style="text-align:center; display:flex; flex-direction:column; width:95%; max-width:800px; max-height:90vh; background:#1e1e1e; border:1px solid #444; padding:0; position:relative;">
-
-      <!-- HEADER -->
-      <div style="padding:20px; border-bottom:1px solid #333;">
-        <h2 style="color:#00d2ff; margin:0; font-size:24px; text-shadow:0 0 15px rgba(0,210,255,0.4);">Synergy Matrix
-        </h2>
-      </div>
-
-      <!-- CONTENT -->
-      <div id="synergyContent"
-        style="flex:1; padding:20px; overflow-y:auto; display:flex; align-items:center; justify-content:center;">
-        <!-- Injected via JS -->
-      </div>
-
-      <!-- FOOTER -->
-      <div style="padding:15px; border-top:1px solid #333; background:#252525;">
-        <button onclick="document.getElementById('synergyModal').style.display='none'" class="action-btn"
-          style="background:#555; padding:10px 30px;">Close Matrix</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="meta_decks.js?v=4"></script>
-  <script src="smart_ai.js?v=4"></script>
-  <script>
-    // --- GLOBAL HELPERS FOR DECK WEAKNESS ---
-    // Moved here to ensure they are accessible by DeckWeakness logic
-
-    // Role Definitions
-    const ROLES = {
-      winCon: ['Hog Rider', 'Royal Giant', 'Golem', 'Lava Hound', 'Balloon', 'Goblin Barrel', 'Miner', 'Graveyard', 'X-Bow', 'Mortar', 'Electro Giant', 'Goblin Giant', 'Ram Rider', 'Battle Ram', 'Wall Breakers', 'Elixir Golem', 'Skeleton Barrel', 'Three Musketeers', 'Giant'],
-      spellSmall: ['The Log', 'Zap', 'Giant Snowball', 'Arrows', 'Barbarian Barrel', 'Tornado', 'Royal Delivery', 'Rage'],
-      spellBig: ['Fireball', 'Poison', 'Rocket', 'Lightning', 'Earthquake', 'Void', 'Freeze'],
-      airDefense: ['Musketeer', 'Electro Wizard', 'Wizard', 'Witch', 'Executioner', 'Hunter', 'Baby Dragon', 'Inferno Dragon', 'Mega Minion', 'Minions', 'Minion Horde', 'Bats', 'Spear Goblins', 'Ice Wizard', 'Princess', 'Dart Goblin', 'Magic Archer', 'Flying Machine', 'Firecracker', 'Mother Witch', 'Skeleton Dragons', 'Phoenix', 'Archer Queen', 'Little Prince'],
-      building: ['Cannon', 'Tesla', 'Inferno Tower', 'Bomb Tower', 'Tombstone', 'Goblin Cage', 'Furnace', 'Barbarian Hut', 'Goblin Hut', 'Elixir Collector', 'Mortar', 'X-Bow'],
-      miniTank: ['Mini P.E.K.K.A', 'P.E.K.K.A', 'Inferno Tower', 'Inferno Dragon', 'Hunter', 'Elite Barbarians', 'Prince', 'Lumberjack', 'Barperians', 'Skeleton Army', 'Guards']
-    };
-
-    function getCardRole(cardName) {
-      let foundRoles = [];
-      for (const [role, cards] of Object.entries(ROLES)) {
-        if (cards.includes(cardName)) foundRoles.push(role);
-      }
-      return foundRoles.length > 0 ? foundRoles : ['troop'];
-    }
-
-    // Expose helpers globally
-    window.getCardRole = getCardRole;
-    window.ROLES = ROLES;
-
-    // META QUALITY TIER LIST (Global)
-    const META_QUALITY = {
-      // S+ Tier Spells (Meta Staples) - BOOSTED
-      'The Log': 150, 'Fireball': 140, 'Poison': 130, 'Tornado': 140,
-      'Zap': 145, 'Arrows': 110, 'Lightning': 125, 'Earthquake': 120,
-      'Barbarian Barrel': 125, 'Snowball': 120, 'Giant Snowball': 120,
-
-      // S Tier Win Conditions (Reliable Damage Dealers) - BOOSTED
-      'Hog Rider': 135, 'Miner': 140, 'Royal Giant': 120, 'Goblin Barrel': 130,
-      'Wall Breakers': 125, 'Graveyard': 130, 'X-Bow': 120, 'Mortar': 110,
-      'Goblin Drill': 125, 'Ram Rider': 115, 'Battle Ram': 105,
-
-      // S Tier Support (Universal Utility) - BOOSTED
-      'Knight': 150, 'Musketeer': 140, 'Ice Spirit': 145, 'Skeletons': 150,
-      'Electro Spirit': 140, 'Valkyrie': 130, 'Baby Dragon': 130,
-      'Electro Wizard': 140, 'Mega Minion': 125, 'Bats': 135,
-      'Ice Golem': 120, 'Archers': 125, 'Flying Machine': 115,
-
-      // A Tier (Strong Meta Picks)
-      'Goblin Gang': 100, 'Cannon': 115, 'Tesla': 125,
-      'Inferno Tower': 120, 'Lumberjack': 105, 'Magic Archer': 110,
-      'Dark Prince': 95, 'Hunter': 50, 'Firecracker': 115,
-      'Mini P.E.K.K.A': 120, 'Prince': 105, 'Bandit': 110,
-      'Fisherman': 100, 'Mother Witch': 110, 'Royal Delivery': 100,
-      'Dart Goblin': 110, 'Princess': 105, 'Minions': 105,
-
-      // B Tier (Archetype-Specific Strong)
-      'Giant': 80, 'Golem': 75, 'Lava Hound': 75, 'Balloon': 90,
-      'Royal Hogs': 85, 'P.E.K.K.A': 85, 'Mega Knight': 75,
-      'Sparky': 65, 'Executioner': 75, 'Bowler': 75,
-      'Phoenix': 85, 'Electro Giant': 70, 'Goblin Giant': 75,
-      'Night Witch': 90, 'Witch': 30, 'Royal Ghost': 85,
-      'Inferno Dragon': 100, 'Skeleton Dragons': 85,
-
-      // C Tier (Needs Specific Synergy)
-      'Bomber': 50, 'Giant Skeleton': 35, 'Skeleton Army': 55,
-      'Minion Horde': 50, 'Tombstone': 65, 'Rocket': 75,
-      'Barbarians': 65, 'Elite Barbarians': 40, 'Royal Recruits': 75,
-      'Rascals': 65, 'Guards': 70, 'Spear Goblins': 55,
-      'Zappies': 50, 'Bomb Tower': 70, 'Goblin Cage': 80,
-
-      // D/F Tier
-      'Wizard': -80, 'Goblin Hut': -100, 'Furnace': -80,
-      'Barbarian Hut': -200, 'Mirror': -220, 'Clone': -240,
-      'Elixir Golem': -300, 'Battle Healer': -200, 'Three Musketeers': -180,
-      'Rage': -100, 'Freeze': 50, 'Heal Spirit': 80,
-      'Elixir Collector': 35, 'Void': 100
-    };
-    window.META_QUALITY = META_QUALITY; 
+window.META_QUALITY = META_QUALITY; 
     
     const DeckWeakness = {
       /**
@@ -880,7 +148,7 @@
           let score = META_QUALITY[c.name] || 50;
           const role = getCardRole(c.name);
 
-          // PROTECTIONS ðŸ›¡ï¸
+          // PROTECTIONS 🛡️
           // 1. Never remove the only Win Condition
           if (role.includes('winCon') && winCons.length === 1) score += 999;
 
@@ -897,7 +165,7 @@
           // 5. Level Bias (Don't suggest removing maxed cards if possible)
           if (c.level >= 14) score += 10;
 
-          // PENALTIES ðŸ”»
+          // PENALTIES 🔻
           // 1. Very heavy cards in a cheap deck? (Not implemented yet)
 
           if (score < minScore) {
@@ -993,7 +261,7 @@
           // Top Candidate to ADD
           let bestAdd = candidates.length > 0 ? candidates[0] : { name: "Hog Rider", iconUrls: { medium: "https://api-assets.clashroyale.com/cards/300/UbuVrj_tAFUulOpA_53oITt7yU8S_eG8wGqgJ8s-yv.png" } };
 
-          // BRUTE FORCE SIMULATION ðŸ¤–
+          // BRUTE FORCE SIMULATION 🤖
           let bestSwap = null;
           let maxScore = -1;
           let baselineScore = this.getDeckScore(deck);
@@ -1093,12 +361,10 @@
             defense: clamp(def),
             cycle: clamp(cyc),
             versatility: clamp(vers),
-            synergy: clamp(syn)
-          };
+            s        clam                 };
         },
 
-        /**
-         * Generates SVG for Radar Chart
+        /            * Generates SVG for Radar Chart
          */
         renderRadarChart: function (stats) {
           const size = 280; // Increased from 220 to prevent clipping
@@ -1277,7 +543,7 @@
                         </button>
                     </div>
 
-                    <div style="position:absolute; top:10px; right:15px; cursor:pointer; color:#666; font-size:20px;" onclick="document.getElementById('synergyModal').remove()">âœ•</div>
+                    <div style="position:absolute; top:10px; right:15px; cursor:pointer; color:#666; font-size:20px;" onclick="document.getElementById('synergyModal').remove()">✕</div>
                 </div>
             </div>
         `;
@@ -1680,7 +946,7 @@
               // Notify User
               const aiStatus = document.getElementById('aiStatus');
               if (aiStatus) {
-                aiStatus.textContent = `âœ¨ AI Updated: ${decks.length} new top decks loaded via Live Scraper.`;
+                aiStatus.textContent = `✨ AI Updated: ${decks.length} new top decks loaded via Live Scraper.`;
                 aiStatus.style.color = '#2ecc71';
               }
             }
@@ -1875,7 +1141,7 @@
           // 3. Render Issues
           const issuesList = document.getElementById('doctorIssuesList');
           if (diagnosis.issues.length === 0) {
-             issuesList.innerHTML = `<li style="border-left-color:#2ecc71; background:rgba(46,204,113,0.1); color:#2ecc71;">✅ No critical issues found!</li>`;
+             issuesList.innerHTML = `<li style="border-left-color:#2ecc71; background:rgba(46,204,113,0.1); color:#2ecc71;">? No critical issues found!</li>`;
           } else {
              issuesList.innerHTML = diagnosis.issues.map(issue => `<li>${issue}</li>`).join('');
           }
@@ -1885,7 +1151,7 @@
           suggestionsEl.innerHTML = '';
           
           if (diagnosis.suggestions.length === 0) {
-            suggestionsEl.innerHTML = `<div style="text-align:center; padding:20px; color:#aaa;">No specific prescriptions needed. You represent the meta! 🏆</div>`;
+            suggestionsEl.innerHTML = `<div style="text-align:center; padding:20px; color:#aaa;">No specific prescriptions needed. You represent the meta! ??</div>`;
             document.getElementById('applyDoctorFixesBtn').style.display = 'none';
           } else {
              document.getElementById('applyDoctorFixesBtn').style.display = 'inline-block';
@@ -1900,7 +1166,7 @@
                 const html = `
                   <div class="suggestion-card">
                      <div class="suggestion-info">
-                        <div style="font-weight:bold; color:#fff;">💊 Suggested: <span style="color:${color}">${choice}</span></div>
+                        <div style="font-weight:bold; color:#fff;">?? Suggested: <span style="color:${color}">${choice}</span></div>
                         <div class="suggestion-reason">${sugg.reason}</div>
                      </div>
                   </div>
@@ -1941,7 +1207,7 @@
              // Toast/Notify
              const status = document.getElementById('aiStatus');
              if (status) {
-                 status.innerHTML = "✨ AI Doctor: Applied prescriptions to your deck!";
+                 status.innerHTML = "? AI Doctor: Applied prescriptions to your deck!";
                  status.style.color = "#2ecc71";
                  setTimeout(() => { status.innerHTML = ""; }, 4000);
              }
@@ -2005,11 +1271,11 @@
         let html = '';
         if (result.issues.length === 0) {
           html = `<div style="text-align:center; padding:20px;">
-                    <h3 style="color:#2ecc71; font-size:24px;">âœ… Operational</h3>
+                    <h3 style="color:#2ecc71; font-size:24px;">✅ Operational</h3>
                     <p>All critical systems are functioning within normal parameters.</p>
                 </div>`;
         } else {
-          html = `<h3 style="color:#e74c3c; border-bottom:1px solid #444; padding-bottom:5px;">âš ï¸ System Weaknesses Detected</h3>`;
+          html = `<h3 style="color:#e74c3c; border-bottom:1px solid #444; padding-bottom:5px;">⚠️ System Weaknesses Detected</h3>`;
 
           // PRE-CALCULATE FIX
           let fixHTML = '';
@@ -2019,7 +1285,7 @@
               fixHTML = `
                  <div style="margin-top:12px; margin-bottom:20px; background:rgba(46, 204, 113, 0.1); border:1px solid rgba(46, 204, 113, 0.3); border-radius:12px; padding:15px; margin-left:10px;">
                      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; border-bottom:1px solid rgba(46, 204, 113, 0.2); padding-bottom:8px;">
-                         <div style="font-size:20px;">ðŸ’¡</div>
+                         <div style="font-size:20px;">💡</div>
                          <div style="font-weight:bold; color:#2ecc71; font-size:15px; letter-spacing:0.5px; text-transform:uppercase;">Recommended Action</div>
                      </div>
                      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;">
@@ -2028,12 +1294,12 @@
                              <div style="font-size:10px; color:#e74c3c; font-weight:bold; margin-bottom:4px; letter-spacing:1px; background:rgba(231, 76, 60, 0.2); display:inline-block; padding:2px 6px; border-radius:4px;">OUT</div>
                              <div style="position:relative; width:50px; height:60px; margin:0 auto;">
                                  <img src="${fix.removal.card.iconUrls.medium}" style="width:100%; height:100%; object-fit:contain; filter:grayscale(100%) opacity(0.7);">
-                                 <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:#e74c3c; font-size:30px; font-weight:bold;">âœ•</div>
+                                 <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:#e74c3c; font-size:30px; font-weight:bold;">✕</div>
                              </div>
                              <div style="font-size:10px; margin-top:2px; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${fix.removal.card.name}</div>
                          </div>
                          <!-- ARROW -->
-                         <div style="color:#555; font-size:20px;">âž”</div>
+                         <div style="color:#555; font-size:20px;">➔</div>
                           <!-- IN -->
                          <div style="text-align:center; flex:1;">
                              <div style="font-size:10px; color:#2ecc71; font-weight:bold; margin-bottom:4px; letter-spacing:1px; background:rgba(46, 204, 113, 0.2); display:inline-block; padding:2px 6px; border-radius:4px;">IN</div>
@@ -2411,7 +1677,7 @@
         if (card.starLevel) {
           const sb = document.createElement('div');
           sb.className = 'badge star-badge';
-          sb.textContent = 'â˜…' + card.starLevel;
+          sb.textContent = '★' + card.starLevel;
           el.appendChild(sb);
         }
 
@@ -2431,11 +1697,11 @@
         if (!data) return;
         const name = data.name || data.playerName || 'Unknown';
         const tag = data.tag || data.playerTag || '';
-        const level = data.expLevel ?? data.level ?? 'â€”';
-        const trophies = data.trophies ?? 'â€”';
-        const best = data.bestTrophies ?? 'â€”';
-        const wins = data.wins ?? data.challengeCardsWon ?? 'â€”';
-        const losses = data.losses ?? 'â€”';
+        const level = data.expLevel ?? data.level ?? '—';
+        const trophies = data.trophies ?? '—';
+        const best = data.bestTrophies ?? '—';
+        const wins = data.wins ?? data.challengeCardsWon ?? '—';
+        const losses = data.losses ?? '—';
         const clanName = data.clan?.name ?? '';
 
         const html = `
@@ -2448,7 +1714,7 @@
                     <span style="font-size:16px; color:#888; font-weight:normal; vertical-align:middle; margin-left:10px;">${escapeHtml(tag)}</span>
                 </h2>
                 <div style="color:#bdc3c7; font-size:15px; margin-top:8px; display:flex; align-items:center; justify-content:center; gap:8px;">
-                    <span style="font-size:18px;">ðŸ›¡ï¸</span> ${escapeHtml(clanName)}
+                    <span style="font-size:18px;">🛡️</span> ${escapeHtml(clanName)}
                 </div>
             </div>
 
@@ -2457,28 +1723,28 @@
                 
                 <!-- Level -->
                 <div style="background:rgba(255,255,255,0.03); padding:15px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.05); transition:transform 0.2s;">
-                    <div style="font-size:28px; margin-bottom:5px;">â­</div>
+                    <div style="font-size:28px; margin-bottom:5px;">⭐</div>
                     <div style="font-size:12px; color:#aaa; text-transform:uppercase; letter-spacing:1px;">Level</div>
                     <div style="font-size:22px; color:#fff; font-weight:bold; margin-top:5px;">${level}</div>
                 </div>
 
                 <!-- Trophies -->
                 <div style="background:linear-gradient(180deg, rgba(241, 196, 15, 0.1), rgba(0,0,0,0)); padding:15px 10px; border-radius:12px; border:1px solid rgba(241, 196, 15, 0.2);">
-                    <div style="font-size:28px; margin-bottom:5px; filter:drop-shadow(0 0 5px rgba(241,196,15,0.5));">ðŸ†</div>
+                    <div style="font-size:28px; margin-bottom:5px; filter:drop-shadow(0 0 5px rgba(241,196,15,0.5));">🏆</div>
                     <div style="font-size:12px; color:#e0c96c; text-transform:uppercase; letter-spacing:1px;">Trophies</div>
                     <div style="font-size:22px; color:#f1c40f; font-weight:bold; margin-top:5px;">${trophies}</div>
                 </div>
 
                 <!-- Best -->
                 <div style="background:rgba(255,255,255,0.03); padding:15px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
-                    <div style="font-size:28px; margin-bottom:5px;">ðŸ”ï¸</div>
+                    <div style="font-size:28px; margin-bottom:5px;">🏔️</div>
                     <div style="font-size:12px; color:#aaa; text-transform:uppercase; letter-spacing:1px;">Best</div>
                     <div style="font-size:22px; color:#fff; font-weight:bold; margin-top:5px;">${best}</div>
                 </div>
 
                 <!-- Wins -->
                 <div style="background:linear-gradient(180deg, rgba(46, 204, 113, 0.1), rgba(0,0,0,0)); padding:15px 10px; border-radius:12px; border:1px solid rgba(46, 204, 113, 0.2);">
-                    <div style="font-size:28px; margin-bottom:5px;">âš”ï¸</div>
+                    <div style="font-size:28px; margin-bottom:5px;">⚔️</div>
                     <div style="font-size:12px; color:#95e5b3; text-transform:uppercase; letter-spacing:1px;">Wins</div>
                     <div style="font-size:22px; color:#2ecc71; font-weight:bold; margin-top:5px;">${wins}</div>
                 </div>
@@ -2683,7 +1949,7 @@
             // Exclusion indicator
             if (isExcluded) {
               const banIcon = document.createElement('div');
-              banIcon.textContent = 'ðŸš«';
+              banIcon.textContent = '🚫';
               banIcon.style.cssText = 'position:absolute; top:5px; right:5px; font-size:20px; pointer-events:none;';
               wrapper.appendChild(banIcon);
             }
@@ -2860,17 +2126,17 @@
         // Sophisticated model based on multiple factors
         let winRate = 50; // Base 50% win rate
 
-        // Factor 1: Average Level (Â±10%)
+        // Factor 1: Average Level (±10%)
         // Higher levels = higher win rate
         const levelBonus = Math.min(10, (avgLevel - 11) * 2.5); // +2.5% per level above 11
         winRate += levelBonus;
 
-        // Factor 2: Synergy (Â±8%)
+        // Factor 2: Synergy (±8%)
         // More synergies = better combos = higher win rate
         const synergyBonus = Math.min(8, synCount * 0.4); // +0.4% per synergy point
         winRate += synergyBonus;
 
-        // Factor 3: Deck Completeness (Â±12%)
+        // Factor 3: Deck Completeness (±12%)
         let completenessBonus = 0;
         if (roles.hasWinCon) completenessBonus += 4;
         if (roles.hasSmallSpell && roles.hasBigSpell) completenessBonus += 4;
@@ -2878,20 +2144,20 @@
         if (hasKiller) completenessBonus += 2;
         winRate += completenessBonus;
 
-        // Factor 4: Meta Quality (Â±5%)
+        // Factor 4: Meta Quality (±5%)
         // Using S-tier cards increases win rate
         let metaBonus = (metaScore - 60) * 0.1; //  +0.1% per point above 60
         metaBonus = Math.max(-5, Math.min(5, metaBonus));
         winRate += metaBonus;
 
-        // Factor 5: Elixir Efficiency (Â±3%)
+        // Factor 5: Elixir Efficiency (±3%)
         // Optimal elixir cost improves win rate
         let elixirBonus = 0;
         if (avgEl >= 2.6 && avgEl <= 4.0) elixirBonus = 3; // Perfect range
         else if (avgEl < 2.3 || avgEl > 4.5) elixirBonus = -3; // Too extreme
         winRate += elixirBonus;
 
-        // Factor 6: Archetype Purity (Â±2%)
+        // Factor 6: Archetype Purity (±2%)
         // Focused decks perform better
         const archetypeBonus = synCount >= 15 ? 2 : 0;
         winRate += archetypeBonus;
@@ -2914,7 +2180,7 @@
           if (levelBonus > 0) factors.push(`+${levelBonus.toFixed(1)}% Levels`);
           if (synergyBonus > 0) factors.push(`+${synergyBonus.toFixed(1)}% Synergy`);
           if (completenessBonus > 0) factors.push(`+${completenessBonus}% Complete`);
-          winRateFactors.textContent = factors.join(' â€¢ ') || 'Based on deck analysis';
+          winRateFactors.textContent = factors.join(' • ') || 'Based on deck analysis';
         }
       }
 
@@ -3223,7 +2489,7 @@
             }
 
             checkBtn.disabled = true;
-            checkBtn.textContent = "â³ Verifying with DeckShop...";
+            checkBtn.textContent = "⏳ Verifying with DeckShop...";
             deckCheckResult.style.display = 'block';
             deckCheckResult.innerHTML = '<div style="text-align:center;color:#ccc;">Connecting to DeckShop Pro...</div>';
 
@@ -3273,11 +2539,11 @@
               // Link
               html += `
                 <div style="margin-top:10px; text-align:center;">
-                    <a href="${data.url}" target="_blank" style="color:#3498db; text-decoration:none; font-size:12px;">View Full Report â†—</a>
+                    <a href="${data.url}" target="_blank" style="color:#3498db; text-decoration:none; font-size:12px;">View Full Report ↗</a>
                 </div>`;
 
               deckCheckResult.innerHTML = html;
-              checkBtn.textContent = "âœ… Verified";
+              checkBtn.textContent = "✅ Verified";
 
             } catch (e) {
               console.error("Verification Error:", e);
@@ -3291,7 +2557,7 @@
               }
 
               deckCheckResult.innerHTML = errorHtml + `<div style="margin-top:10px;"><a href="#" onclick="window.open('https://www.deckshop.pro','_blank')">Try Manual Check</a></div>`;
-              checkBtn.textContent = "âŒ Retry Check";
+              checkBtn.textContent = "❌ Retry Check";
             } finally {
               checkBtn.disabled = false;
             }
@@ -3318,7 +2584,7 @@
           const avgElixir = (deck.reduce((a, c) => a + (c.elixirCost || 0), 0) / 8).toFixed(1);
           const playstyle = avgElixir < 3.3 ? "Cycle" : avgElixir > 4.0 ? "Beatdown" : "Control";
 
-          let html = `<h3>ðŸ§  AI Strategy Coach</h3>`;
+          let html = `<h3>🧠 AI Strategy Coach</h3>`;
 
           // P1: Gameplan (~50 words)
           let gp = [];
@@ -3791,7 +3057,7 @@
                 // NEW: Open Report Explicitly Button (Prevents auto-tab unwanted behavior)
                 html += `<div style="margin-top:20px; text-align:center;">
                     <a href="${data.url}" target="_blank" class="action-btn" style="background:#2980b9; color:white; text-decoration:none; display:inline-block; padding:8px 16px; border-radius:4px;">
-                      ðŸ“„ Open Full Report (External)
+                      📄 Open Full Report (External)
                     </a>
                     <div style="font-size:10px; color:#aaa; margin-top:5px;">Opens validation on DeckShop.pro</div>
                 </div>`;
@@ -3807,7 +3073,7 @@
 
         const autoBtn = document.getElementById('autofillBtn');
         autoBtn.disabled = false;
-        autoBtn.textContent = "âœ¨ Regenerate (Force New Cards)"; // Change text
+        autoBtn.textContent = "✨ Regenerate (Force New Cards)"; // Change text
 
         document.getElementById('aiStatus').textContent = `Generation Complete!`;
         aiStatus.textContent = 'Deck Generation Complete.';
@@ -4329,7 +3595,7 @@
               const alreadyIn = builderDeck.find(c => c.name === captainName);
 
               if (captainCard && !alreadyIn) {
-                console.log(`ðŸ‘¨â€âœˆï¸ Captain Found: ${captainName}. Adding to deck.`);
+                console.log(`👨‍✈️ Captain Found: ${captainName}. Adding to deck.`);
                 builderDeck.push(captainCard);
                 // Mark as used
                 if (!cardUsageHistory[captainName]) cardUsageHistory[captainName] = 0;
@@ -4619,7 +3885,7 @@
             // Remove X button (only if active?)
             if (activeTarget === 'mine') {
               const xBtn = document.createElement('div');
-              xBtn.innerHTML = 'Ã—';
+              xBtn.innerHTML = '×';
               xBtn.style.cssText = 'position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:18px; height:18px; text-align:center; line-height:16px; cursor:pointer; font-weight:bold; font-size:14px; box-shadow:0 2px 5px black;';
               xBtn.onclick = (e) => {
                 e.stopPropagation();
@@ -4678,7 +3944,7 @@
             // Remove logic
             if (activeTarget === 'enemy') {
               const xBtn = document.createElement('div');
-              xBtn.innerHTML = 'Ã—';
+              xBtn.innerHTML = '×';
               xBtn.style.cssText = 'position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:18px; height:18px; text-align:center; line-height:16px; cursor:pointer; font-weight:bold; font-size:14px; box-shadow:0 2px 5px black;';
               xBtn.onclick = (e) => {
                 e.stopPropagation();
@@ -4831,13 +4097,13 @@
 
            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
               <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
-                 <h4 style="color:#e74c3c; margin-top:0;">âš ï¸ Threats to You</h4>
+                 <h4 style="color:#e74c3c; margin-top:0;">⚠️ Threats to You</h4>
                  <ul style="padding-left:20px; margin:0; color:#ddd;">
                     ${result.threats && result.threats.length ? result.threats.map(t => `<li>${t}</li>`).join('') : '<li style="color:#888">None detected</li>'}
                  </ul>
               </div>
               <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
-                 <h4 style="color:#2ecc71; margin-top:0;">ðŸ’¡ Strategy Tips</h4>
+                 <h4 style="color:#2ecc71; margin-top:0;">💡 Strategy Tips</h4>
                  <ul style="padding-left:20px; margin:0; color:#ddd;">
                     ${result.tips && result.tips.length ? result.tips.map(t => `<li>${t}</li>`).join('') : '<li style="color:#888">Play smart!</li>'}
                  </ul>
@@ -4865,7 +4131,4 @@
     import { WIN_CONDITION_GUIDES } from './win_conditions.js';
     window.WIN_CONDITION_GUIDES = WIN_CONDITION_GUIDES;
     console.log("Win Conditions Loaded:",bje(WIN_CONDITION_GUIDES).length);
-  </script>
-</body>
-
-</html>
+  
