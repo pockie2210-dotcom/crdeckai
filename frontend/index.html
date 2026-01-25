@@ -1036,28 +1036,30 @@
           card: worstCard,
           reason: synergizedCards.has(worstCard.name) ?
             "This card is weak in the current meta, though it has some synergy." :
-            "This card is the statistically weakest link in you       con       ion."
+            "This card is the statistically weakest link in your collection."
         };
       },
 
       /**
-       * Suggests       lete fix: Add Card X, Remove Card Y.
-                       Fix: function (deck) {
+       * Suggests a complete fix: Add Card X, Remove Card Y.
+       */
+      proposeFix: function (deck) {
         /**
-         * Calculates          integer score (0-500) for a deck.
+         * Calculates an integer score (0-500) for a deck.
          */
-        getDeckScore: function (deck) {
-          if (!deck || deck.length !== 8) return 0;
-          const stats = this.calculateStats(deck);
-          return stats.offense + stats.defense + stats.versatility        .cyc         s.synergy;
+        const getDeckScore = (d) => {
+          if (!d || d.length !== 8) return 0;
+          const stats = this.calculateStats(d);
+          return stats.offense + stats.defense + stats.versatility + stats.cycle + stats.synergy;
         },
 
         /**
-         * Suggests a c         ix using Brute Force Optimization           * 1. Pick best candidate to ADD.
-         * 2. Simulat         ng it with EVERY card in the deck.
-         * 3. picks t         hat yields the highest Deck Score.
+         * Suggests a complete fix using Brute Force Optimization.
+         * 1. Pick best candidate to ADD.
+         * 2. Simulate swapping it with EVERY card in the deck.
+         * 3. Pick the swap that yields the highest Deck Score.
          */
-        proposeFix: function (deck) {
+        // Internal logic:
           const report = this.detect(deck);
           if (report.issues.length === 0) return null; // No fix needed
 
