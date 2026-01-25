@@ -682,6 +682,130 @@
     window.getCardRole = getCardRole;
     window.ROLES = ROLES;
 
+    // ============================================================
+    // SCAN PLAYER FUNCTION - THE CORE FEATURE
+    // ============================================================
+    const API_BASE_URL = 'https://crdeckai.onrender.com/api';
+    
+    window.scanPlayerFromInput = async function() {
+      const tagInput = document.getElementById('tagInput');
+      const deckContainer = document.getElementById('deckContainer');
+      const statsContainer = document.getElementById('statsContainer');
+      const scanBtn = document.getElementById('scanBtn');
+      
+      if (!tagInput || !deckContainer) {
+        alert('Page elements not found!');
+        return;
+      }
+      
+      const rawTag = tagInput.value.trim();
+      if (!rawTag) {
+        alert('Please enter a player tag!');
+        return;
+      }
+      
+      // Format tag: ensure it has # prefix
+      const tag = rawTag.startsWith('#') ? rawTag : '#' + rawTag;
+      const encodedTag = encodeURIComponent(tag);
+      
+      // Show loading state
+      if (scanBtn) {
+        scanBtn.disabled = true;
+        scanBtn.textContent = 'Loading...';
+      }
+      deckContainer.innerHTML = '<p style="color:#aaa; text-align:center;">🔄 Fetching player data...</p>';
+      
+      try {
+        console.log('[SCAN] Fetching:', `${API_BASE_URL}/player/${encodedTag}`);
+        
+        const response = await fetch(`${API_BASE_URL}/player/${encodedTag}`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        console.log('[SCAN] Response status:', response.status);
+        
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`API returned ${response.status}: ${errText}`);
+        }
+        
+        const data = await response.json();
+        console.log('[SCAN] Player data received:', data.name || 'Unknown');
+        
+        // Store globally
+        window.currentPlayerData = data;
+        
+        // Extract current deck from player data
+        let currentDeck = [];
+        if (data.currentDeck && data.currentDeck.length > 0) {
+          currentDeck = data.currentDeck.map(card => ({
+            name: card.name,
+            elixirCost: card.elixirCost || 0,
+            iconUrl: card.iconUrls?.medium || '',
+            level: card.level || 1,
+            maxLevel: card.maxLevel || 14
+          }));
+        }
+        
+        window.currentAppDeck = currentDeck;
+        
+        // Render the deck
+        if (currentDeck.length === 0) {
+          deckContainer.innerHTML = '<p style="color:#f39c12; text-align:center;">⚠️ No current deck found for this player.</p>';
+        } else {
+          deckContainer.innerHTML = currentDeck.map(card => `
+            <div class="deck-card" title="${card.name}">
+              <img src="${card.iconUrl}" alt="${card.name}" style="width:80px; height:auto; border-radius:8px;">
+              <div style="font-size:12px; text-align:center; margin-top:5px;">${card.name}</div>
+              <div style="font-size:10px; color:#888; text-align:center;">Lv.${card.level}</div>
+            </div>
+          `).join('');
+          
+          // Apply flex styling
+          deckContainer.style.display = 'flex';
+          deckContainer.style.flexWrap = 'wrap';
+          deckContainer.style.gap = '10px';
+          deckContainer.style.justifyContent = 'center';
+        }
+        
+        // Show player stats
+        if (statsContainer) {
+          statsContainer.innerHTML = `
+            <div style="background:#222; padding:15px; border-radius:10px; border:1px solid var(--gold); margin-top:15px;">
+              <h3 style="color:var(--gold); margin-top:0;">👤 ${data.name || 'Unknown'}</h3>
+              <p style="color:#ccc; margin:5px 0;">🏆 Trophies: <strong>${data.trophies || 0}</strong></p>
+              <p style="color:#ccc; margin:5px 0;">⭐ Highest: <strong>${data.bestTrophies || 0}</strong></p>
+              <p style="color:#ccc; margin:5px 0;">🎮 Wins: <strong>${data.wins || 0}</strong></p>
+              <p style="color:#ccc; margin:5px 0;">📦 Cards: <strong>${data.cards?.length || 0}</strong></p>
+            </div>
+          `;
+        }
+        
+        // Show hidden buttons
+        const hiddenBtns = ['aiDoctorBtn', 'substitutionsBtn', 'weaknessReportBtn', 'buildBtn'];
+        hiddenBtns.forEach(id => {
+          const btn = document.getElementById(id);
+          if (btn) btn.style.display = 'inline-block';
+        });
+        
+        console.log('[SCAN] Complete!');
+        
+      } catch (err) {
+        console.error('[SCAN] Error:', err);
+        deckContainer.innerHTML = `<p style="color:#e74c3c; text-align:center;">❌ Error: ${err.message}</p>`;
+        if (statsContainer) statsContainer.innerHTML = '';
+      } finally {
+        if (scanBtn) {
+          scanBtn.disabled = false;
+          scanBtn.textContent = 'Scan Player';
+        }
+      }
+    };
+    
+    console.log('[INIT] scanPlayerFromInput function loaded!');
+    // ============================================================
+
     // META QUALITY TIER LIST (Global)
     const META_QUALITY = {
       // S+ Tier Spells (Meta Staples) - BOOSTED
