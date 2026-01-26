@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test Page</title>
+</head>
+
+<body>
+    <h1>Server Test</h1>
+    <p>If you can see this, the server is serving files.</p>
+    <button onclick="testFunction()">Click Me</button>
+    <div id="result"></div>
+
+    <script>
+        function testFunction() {
+            document.getElementById('result').innerHTML = 'JavaScript is working!';
+            console.log('Test function called');
+        }
+        console.log('Script loaded successfully');
+    </script>
+</body>
+
+</html>

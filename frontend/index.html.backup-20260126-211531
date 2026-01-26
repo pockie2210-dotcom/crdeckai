@@ -284,6 +284,48 @@
     </div>
   </div>
 
+  <!-- DOCTOR MODAL -->
+  <div id="doctorModal" class="modal-overlay doctor-modal" style="display:none;">
+    <div class="doctor-content">
+      <div class="doctor-header">
+        <h2>🩺 AI Deck Doctor</h2>
+        <span onclick="document.getElementById('doctorModal').style.display='none'" class="close-doctor">&times;</span>
+      </div>
+
+      <div class="doctor-body">
+        <!-- LEFT: DIAGNOSIS -->
+        <div class="diagnosis-section">
+          <h3>Diagnosis Report</h3>
+          <div class="health-score-container">
+            <div id="doctorScoreRing" class="score-ring">
+              <span id="doctorScoreValue">85</span>
+            </div>
+            <p id="doctorScoreLabel">Healthy Deck</p>
+          </div>
+          <ul id="doctorIssuesList" class="issues-list">
+            <!-- JS Populates -->
+          </ul>
+        </div>
+
+        <!-- RIGHT: PRESCRIPTIONS -->
+        <div class="prescription-section">
+          <h3>💊 Prescriptions</h3>
+          <p style="color:#aaa; font-size:13px; margin-bottom:15px;">Suggested swaps to fix issues:</p>
+          <div id="doctorSuggestions" class="suggestions-container">
+            <!-- JS Populates -->
+          </div>
+        </div>
+      </div>
+
+      <div class="doctor-footer">
+        <button id="applyDoctorFixesBtn" class="action-btn"
+          style="background:var(--gold); color:black; font-weight:800; font-size:16px;">✅ Apply All Fixes</button>
+        <button onclick="document.getElementById('doctorModal').style.display='none'" class="action-btn"
+          style="background:#555;">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
   <!-- SUBSTITUTIONS MODAL -->
   <div id="substitutionsModal"
     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; align-items:center; justify-content:center;">
@@ -333,8 +375,10 @@
     <input id="tagInput" placeholder="#PLAYER TAG">
     <br><br>
     <div class="actions">
-      <button id="scanBtn">Scan Player</button>
-      <button id="canImproveDeckBtn" style="display:none; background: #27ae60;">Improve Deck</button>
+      <button id="scanBtn" onclick="window.scanPlayerFromInput()">Scan Player</button>
+      <button id="aiDoctorBtn"
+        style="display:none; background: linear-gradient(135deg, #7B3FE4, #8e54e9); border: 1px solid #c0a1f5; box-shadow: 0 0 15px rgba(123, 63, 228, 0.5);">✨
+        AI Deck Doctor</button>
       <button id="substitutionsBtn" style="display:none; background: #9b59b6;">Substitutions</button>
       <!-- Weakness Check button (Renamed & Restored) -->
       <button id="weaknessReportBtn" style="display:none; background: #c0392b;">Weakness Check</button>
@@ -638,6 +682,131 @@
     window.getCardRole = getCardRole;
     window.ROLES = ROLES;
 
+    // ============================================================
+    // SCAN PLAYER FUNCTION - THE CORE FEATURE
+    // ============================================================
+    // For local testing - change to production URL before deploying
+    const API_BASE_URL = 'http://localhost:3000';
+    
+    window.scanPlayerFromInput = async function() {
+      const tagInput = document.getElementById('tagInput');
+      const deckContainer = document.getElementById('deckContainer');
+      const statsContainer = document.getElementById('statsContainer');
+      const scanBtn = document.getElementById('scanBtn');
+      
+      if (!tagInput || !deckContainer) {
+        alert('Page elements not found!');
+        return;
+      }
+      
+      const rawTag = tagInput.value.trim();
+      if (!rawTag) {
+        alert('Please enter a player tag!');
+        return;
+      }
+      
+      // Format tag: ensure it has # prefix
+      const tag = rawTag.startsWith('#') ? rawTag : '#' + rawTag;
+      const encodedTag = encodeURIComponent(tag);
+      
+      // Show loading state
+      if (scanBtn) {
+        scanBtn.disabled = true;
+        scanBtn.textContent = 'Loading...';
+      }
+      deckContainer.innerHTML = '<p style="color:#aaa; text-align:center;">🔄 Fetching player data...</p>';
+      
+      try {
+        console.log('[SCAN] Fetching:', `${API_BASE_URL}/player/${encodedTag}`);
+        
+        const response = await fetch(`${API_BASE_URL}/player/${encodedTag}`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        console.log('[SCAN] Response status:', response.status);
+        
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`API returned ${response.status}: ${errText}`);
+        }
+        
+        const data = await response.json();
+        console.log('[SCAN] Player data received:', data.name || 'Unknown');
+        
+        // Store globally
+        window.currentPlayerData = data;
+        
+        // Extract current deck from player data
+        let currentDeck = [];
+        if (data.currentDeck && data.currentDeck.length > 0) {
+          currentDeck = data.currentDeck.map(card => ({
+            name: card.name,
+            elixirCost: card.elixirCost || 0,
+            iconUrl: card.iconUrls?.medium || '',
+            level: card.level || 1,
+            maxLevel: card.maxLevel || 14
+          }));
+        }
+        
+        window.currentAppDeck = currentDeck;
+        
+        // Render the deck
+        if (currentDeck.length === 0) {
+          deckContainer.innerHTML = '<p style="color:#f39c12; text-align:center;">⚠️ No current deck found for this player.</p>';
+        } else {
+          deckContainer.innerHTML = currentDeck.map(card => `
+            <div class="deck-card" title="${card.name}">
+              <img src="${card.iconUrl}" alt="${card.name}" style="width:80px; height:auto; border-radius:8px;">
+              <div style="font-size:12px; text-align:center; margin-top:5px;">${card.name}</div>
+              <div style="font-size:10px; color:#888; text-align:center;">Lv.${card.level}</div>
+            </div>
+          `).join('');
+          
+          // Apply flex styling
+          deckContainer.style.display = 'flex';
+          deckContainer.style.flexWrap = 'wrap';
+          deckContainer.style.gap = '10px';
+          deckContainer.style.justifyContent = 'center';
+        }
+        
+        // Show player stats
+        if (statsContainer) {
+          statsContainer.innerHTML = `
+            <div style="background:#222; padding:15px; border-radius:10px; border:1px solid var(--gold); margin-top:15px;">
+              <h3 style="color:var(--gold); margin-top:0;">👤 ${data.name || 'Unknown'}</h3>
+              <p style="color:#ccc; margin:5px 0;">🏆 Trophies: <strong>${data.trophies || 0}</strong></p>
+              <p style="color:#ccc; margin:5px 0;">⭐ Highest: <strong>${data.bestTrophies || 0}</strong></p>
+              <p style="color:#ccc; margin:5px 0;">🎮 Wins: <strong>${data.wins || 0}</strong></p>
+              <p style="color:#ccc; margin:5px 0;">📦 Cards: <strong>${data.cards?.length || 0}</strong></p>
+            </div>
+          `;
+        }
+        
+        // Show hidden buttons
+        const hiddenBtns = ['aiDoctorBtn', 'substitutionsBtn', 'weaknessReportBtn', 'buildBtn'];
+        hiddenBtns.forEach(id => {
+          const btn = document.getElementById(id);
+          if (btn) btn.style.display = 'inline-block';
+        });
+        
+        console.log('[SCAN] Complete!');
+        
+      } catch (err) {
+        console.error('[SCAN] Error:', err);
+        deckContainer.innerHTML = `<p style="color:#e74c3c; text-align:center;">❌ Error: ${err.message}</p>`;
+        if (statsContainer) statsContainer.innerHTML = '';
+      } finally {
+        if (scanBtn) {
+          scanBtn.disabled = false;
+          scanBtn.textContent = 'Scan Player';
+        }
+      }
+    };
+    
+    console.log('[INIT] scanPlayerFromInput function loaded!');
+    // ============================================================
+
     // META QUALITY TIER LIST (Global)
     const META_QUALITY = {
       // S+ Tier Spells (Meta Staples) - BOOSTED
@@ -686,11 +855,11 @@
       'Rage': -100, 'Freeze': 50, 'Heal Spirit': 80,
       'Elixir Collector': 35, 'Void': 100
     };
-    window.META_QUALITY = META_QUALITY; // Expose explicit
-
+    window.META_QUALITY = META_QUALITY; 
+    
     const DeckWeakness = {
       /**
-       * Analyzes a deck and returns a health report.
+       * Analyze a deck and returns a health report.
        * @param {Array} deck - Array of card objects {name, ...}
        * @returns {Object} { health: number, issues: [], suggestions: [] }
        */
@@ -799,12 +968,11 @@
 
         // Final Clamp
         report.health = Math.max(0, report.health);
-
         return report;
       },
 
       /**
-       * Suggests a card to remove based on analysis.
+       * Suggest a card to remove based on analysis.
        * @param {Array} deck - Current deck
        * @returns {Object} { card: CardObject, reason: string } or null
        */
@@ -869,7 +1037,7 @@
           card: worstCard,
           reason: synergizedCards.has(worstCard.name) ?
             "This card is weak in the current meta, though it has some synergy." :
-            "This card is the statistically weakest link in your deck configuration."
+            "This card is the statistically weakest link in your collection."
         };
       },
 
@@ -878,21 +1046,21 @@
        */
       proposeFix: function (deck) {
         /**
-         * Calculates a single integer score (0-500) for a deck.
+         * Calculates an integer score (0-500) for a deck.
          */
-        getDeckScore: function (deck) {
-          if (!deck || deck.length !== 8) return 0;
-          const stats = this.calculateStats(deck);
+        const getDeckScore = (d) => {
+          if (!d || d.length !== 8) return 0;
+          const stats = this.calculateStats(d);
           return stats.offense + stats.defense + stats.versatility + stats.cycle + stats.synergy;
-        },
+        };
 
         /**
          * Suggests a complete fix using Brute Force Optimization.
          * 1. Pick best candidate to ADD.
-         * 2. Simulates swapping it with EVERY card in the deck.
-         * 3. picks the swap that yields the highest Deck Score.
+         * 2. Simulate swapping it with EVERY card in the deck.
+         * 3. Pick the swap that yields the highest Deck Score.
          */
-        proposeFix: function (deck) {
+        // Internal logic:
           const report = this.detect(deck);
           if (report.issues.length === 0) return null; // No fix needed
 
@@ -1003,11 +1171,10 @@
             remove: bestSwap,
             addReason: addReason,
             removeReason: removeReason,
-            reason: `${suggestionText} (${bestAdd.name}) by removing ${bestSwap.name}.`
-          };
+            reason: `${suggestionText} (${bestAdd.name}) by removing        wap.                  };
         },
         /**
-         * Calculates detailed 0-100 stats for the Radar Chart.
+         * Calculate         d 0-100 stats for the Radar Chart.
          */
         calculateStats: function (deck) {
           const cardNames = deck.map(c => c.name);
@@ -1487,157 +1654,22 @@
           if (old) old.remove();
           document.body.insertAdjacentHTML('beforeend', html);
         }
-      };
-      window.DeckRadar = DeckRadar;
+   ar = DeckRadar;
   </script>
 
   <script type="module">
       import { MatchupAnalyzer } from './matchup_analyzer.js';
-      // DeckWeakness is now inlined above to fix local file loading
-
+      
+      // Expose to window
       window.MatchupAnalyzer = MatchupAnalyzer;
 
-      // Weakness Button Logic - DISABLED
+      // Weakness Button Logic - Disabled/Legacy Code Removed
       const wBtn = document.getElementById('weaknessBtn');
-      if(wBtn) wBtn.onclick = () => {
-        console.log("Weakness Button Clicked - Disabled");
-      };
-      /*
-      document.getElementById('weaknessBtn').onclick = () => {
-        if (!window.currentAppDeck || window.currentAppDeck.length === 0) {
-          alert("Scan a deck first!");
-          return;
-        }
-  
-        const report = DeckWeakness.detect(window.currentAppDeck);
-        const scoreEl = document.getElementById('weaknessScore');
-        const bodyEl = document.getElementById('weaknessBody');
-  
-        // Color Code Score
-        let color = '#e74c3c';
-        if (report.health > 80) color = '#2ecc71';
-        else if (report.health > 50) color = '#f1c40f';
-  
-        scoreEl.innerText = `${report.health}% Health`;
-        scoreEl.style.color = color;
-  
-        // Build HTML
-        let html = '';
-        if (report.issues.length === 0) {
-          html += `<div style="padding:10px; background:rgba(46, 204, 113, 0.2); border-radius:5px;">âœ… Your deck is well balanced!</div>`;
-        } else {
-          html += `<h4 style="color:#e74c3c; margin-bottom:5px;">âš ï¸ Critical Issues:</h4><ul>`;
-          report.issues.forEach(i => html += `<li>${i}</li>`);
-          html += `</ul>`;
-        }
-  
-        if (report.suggestions.length > 0) {
-          html += `<h4 style="color:#f1c40f; margin-bottom:5px;">ðŸ’¡ Suggestions:</h4><ul>`;
-          report.suggestions.forEach(s => html += `<li>${s}</li>`);
-          html += `</ul>`;
-        }
-  
-        // INJECT SUGGEST DROP AREA
-        html += `<div id="suggestDropArea" style="margin-top:20px; text-align:center; padding-top:15px; border-top:1px solid #444; display:flex; gap:10px; justify-content:center;"></div>`;
-  
-        bodyEl.innerHTML = html;
-  
-        // Add Buttons
-        const area = document.getElementById('suggestDropArea');
-  
-        // 1. Suggest Fix Button (NEW)
-        const btnFix = document.createElement('button');
-        btnFix.innerText = "ðŸ”§ Suggest Fix";
-        btnFix.className = "action-btn";
-        btnFix.style.background = "linear-gradient(135deg, #2ecc71, #27ae60)";
-        btnFix.style.fontSize = "14px";
-        btnFix.style.padding = "8px 16px";
-        btnFix.onclick = () => {
-          try {
-            const fix = DeckWeakness.proposeFix(window.currentAppDeck);
-            if (fix) {
-              area.innerHTML = `
-                      <div style="background:rgba(39, 174, 96, 0.2); padding:15px; border-radius:8px; margin-top:10px; border:1px solid #27ae60; width:100%;">
-                          <div style="font-weight:bold; color:#2ecc71; margin-bottom:10px; font-size:1.1em;">Recommended Fix:</div>
-                          <div style="display:flex; align-items:center; justify-content:center; gap:15px; margin-bottom:10px;">
-                              <div style="text-align:center;">
-                                  <div style="color:#e74c3c; font-size:12px; font-weight:bold;">REMOVE</div>
-                                  <img src="${fix.remove.iconUrls?.medium || fix.remove.iconUrls || fix.remove.iconUrl}" style="width:50px;">
-                                  <div style="font-size:12px;">${fix.remove.name}</div>
-                              </div>
-                              <div style="font-size:24px; color:#aaa;">âž</div>
-                              <div style="text-align:center;">
-                                  <div style="color:#2ecc71; font-size:12px; font-weight:bold;">ADD</div>
-                                  <img src="${fix.add.iconUrls?.medium || fix.add.iconUrls || fix.add.iconUrl}" style="width:50px;">
-                                  <div style="font-size:12px;">${fix.add.name}</div>
-                              </div>
-                          </div>
-                          <div style="font-size:0.9em; color:#ddd; margin-bottom:15px; font-style:italic;">"${fix.reason}"</div>
-                          <button id="applyFixBtn" class="action-btn" style="background:#27ae60; width:100%;">âœ… Apply Fix</button>
-                          <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin-top:10px; cursor:pointer;">Cancel</button>
-                      </div>
-                  `;
-  
-              document.getElementById('applyFixBtn').onclick = () => {
-                // Update Deck
-                const newDeck = window.currentAppDeck.filter(c => c.name !== fix.remove.name);
-                newDeck.push(fix.add);
-  
-                // Update Globals
-                window.currentAppDeck = newDeck;
-                window.builderDeck = newDeck; // Sync builder too
-                if (window.currentPlayerData) window.currentPlayerData.currentDeck = newDeck;
-  
-                // Render
-                renderDeck(window.currentPlayerData || { currentDeck: newDeck }); // Hacky but works for UI update
-  
-                // Close Modal
-                document.getElementById('weaknessModal').style.display = 'none';
-                alert(`Swapped ${fix.remove.name} with ${fix.add.name}!`);
-              };
-  
-            } else {
-              area.innerHTML = `<div style="color:#aaa; margin-top:10px;">No clear fix found. Try manual adjustments.</div>`;
-            }
-          } catch (e) {
-            console.error("Suggest Fix Error:", e);
-            area.innerHTML = `<div style="color:#e74c3c; margin-top:10px;">Error finding fix: ${e.message}</div>`;
-          }
-        };
-  
-        // 2. Suggest Drop Button (Legacy)
-        const btnDrop = document.createElement('button');
-        btnDrop.innerText = "ðŸ“‰ Suggest DropOnly";
-        btnDrop.className = "action-btn";
-        btnDrop.style.background = "#c0392b";
-        btnDrop.style.fontSize = "14px";
-        btnDrop.style.padding = "8px 16px";
-        btnDrop.onclick = () => {
-          const suggestion = DeckWeakness.proposeRemoval(window.currentAppDeck);
-          if (suggestion && suggestion.card) {
-            area.innerHTML = `
-                      <div style="background:rgba(192, 57, 43, 0.2); padding:10px; border-radius:8px; margin-top:10px; border:1px solid #c0392b; width:100%;">
-                          <div style="font-weight:bold; color:#e74c3c; margin-bottom:5px;">Recommended Cut:</div>
-                          <div style="display:flex; align-items:center; gap:10px; justify-content:center;">
-                              <img src="${suggestion.card.iconUrls?.medium || suggestion.card.iconUrls || suggestion.card.iconUrl}" style="width:40px;">
-                              <span style="font-size:1.2em; font-weight:bold;">${suggestion.card.name}</span>
-                          </div>
-                          <div style="font-size:0.9em; color:#ddd; margin-top:5px; font-style:italic;">"${suggestion.reason}"</div>
-                          <button onclick="document.getElementById('weaknessBtn').click()" style="background:transparent; border:none; color:#aaa; text-decoration:underline; margin-top:10px; cursor:pointer;">Reset</button>
-                      </div>
-                   `;
-          } else {
-            area.innerHTML = `<div style="color:#aaa; margin-top:10px;">No specific remove suggestions. Try standard substitutions.</div>`;
-          }
-        };
-  
-        area.appendChild(btnFix);
-        area.appendChild(btnDrop);
-  
-        // document.getElementById('weaknessModal').style.display = 'flex';
-        console.log('Weakness Modal suppressed by user request.');
-      };
-      */
+      if(wBtn) {
+          wBtn.onclick = () => {
+            console.log("Weakness Button Clicked - Disabled");
+          };
+      }
   </script>
   <script type="module">
       import { WIN_CONDITION_GUIDES } from './win_conditions.js?v=6';
@@ -1746,8 +1778,7 @@
       < img src = "${guide.imgUrl}" alt = "${name}" onerror = "this.style.display='none';this.parentElement.style.background='#333'" >
         <div class="win-con-label">${name}</div>
              `;
-            grid.appendChild(div);
-          });
+            grid.appendChildi    });
         }
 
       })();
@@ -1821,6 +1852,9 @@
 
       // GLOBAL DECK TRACKER
       window.currentAppDeck = [];
+
+
+
       // WEAKNESS CHECK BUTTON HANDLER
       const weaknessBtnSetup = document.getElementById('weaknessReportBtn');
       if (weaknessBtnSetup) {
@@ -1829,9 +1863,221 @@
         };
       }
 
-      // SYNERGY BTN SETUP (Inline for reliability)
-      // SYNERGY BTN SETUP (Global function for reliability)
-      // openSynergyMatrix wrapper removed
+
+      // --- LOUD DEBUGGING & GLOBAL HANDLERS ---
+      window.onerror = function(msg, url, line, col, error) {
+         // Ignore minor irrelevant errors
+         if (msg.includes("ResizeObserver")) return;
+         alert("Create Error: " + msg + "\nLine: " + line);
+         return false;
+      };
+
+      // Exposed Global Function for HTML onclick
+      window.scanPlayerFromInput = async function() {
+          console.log("Global Scan Triggered");
+          const btn = document.getElementById('scanBtn');
+          const input = document.getElementById('tagInput');
+          
+          if (!input || !btn) {
+              alert("Critical: Input or Button element missing from DOM");
+              return;
+          }
+
+          let tag = input.value.trim();
+          if (!tag) {
+              alert("Please enter a player tag (e.g. #2P090J0V)");
+              return;
+          }
+           if (!tag.startsWith('#')) {
+              tag = '#' + tag.toUpperCase();
+              input.value = tag;
+          }
+
+          // Save to LocalStorage
+          localStorage.setItem('cachedPlayerTag', tag);
+          
+          btn.disabled = true;
+          btn.textContent = 'Scanning...';
+          
+          await fetchPlayer(tag);
+          
+          btn.disabled = false;
+          btn.textContent = 'Scan Player';
+      };
+
+      // --- RESTORED SCAN LOGIC ---
+      async function fetchPlayer(tag) {
+          try {
+              const safeTag = tag.replace('#', '');
+              const res = await fetch(`/api/player/${safeTag}`);
+              if (!res.ok) throw new Error('Player not found or API error');
+              
+              const data = await res.json();
+              console.log("Player Loaded:", data);
+              window.currentPlayerData = data;
+              
+              // Validate Deck
+              if(!data.currentDeck || data.currentDeck.length === 0) {
+                  alert("Player found, but no current deck!");
+                  return;
+              }
+
+              // Update Global
+              window.currentAppDeck = data.currentDeck;
+
+              // Render
+              renderDeck(data);
+              
+              // Helper: Update Stats
+              if(window.updateDeckStats) window.updateDeckStats(data.currentDeck);
+
+              // Update UI
+              const output = document.getElementById('output');
+              if(output) output.innerHTML = `Loaded <b>${data.name}</b> (${data.clan ? data.clan.name : 'No Clan'})`;
+
+          } catch (err) {
+              console.error(err);
+              alert("Failed to load player: " + err.message);
+              const output = document.getElementById('output');
+              if(output) output.innerHTML = `<span style="color:red">${err.message}</span>`;
+          }
+      }
+
+      const scanInput = document.getElementById('tagInput');
+      if (scanInput) {
+          // Enter Key
+          scanInput.addEventListener('keypress', function (e) {
+              if (e.key === 'Enter') {
+                  window.scanPlayerFromInput();
+              }
+          });
+          
+          // Pre-fill
+          const cachedTag = localStorage.getItem('cachedPlayerTag');
+          if (cachedTag) {
+              scanInput.value = cachedTag;
+          }
+      }
+
+
+
+      // AI DECK DOCTOR SETUP
+      const doctorBtn = document.getElementById('aiDoctorBtn');
+      if (doctorBtn) {
+        doctorBtn.onclick = () => {
+          if (!window.currentAppDeck || window.currentAppDeck.length === 0) {
+            alert("Please scan a player or build a deck first!");
+            return;
+          }
+
+          // 1. Run Diagnosis
+          // We pass current deck + collection (simulated for now by meta cache)
+          // Ideally we pass the user's full collection if we had it, but for now we trust `META_QUALITY` or similar.
+          // In simpler terms, we just need the deck to check issues.
+          const diagnosis = window.SmartAI.diagnose(window.currentAppDeck);
+          
+          // 2. Render Score Ring
+          const scoreVal = document.getElementById('doctorScoreValue');
+          const scoreLabel = document.getElementById('doctorScoreLabel');
+          const ring = document.getElementById('doctorScoreRing');
+          
+          scoreVal.innerText = diagnosis.score;
+          
+          let color = '#2ecc71'; // Green
+          let label = "Healthy Deck";
+          
+          if (diagnosis.score < 60) {
+            color = '#e74c3c'; // Red
+            label = "Critical Condition";
+          } else if (diagnosis.score < 85) {
+            color = '#f1c40f'; // Yellow
+            label = "Needs Improvement";
+          }
+          
+          ring.style.borderColor = color;
+          scoreVal.style.color = color;
+          scoreLabel.innerText = label;
+          scoreLabel.style.color = color;
+
+          // 3. Render Issues
+          const issuesList = document.getElementById('doctorIssuesList');
+          if (diagnosis.issues.length === 0) {
+             issuesList.innerHTML = `<li style="border-left-color:#2ecc71; background:rgba(46,204,113,0.1); color:#2ecc71;">✅ No critical issues found!</li>`;
+          } else {
+             issuesList.innerHTML = diagnosis.issues.map(issue => `<li>${issue}</li>`).join('');
+          }
+
+          // 4. Render Prescriptions
+          const suggestionsEl = document.getElementById('doctorSuggestions');
+          suggestionsEl.innerHTML = '';
+          
+          if (diagnosis.suggestions.length === 0) {
+            suggestionsEl.innerHTML = `<div style="text-align:center; padding:20px; color:#aaa;">No specific prescriptions needed. You represent the meta! 🏆</div>`;
+            document.getElementById('applyDoctorFixesBtn').style.display = 'none';
+          } else {
+             document.getElementById('applyDoctorFixesBtn').style.display = 'inline-block';
+             
+             diagnosis.suggestions.forEach(sugg => {
+                // If it's a generic "Add X" suggestion
+                const choice = sugg.choices[0]; // Take top choice
+                // Find icon logic (simplified)
+                const metaCard = window.allCards ? window.allCards.find(c=>c.name===choice) : { iconUrls: {medium: ''} }; 
+                const iconUrl = metaCard ? metaCard.iconUrls.medium : ''; 
+                
+                const html = `
+                  <div class="suggestion-card">
+                     <div class="suggestion-info">
+                        <div style="font-weight:bold; color:#fff;">💊 Suggested: <span style="color:${color}">${choice}</span></div>
+                        <div class="suggestion-reason">${sugg.reason}</div>
+                     </div>
+                  </div>
+                `;
+                suggestionsEl.innerHTML += html;
+             });
+          }
+
+          // Show Modal
+          document.getElementById('doctorModal').style.display = 'flex';
+        };
+      } else {
+          console.error("AI Doctor Button not found!");
+      }
+
+      // 5. APPLY FIXES BUTTON
+      const applyFixBtn = document.getElementById('applyDoctorFixesBtn');
+      if (applyFixBtn) {
+         applyFixBtn.onclick = () => {
+             if (!window.currentAppDeck) return;
+             
+             // Run Fix
+             const newDeck = window.SmartAI.fix(window.currentAppDeck, window.allCards || []);
+             
+             // Update Global State
+             window.currentAppDeck = newDeck;
+             if (window.currentPlayerData) {
+                 window.currentPlayerData.currentDeck = newDeck;
+             }
+             
+             // Re-Render App
+             // 1. Deck Builder
+             if (window.renderDeck) window.renderDeck(window.currentPlayerData || {currentDeck: newDeck});
+             // 2. Refresh Doctor if still open? Or close it?
+             // Let's close it and show a success toast
+             document.getElementById('doctorModal').style.display = 'none';
+             
+             // Toast/Notify
+             const status = document.getElementById('aiStatus');
+             if (status) {
+                 status.innerHTML = "✨ AI Doctor: Applied prescriptions to your deck!";
+                 status.style.color = "#2ecc71";
+                 setTimeout(() => { status.innerHTML = ""; }, 4000);
+             }
+             
+             // Trigger Synergy/Stats update
+             if (window.updateDeckStats) window.updateDeckStats(newDeck);
+         };
+      }
+
 
       // SYNC SYNERGY BUTTON VISIBILITY
       const weaknessBtn = document.getElementById('weaknessReportBtn');
@@ -2609,7 +2855,16 @@
         'Spear Goblins': { off: 3, def: 3 }, 'Goblin Gang': { off: 5, def: 5 }, 'Rascals': { off: 5, def: 8 }
       };
 
+      // VISIBLE JS INDICATOR
+      document.addEventListener('DOMContentLoaded', () => {
+         const h = document.querySelector('h1') || document.body;
+         h.style.borderBottom = "5px solid #2ecc71"; // Green line = JS Alive
+         console.log("JS MAIN THREAD ALIVE");
+      });
+
       function updateStats() {
+        // TEMPORARILY DISABLED TO FIX PARSE ERRORS
+        /* 
         const statsPanel = document.getElementById('statsPanel');
         if (builderDeck.length === 0) {
           statsPanel.style.display = 'none';
@@ -2797,6 +3052,7 @@
           if (completenessBonus > 0) factors.push(`+${completenessBonus}% Complete`);
           winRateFactors.textContent = factors.join(' â€¢ ') || 'Based on deck analysis';
         }
+        */
       }
 
       function addCardToBuilder(card) {
@@ -4339,8 +4595,8 @@
               alert("Your deck looks solid! No obvious weaknesses found.");
             }
           } else {
-            console.log("DeckWeakness.proposeFix not found in this version.");
-          }
+            console.log("DeckWeakness.proposeFix not found in this version.;
+ 
         }
       }
     })();
@@ -4736,130 +4992,11 @@
       console.log('Matchup Analyzer Script Loaded (Dual Manual Mode)');
 
       // --- CRITICAL RESTORATION: SUBSTITUTIONS & BUTTONS ---
-      // This logic was missing in the reverted commit but is required for buttons to work.
-
-
-
-      // Expose Globals
+      // This logic was missing in the reverted commit but is required for buttons to wo.als
 
 
 
     })();
-
-    // ============================================================
-    // SCAN PLAYER FUNCTION - Working version
-    // ============================================================
-    const API_BASE_URL = window.location.origin;
-
-    window.scanPlayerFromInput = async function () {
-      const tagInput = document.getElementById('tagInput');
-      const deckContainer = document.getElementById('deckContainer');
-      const statsContainer = document.getElementById('statsContainer');
-      const scanBtn = document.getElementById('scanBtn');
-
-      if (!tagInput || !deckContainer) {
-        alert('Page elements not found!');
-        return;
-      }
-
-      const rawTag = tagInput.value.trim();
-      if (!rawTag) {
-        alert('Please enter a player tag!');
-        return;
-      }
-
-      const tag = rawTag.startsWith('#') ? rawTag : '#' + rawTag;
-      const encodedTag = encodeURIComponent(tag);
-
-      if (scanBtn) {
-        scanBtn.disabled = true;
-        scanBtn.textContent = 'Loading...';
-      }
-      deckContainer.innerHTML = '<p style="color:#aaa; text-align:center;">🔄 Fetching player data...</p>';
-
-      try {
-        console.log('[SCAN] Fetching:', `${API_BASE_URL}/player/${encodedTag}`);
-
-        const response = await fetch(`${API_BASE_URL}/player/${encodedTag}`, {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        });
-
-        console.log('[SCAN] Response status:', response.status);
-
-        if (!response.ok) {
-          const errText = await response.text();
-          throw new Error(`HTTP ${response.status}: ${errText}`);
-        }
-
-        const data = await response.json();
-        console.log('[SCAN] Data received:', data);
-
-        window.currentPlayerData = data;
-
-        let currentDeck = [];
-        if (data.currentDeck && data.currentDeck.length > 0) {
-          currentDeck = data.currentDeck.map(card => ({
-            name: card.name,
-            elixirCost: card.elixirCost || 0,
-            iconUrl: card.iconUrls?.medium || '',
-            level: card.level || 1,
-            maxLevel: card.maxLevel || 14
-          }));
-        }
-
-        window.currentAppDeck = currentDeck;
-
-        if (currentDeck.length === 0) {
-          deckContainer.innerHTML = '<p style="color:#f39c12; text-align:center;">⚠️ No current deck found.</p>';
-        } else {
-          deckContainer.innerHTML = currentDeck.map(card => `
-            <div class="deck-card" title="${card.name}">
-              <img src="${card.iconUrl}" alt="${card.name}" style="width:80px; height:auto; border-radius:8px;">
-              <div style="font-size:12px; text-align:center; margin-top:5px;">${card.name}</div>
-              <div style="font-size:10px; color:#888; text-align:center;">Lv.${card.level}</div>
-            </div>
-          `).join('');
-
-          deckContainer.style.display = 'flex';
-          deckContainer.style.flexWrap = 'wrap';
-          deckContainer.style.gap = '10px';
-          deckContainer.style.justifyContent = 'center';
-        }
-
-        if (statsContainer) {
-          statsContainer.innerHTML = `
-            <div style="background:#222; padding:15px; border-radius:10px; border:1px solid var(--gold); margin-top:15px;">
-              <h3 style="color:var(--gold);  margin-top:0;">👤 ${data.name || 'Unknown'}</h3>
-              <p style="color:#ccc; margin:5px 0;">🏆 Trophies: <strong>${data.trophies || 0}</strong></p>
-              <p style="color:#ccc; margin:5px 0;">⭐ Highest: <strong>${data.bestTrophies || 0}</strong></p>
-              <p style="color:#ccc; margin:5px 0;">🎮 Wins: <strong>${data.wins || 0}</strong></p>
-              <p style="color:#ccc; margin:5px 0;">📦 Cards: <strong>${data.cards?.length || 0}</strong></p>
-            </div>
-          `;
-        }
-
-        const hiddenBtns = ['aiDoctorBtn', 'substitutionsBtn', 'weaknessReportBtn', 'buildBtn'];
-        hiddenBtns.forEach(id => {
-          const btn = document.getElementById(id);
-          if (btn) btn.style.display = 'inline-block';
-        });
-
-        console.log('[SCAN] Complete!');
-
-      } catch (err) {
-        console.error('[SCAN] Error:', err);
-        deckContainer.innerHTML = `<p style="color:#e74c3c; text-align:center;">❌ Error: ${err.message}</p>`;
-        if (statsContainer) statsContainer.innerHTML = '';
-      } finally {
-        if (scanBtn) {
-          scanBtn.disabled = false;
-          scanBtn.textContent = 'Scan Player';
-        }
-      }
-    };
-
-    console.log('[INIT] Scan function loaded!');
   </script>
   <script type="module">
     import { WIN_CONDITION_GUIDES } from './win_conditions.js';
