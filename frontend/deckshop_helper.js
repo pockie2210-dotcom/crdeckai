@@ -1,8 +1,8 @@
 // Helper to generate DeckShop.pro check URLs
-// Based on "Best Guess" slugs.
+// Uses widely accepted community abbreviations for 2-3 char slugs.
 
 const DECKSHOP_SLUGS = {
-    // Abbreviations
+    // --- KNOWN ABBREVIATIONS ---
     'Wall Breakers': 'wb',
     'Bomb Tower': 'bt',
     'Royal Giant': 'rg',
@@ -12,49 +12,87 @@ const DECKSHOP_SLUGS = {
     'Battle Ram': 'ram',
     'Hog Rider': 'hog',
     'Ice Golem': 'ig',
-
-    // Standard Slugs
-    'The Log': 'log',
+    'Baby Dragon': 'bd',
+    'Dark Prince': 'dp',
+    'Electro Dragon': 'edrag',
+    'Electro Giant': 'egiant',
+    'Electro Wizard': 'ewiz',
+    'Goblin Giant': 'gg',
+    'Giant Skeleton': 'gs',
+    'Graveyard': 'gy',
+    'Inferno Dragon': 'id',
+    'Ice Wizard': 'icewiz',
+    'Lumberjack': 'lj',
+    'Lava Hound': 'lh',
+    'Mini P.E.K.K.A': 'mp',
+    'Minion Horde': 'mh',
+    'Night Witch': 'nw',
     'P.E.K.K.A': 'pekka',
-    'Mini P.E.K.K.A': 'mini-pekka',
-    'X-Bow': 'x-bow',
-    'Royal Recruits': 'royal-recruits',
+    'Ram Rider': 'rr',
     'Skeleton Army': 'skarmy',
-    'Three Musketeers': '3m',
-    'Goblin Giant': 'goblin-giant',
-    'Electro Giant': 'electro-giant',
-    'Battle Healer': 'battle-healer',
-    'Elixir Golem': 'elixir-golem',
-    'Royal Hogs': 'royal-hogs',
-    // ... keep generic fallback for others
+    'Valkyrie': 'valk',
+    'Inferno Tower': 'it',
+    'Goblin Cage': 'cage',
+    'Cannon Cart': 'cc',
+    'Flying Machine': 'fm',
+    'Royal Hogs': 'hogs',
+    'Royal Recruits': 'recruits',
+    'Electro Spirit': 'espirit',
+    'Heal Spirit': 'healspirit',
+    'Battle Healer': 'healer',
+    'Fisherman': 'fish',
+    'Mother Witch': 'mw',
+    'Elixir Golem': 'egolem',
+    'Zappies': 'zappies',
+    'Sparky': 'sparky',
+    'Bowler': 'bowler',
+    'Executioner': 'exe',
+    'Cannon': 'cannon',
+    'Tesla': 'tesla',
+    'X-Bow': 'xbow',
+    'Mortar': 'mortar',
+    'Princess': 'princess',
+    'Dart Goblin': 'dg',
+    'Archer Queen': 'aq',
+    'Golden Knight': 'gk',
+    'Skeleton King': 'sk',
+    'Mighty Miner': 'mm',
+    'Little Prince': 'lp',
+    'Monk': 'monk',
+    'Phoenix': 'phoenix',
+    'Goblin Drill': 'drill',
+
+    // --- SPELLS ---
+    'The Log': 'log',
+    'Zap': 'zap',
+    'Giant Snowball': 'snowball',
+    'Barbarian Barrel': 'barb-barrel',
+    'Arrows': 'arrows',
+    'Royal Delivery': 'delivery',
+    'Fireball': 'fireball',
+    'Poison': 'poison',
+    'Rocket': 'rocket',
+    'Lightning': 'lightning',
+    'Earthquake': 'eq',
+    'Void': 'void',
+    'Tornado': 'tornado',
+    'Freeze': 'freeze',
+    'Rage': 'rage',
+    'Clone': 'clone',
+    'Mirror': 'mirror',
+
+    // --- TROOPS (Fallbacks if no shortcode known) ---
     'Knight': 'knight',
     'Archers': 'archers',
     'Goblins': 'goblins',
     'Spear Goblins': 'spear-goblins',
     'Bats': 'bats',
     'Minions': 'minions',
-    'Minion Horde': 'minion-horde',
     'Mega Minion': 'mega-minion',
     'Ice Spirit': 'ice-spirit',
-    'Electro Spirit': 'electro-spirit',
     'Fire Spirit': 'fire-spirit',
-    'Heal Spirit': 'heal-spirit',
     'Elixir Collector': 'elixir-collector',
-    'Rocket': 'rocket',
-    'Lightning': 'lightning',
-    'Fireball': 'fireball',
-    'Poison': 'poison',
-    'Zap': 'zap',
-    'Giant Snowball': 'snowball',
-    'Barbarian Barrel': 'barb-barrel',
-    'Arrows': 'arrows',
-    'Clone': 'clone',
-    'Mirror': 'mirror',
-    'Tornado': 'tornado',
-    'Rage': 'rage',
-    'Freeze': 'freeze',
-    'Earthquake': 'earthquake',
-    'Void': 'void'
+    'Three Musketeers': '3m'
 };
 
 function getSlug(name) {
@@ -78,7 +116,6 @@ window.openDeckShop = function () {
         return;
     }
 
-    // Sort deck by elixir cost? Deckshop doesn't care order usually.
     const slugs = deck.map(c => getSlug(c.name));
 
     // Construct URL
