@@ -221,12 +221,11 @@ const SmartAI = (() => {
             const rolesToAdd = getCardRole(cardToAdd.name);
             const deckNames = new Set(deck.map(c => c.name));
 
+            // --- PROTECTION LOGIC ---
             // 1. DUPLICATE ROLE CHECK
-            // If adding a Win Con, remove the weakest Win Con (unless double win con archetype)
             if (rolesToAdd.includes('winCon')) {
                 const winCons = deck.filter(c => getCardRole(c.name).includes('winCon'));
                 if (winCons.length > 0) {
-                    // Sort by meta score ascending (weakest first)
                     const weakest = winCons.sort((a, b) => getMetaScore(a.name) - getMetaScore(b.name))[0];
                     return {
                         remove: weakest,
@@ -247,17 +246,47 @@ const SmartAI = (() => {
                 }
             }
 
-            // 3. GENERIC VALUE SWAP (Remove lowest meta score card that isn't essential)
-            // Filter out captain if exists
+            // 3. GENERIC VALUE SWAP
+            // CRITICAL FIX: PROTECT WIN CONDITIONS
             const captain = identifyCaptain(deck);
-            let candidates = deck;
-            if (captain) candidates = deck.filter(c => c.name !== captain.name);
+
+            // Candidate Filtering
+            let candidates = deck.filter(c => {
+                const role = getCardRole(c.name);
+
+                // NEVER remove the captain (Main Win Con)
+                if (captain && c.name === captain.name) return false;
+
+                // NEVER remove any Win Condition if we are not adding one
+                if (role.includes('winCon') && !rolesToAdd.includes('winCon')) return false;
+
+                // PROTECT EVOLUTIONS (User chose them for a reason)
+                if (c.name.includes('Evolution')) return false;
+
+                // PROTECT BUILDINGS if we are adding a troop (maintain structure)
+                if (role.includes('building') && !rolesToAdd.includes('building')) {
+                    // Only allow removing building if we have >1
+                    const buildingCount = deck.filter(b => getCardRole(b.name).includes('building')).length;
+                    if (buildingCount <= 1) return false;
+                }
+
+                return true;
+            });
+
+            // If candidates empty (e.g. deck full of win cons/evos?), fall back to lowest score but try to keep Win Con
+            if (candidates.length === 0) {
+                candidates = deck.filter(c => c.name !== (captain ? captain.name : ''));
+            }
 
             // Find weakest
             candidates.sort((a, b) => getMetaScore(a.name) - getMetaScore(b.name));
+
+            // Fallback safety
+            const worst = candidates[0] || deck[0];
+
             return {
-                remove: candidates[0],
-                reason: `<strong>${candidates[0].name}</strong> is your weakest link. <strong>${cardToAdd.name}</strong> is a solid upgrade.`
+                remove: worst,
+                reason: `<strong>${worst.name}</strong> is your weakest link compared to <strong>${cardToAdd.name}</strong>.`
             };
         },
 
