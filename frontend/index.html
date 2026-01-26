@@ -4281,34 +4281,9 @@
         let html = '';
         const deck = window.currentAppDeck || [];
 
-        // 1. HEADER: Smart Suggestions (Top Section)
-        if (deck.length === 8 && window.SmartAI && window.SmartAI.proposeSwaps) {
-          const swaps = window.SmartAI.proposeSwaps(deck);
-          if (swaps.length > 0) {
-            html += `<div style="background:#222; padding:15px; border-radius:10px; margin-bottom:20px; border:1px solid #9b59b6;">
-                    <h3 style="color:#9b59b6; margin-top:0;">🤖 Coach's Picks</h3>
-                    <div style="display:flex; flex-direction:column; gap:10px;">`;
+        // 1. SMART SUGGESTIONS (Disabled)
+        // User prefers manual selection.
 
-            swaps.forEach(swap => {
-              let addImg = 'https://link.clashroyale.com/images/cards/unknown.png';
-              if (window.currentPlayerData && window.currentPlayerData.cards) {
-                const c = window.currentPlayerData.cards.find(x => x.name === swap.add);
-                if (c) addImg = c.iconUrls?.medium || c.iconUrl;
-              }
-
-              html += `
-                    <div style="display:flex; align-items:center; background:#333; padding:10px; border-radius:8px; gap:10px;">
-                        <div style="text-align:center; font-size:10px; color:#e74c3c;">OUT<br><img src="${swap.remove.iconUrl || swap.remove.iconUrls?.medium}" style="width:40px;"></div>
-                        <div style="color:#aaa;">➡️</div>
-                        <div style="text-align:center; font-size:10px; color:#2ecc71;">IN<br><img src="${addImg}" style="width:40px;"></div>
-                        <div style="flex:1; font-size:12px; color:#ddd;">${swap.reason}</div>
-                        <button onclick="applySwap('${swap.remove.name}', '${swap.add}')" style="background:#2980b9; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Apply</button>
-                    </div>`;
-            });
-
-            html += `</div></div>`;
-          }
-        }
 
         // 2. BROWSER: Manual Selection (Bottom Section)
         html += `<h3 style="color:#ddd; margin: 10px 0;">Browse Collection</h3>
