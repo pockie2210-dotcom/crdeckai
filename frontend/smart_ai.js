@@ -171,7 +171,11 @@ const SmartAI = (() => {
         return [];
     }
     function getMetaScore(name) {
-        if (window.META_QUALITY) return window.META_QUALITY[name] || 50;
+        const cleanName = name.replace(/ Evolution$/i, '').trim();
+        if (window.META_QUALITY) {
+            // Check full name first, then clean name
+            return window.META_QUALITY[name] || window.META_QUALITY[cleanName] || 50;
+        }
         return 50;
     }
 

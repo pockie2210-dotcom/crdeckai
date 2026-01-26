@@ -612,6 +612,7 @@
 
   <script src="meta_decks.js?v=4"></script>
   <script src="smart_ai.js?v=4"></script>
+  <script src="deckshop_helper.js?v=1"></script>
   <script>
     // --- GLOBAL HELPERS FOR DECK WEAKNESS ---
     // Moved here to ensure they are accessible by DeckWeakness logic
@@ -4286,8 +4287,13 @@
 
 
         // 2. BROWSER: Manual Selection (Bottom Section)
-        html += `<h3 style="color:#ddd; margin: 10px 0;">Browse Collection</h3>
-                 <p style="color:#aaa; font-size:12px; margin-bottom:10px;">Click any card to analyze if it fits your deck.</p>`;
+        html += `<div style="margin-bottom:15px; text-align:center;">
+                    <h3 style="color:var(--gold); margin:0;">Browse Collection</h3>
+                    <p style="color:#aaa; font-size:12px; margin-bottom:10px;">Click any card to analyze if it fits your deck.</p>
+                    <button onclick="openDeckShop()" style="background:#3498db; border:none; padding:8px 15px; color:white; border-radius:4px; font-size:12px; cursor:pointer;">
+                        🌐 Validated by DeckShop.pro
+                    </button>
+                 </div>`;
         html += `<div id="manualGrid" class="picker-grid"></div>`;
         grid.innerHTML = html;
 
