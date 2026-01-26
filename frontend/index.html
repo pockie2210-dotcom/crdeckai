@@ -627,9 +627,12 @@
     };
 
     function getCardRole(cardName) {
+      // Normalize: "Knight Evolution" -> "Knight"
+      const cleanName = cardName.replace(/ Evolution$/i, '').trim();
+
       let foundRoles = [];
       for (const [role, cards] of Object.entries(ROLES)) {
-        if (cards.includes(cardName)) foundRoles.push(role);
+        if (cards.includes(cleanName)) foundRoles.push(role);
       }
       return foundRoles.length > 0 ? foundRoles : ['troop'];
     }
