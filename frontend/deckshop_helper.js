@@ -2,19 +2,31 @@
 // Based on "Best Guess" slugs.
 
 const DECKSHOP_SLUGS = {
+    // Abbreviations
+    'Wall Breakers': 'wb',
+    'Bomb Tower': 'bt',
+    'Royal Giant': 'rg',
+    'Magic Archer': 'ma',
+    'Mega Knight': 'mk',
+    'Goblin Barrel': 'gb',
+    'Battle Ram': 'ram',
+    'Hog Rider': 'hog',
+    'Ice Golem': 'ig',
+
+    // Standard Slugs
     'The Log': 'log',
     'P.E.K.K.A': 'pekka',
     'Mini P.E.K.K.A': 'mini-pekka',
     'X-Bow': 'x-bow',
     'Royal Recruits': 'royal-recruits',
     'Skeleton Army': 'skarmy',
-    'Three Musketeers': '3m', // or three-musketeers
+    'Three Musketeers': '3m',
     'Goblin Giant': 'goblin-giant',
     'Electro Giant': 'electro-giant',
     'Battle Healer': 'battle-healer',
     'Elixir Golem': 'elixir-golem',
     'Royal Hogs': 'royal-hogs',
-    'Wall Breakers': 'wall-breakers',
+    // ... keep generic fallback for others
     'Knight': 'knight',
     'Archers': 'archers',
     'Goblins': 'goblins',
@@ -27,15 +39,14 @@ const DECKSHOP_SLUGS = {
     'Electro Spirit': 'electro-spirit',
     'Fire Spirit': 'fire-spirit',
     'Heal Spirit': 'heal-spirit',
-    'Ice Golem': 'ice-golem',
     'Elixir Collector': 'elixir-collector',
     'Rocket': 'rocket',
     'Lightning': 'lightning',
     'Fireball': 'fireball',
     'Poison': 'poison',
     'Zap': 'zap',
-    'Giant Snowball': 'snowball', // "Snowball" or "Giant Snowball"? usually snowball
-    'Barbarian Barrel': 'barb-barrel', // often short
+    'Giant Snowball': 'snowball',
+    'Barbarian Barrel': 'barb-barrel',
     'Arrows': 'arrows',
     'Clone': 'clone',
     'Mirror': 'mirror',
