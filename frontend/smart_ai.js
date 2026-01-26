@@ -213,6 +213,55 @@ const SmartAI = (() => {
         },
 
         /**
+         * RECOMMENDER: User picks a card -> AI suggests removal
+         * @param {Array} deck 
+         * @param {Object} cardToAdd 
+         */
+        recommendSwap: function (deck, cardToAdd) {
+            const rolesToAdd = getCardRole(cardToAdd.name);
+            const deckNames = new Set(deck.map(c => c.name));
+
+            // 1. DUPLICATE ROLE CHECK
+            // If adding a Win Con, remove the weakest Win Con (unless double win con archetype)
+            if (rolesToAdd.includes('winCon')) {
+                const winCons = deck.filter(c => getCardRole(c.name).includes('winCon'));
+                if (winCons.length > 0) {
+                    // Sort by meta score ascending (weakest first)
+                    const weakest = winCons.sort((a, b) => getMetaScore(a.name) - getMetaScore(b.name))[0];
+                    return {
+                        remove: weakest,
+                        reason: `You're adding <strong>${cardToAdd.name}</strong>, so swap out <strong>${weakest.name}</strong> to keep your Win Condition slot.`
+                    };
+                }
+            }
+
+            // 2. SPELL SWAP
+            if (rolesToAdd.includes('spellSmall') || rolesToAdd.includes('spellBig')) {
+                const spells = deck.filter(c => getCardRole(c.name).includes('spellSmall') || getCardRole(c.name).includes('spellBig'));
+                if (spells.length >= 3) {
+                    const weakest = spells.sort((a, b) => getMetaScore(a.name) - getMetaScore(b.name))[0];
+                    return {
+                        remove: weakest,
+                        reason: `You already have enough spells. Swap <strong>${weakest.name}</strong> for <strong>${cardToAdd.name}</strong>.`
+                    };
+                }
+            }
+
+            // 3. GENERIC VALUE SWAP (Remove lowest meta score card that isn't essential)
+            // Filter out captain if exists
+            const captain = identifyCaptain(deck);
+            let candidates = deck;
+            if (captain) candidates = deck.filter(c => c.name !== captain.name);
+
+            // Find weakest
+            candidates.sort((a, b) => getMetaScore(a.name) - getMetaScore(b.name));
+            return {
+                remove: candidates[0],
+                reason: `<strong>${candidates[0].name}</strong> is your weakest link. <strong>${cardToAdd.name}</strong> is a solid upgrade.`
+            };
+        },
+
+        /**
          * NEW: Propose Specific Swaps
          * @param {Array} deck 
          * @returns {Array} Array of { remove: Card, add: StringName, reason: String }

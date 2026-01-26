@@ -4270,81 +4270,99 @@
 
       // --- CRITICAL RESTORATION: SUBSTITUTIONS & BUTTONS (Moved to Correct Scope) ---
       window.renderSubstitutions = function () {
+
         const modal = document.getElementById('substitutionsModal');
         const grid = document.getElementById('subsGrid');
         if (!grid) return;
 
-        // 1. Get Recommendations from SmartAI
-        const deck = window.currentAppDeck || [];
         let html = '';
+        const deck = window.currentAppDeck || [];
 
-        if (deck.length < 8) {
-          html = `<div style="text-align:center; padding:30px;">
-                <h3 style="color:#aaa;">Deck Incomplete</h3>
-                <p>Please finish building your deck (8 cards) so I can analyze it.</p>
-             </div>`;
-        } else if (window.SmartAI && window.SmartAI.proposeSwaps) {
+        // 1. HEADER: Smart Suggestions (Top Section)
+        if (deck.length === 8 && window.SmartAI && window.SmartAI.proposeSwaps) {
           const swaps = window.SmartAI.proposeSwaps(deck);
-
           if (swaps.length > 0) {
-            html += `<div style="text-align:center; margin-bottom:20px; color:#f1c40f;">Only showing high-impact improvements.</div>`;
+            html += `<div style="background:#222; padding:15px; border-radius:10px; margin-bottom:20px; border:1px solid #9b59b6;">
+                    <h3 style="color:#9b59b6; margin-top:0;">🤖 Coach's Picks</h3>
+                    <div style="display:flex; flex-direction:column; gap:10px;">`;
 
             swaps.forEach(swap => {
-              const removeCard = swap.remove;
-              const addName = swap.add;
-
-              // Find image for 'add' card if possible (from full pool if available, or placeholder)
-              // We need a helper to find image URL by name. 
-              // Let's try to find it in window.currentPlayerData.cards or a global dictionary.
               let addImg = 'https://link.clashroyale.com/images/cards/unknown.png';
-              // Try to find in demo deck or player pool
               if (window.currentPlayerData && window.currentPlayerData.cards) {
-                const c = window.currentPlayerData.cards.find(x => x.name === addName);
+                const c = window.currentPlayerData.cards.find(x => x.name === swap.add);
                 if (c) addImg = c.iconUrls?.medium || c.iconUrl;
               }
 
               html += `
-                    <div class="swap-card" style="background:#222; border:1px solid #444; padding:15px; border-radius:10px; margin-bottom:15px; display:flex; align-items:center; gap:15px;">
-                        
-                        <!-- OUT -->
-                        <div style="text-align:center;">
-                            <div style="color:#e74c3c; font-weight:bold; margin-bottom:5px;">OUT 🔻</div>
-                            <img src="${removeCard.iconUrl || removeCard.iconUrls?.medium}" style="width:60px;">
-                            <div style="font-size:11px;">${removeCard.name}</div>
-                        </div>
-
-                        <!-- ARROW -->
-                        <div style="font-size:24px; color:#aaa;">➡️</div>
-
-                        <!-- IN -->
-                        <div style="text-align:center;">
-                            <div style="color:#2ecc71; font-weight:bold; margin-bottom:5px;">IN 💚</div>
-                            <img src="${addImg}" style="width:60px;">
-                            <div style="font-size:11px;">${addName}</div>
-                        </div>
-
-                        <!-- REASON -->
-                        <div style="flex:1; border-left:1px solid #444; padding-left:15px; font-size:13px; color:#ddd; line-height:1.4;">
-                            ${swap.reason}
-                        </div>
-
-                        <!-- APPLY BTN -->
-                        <button onclick="applySwap('${removeCard.name}', '${addName}')" style="background:#2980b9; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">Apply</button>
-                    </div>
-                    `;
+                    <div style="display:flex; align-items:center; background:#333; padding:10px; border-radius:8px; gap:10px;">
+                        <div style="text-align:center; font-size:10px; color:#e74c3c;">OUT<br><img src="${swap.remove.iconUrl || swap.remove.iconUrls?.medium}" style="width:40px;"></div>
+                        <div style="color:#aaa;">➡️</div>
+                        <div style="text-align:center; font-size:10px; color:#2ecc71;">IN<br><img src="${addImg}" style="width:40px;"></div>
+                        <div style="flex:1; font-size:12px; color:#ddd;">${swap.reason}</div>
+                        <button onclick="applySwap('${swap.remove.name}', '${swap.add}')" style="background:#2980b9; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Apply</button>
+                    </div>`;
             });
-          } else {
-            html = `<div style="text-align:center; padding:30px;">
-                    <h3 style="color:#2ecc71;">✅ Perfect!</h3>
-                    <p>I couldn't find any critical swaps. Your deck synergy looks solid.</p>
-                 </div>`;
-          }
 
-        } else {
-          html = `<p>Error: SmartAI not loaded.</p>`;
+            html += `</div></div>`;
+          }
         }
 
+        // 2. BROWSER: Manual Selection (Bottom Section)
+        html += `<h3 style="color:#ddd; margin: 10px 0;">Browse Collection</h3>
+                 <p style="color:#aaa; font-size:12px; margin-bottom:10px;">Click any card to analyze if it fits your deck.</p>`;
+        html += `<div id="manualGrid" class="picker-grid"></div>`;
         grid.innerHTML = html;
+
+        // Render the Grid Cards
+        const manualGrid = document.getElementById('manualGrid');
+
+        let pool = [];
+        if (window.currentPlayerData && window.currentPlayerData.cards) {
+          pool = window.currentPlayerData.cards;
+        } else {
+          pool = window.currentAppDeck ? [...window.currentAppDeck] : DEMO_DECK;
+        }
+
+        const inDeckNames = new Set(deck.map(c => c.name));
+        const candidates = pool.filter(c => !inDeckNames.has(c.name));
+        candidates.sort((a, b) => (b.level || 0) - (a.level || 0));
+
+        candidates.forEach(card => {
+          const cardEl = buildCardElement(card);
+          cardEl.style.cursor = 'pointer';
+          cardEl.onclick = () => {
+            // 3. User clicked a card -> Analyze it
+            if (window.SmartAI && window.SmartAI.recommendSwap) {
+              const recommendation = window.SmartAI.recommendSwap(deck, card);
+
+              // IMPROVED CONFIRMATION DIALOG 
+              const msg = `MANUAL ANALYZER 🔍\n\nYou want to add: ${card.name} 💚\nSuggestion: Remove ${recommendation.remove.name} 🔻\nReason: ${recommendation.reason.replace(/<[^>]*>/g, '')}\n\nClick OK to Swap.`;
+
+              if (confirm(msg)) {
+                window.applySwap(recommendation.remove.name, card.name);
+              }
+            } else {
+              if (confirm(`Add ${card.name}? (SmartAI Offline)`)) {
+                alert("Full manual swap not supported in this mode.");
+              }
+            }
+          };
+          manualGrid.appendChild(cardEl);
+        });
+
+        // Search Filter Logic
+        const searchInput = document.getElementById('subSearch');
+        if (searchInput) {
+          searchInput.onkeyup = (e) => {
+            const term = e.target.value.toLowerCase();
+            const items = manualGrid.getElementsByClassName('card-item');
+            Array.from(items).forEach(item => {
+              const name = item.innerText.toLowerCase();
+              item.style.display = name.includes(term) ? 'flex' : 'none';
+            });
+          };
+        }
+
         modal.style.display = 'flex';
       };
 
