@@ -711,7 +711,7 @@
 
         const cardNames = deck.map(c => c.name);
 
-        // --- ROLE DEFINITIONS (Simplified for Analysis) ---
+        // --- ROLE DEFINITIONS (Local helper for scoring) ---
         const ROLES = {
           winConditions: [
             'Hog Rider', 'Royal Giant', 'Golem', 'Lava Hound', 'Balloon', 'Goblin Barrel',
@@ -734,10 +734,6 @@
           buildings: [
             'Cannon', 'Tesla', 'Inferno Tower', 'Bomb Tower', 'Tombstone', 'Goblin Cage',
             'Furnace', 'Barbarian Hut', 'Goblin Hut', 'Elixir Collector', 'Mortar', 'X-Bow'
-          ],
-          tankKillers: [
-            'Mini P.E.K.K.A', 'P.E.K.K.A', 'Inferno Tower', 'Inferno Dragon', 'Hunter',
-            'Elite Barbarians', 'Prince', 'Lumberjack', 'Barperians', 'Skeleton Army', 'Guards'
           ]
         };
 
@@ -746,7 +742,6 @@
         if (!hasWinCon) {
           report.health -= 30;
           report.issues.push("Missing Win Condition");
-          report.suggestions.push("A Win Condition (like Hog Rider, Golem, or Miner) is essential. It's the primary way to deal damage to enemy towers. Without one, you will struggle to win matches efficiently.");
         }
 
         // --- CHECK 2: SPELLS ---
@@ -756,24 +751,17 @@
         if (!hasSmallSpell) {
           report.health -= 15;
           report.issues.push("Missing Small Spell");
-          report.suggestions.push("Small spells (Zap, Log, Arrows) are crucial for clearing swarm troops like Skeleton Army or Goblin Gang. They also reset Inferno Towers and finish off low-HP towers.");
         }
         if (!hasBigSpell) {
           report.health -= 10;
           report.issues.push("Missing Big Spell");
-          report.suggestions.push("Big spells (Fireball, Poison, Lightning) provide high value against clustered medium-health troops (like Musketeer or Wizard) and can deal the finishing blow to an enemy tower.");
         }
 
         // --- CHECK 3: AIR DEFENSE ---
-        const airDefenseCount = cardNames.filter(name => ROLES.airDefense.includes(name) || ROLES.buildings.includes(name)).length;
-        // Note: Some buildings hit air (Tesla, Inferno), but simplifies to just checking units primarily.
-        // Let's refine: Count units that hit air vs buildings.
         const antiAirUnits = cardNames.filter(name => ROLES.airDefense.includes(name)).length;
-
         if (antiAirUnits < 2) {
           report.health -= 20;
           report.issues.push("Weak Air Defense");
-          report.suggestions.push("You have a critical vulnerability to air attacks (Lava Hound, Balloon). You need at least 2 reliable air-targeting troops (like Musketeer, Electro Wizard, or Archers). Minions and Bats are good, but they die to Zap/Arrows, so you need a unit that survives small spells.");
         }
 
         // --- CHECK 4: AVERAGE ELIXIR ---
@@ -781,24 +769,27 @@
         if (avgElixir > 4.5) {
           report.health -= 10;
           report.issues.push("Deck Too Expensive");
-          report.suggestions.push("Your average elixir is very high. Try replacing a high-cost card with a cheaper cycle card.");
         } else if (avgElixir < 2.6 && !hasWinCon) {
-          // If cycle is super fast but no win con, it's just spam
           report.issues.push("Cycle Too Fast?");
         }
 
         // --- CHECK 5: BUILDING (Soft Check) ---
-        // Not strictly required for all decks (e.g. Beatdown), but good for defense
         const hasBuilding = cardNames.some(name => ROLES.buildings.includes(name));
-        // We only penalize if it's not a beatdown deck (heuristic: avg elixir < 4.0 usually needs a building)
         if (!hasBuilding && avgElixir < 4.0) {
-          report.health -= 5; // Minor penalty
+          report.health -= 5;
           report.issues.push("No Defensive Building");
-          report.suggestions.push("For decks this light (Cycle/Control), a defensive building (Cannon, Tesla, Bomb Tower, Inferno Tower) is absolutely CRITICAL. It pulls building-targeting units like Hog Rider, Golem, and Giant into the center 'kill zone', allowing both Princess Towers to shoot them. Without one, you will constantly take massive damage from simple pushes.");
         }
 
         // Final Clamp
         report.health = Math.max(0, report.health);
+
+        // --- USE SmartAI FOR SUGGESTIONS ---
+        if (window.SmartAI && window.SmartAI.generateCoachNotes) {
+          report.suggestions = window.SmartAI.generateCoachNotes(deck);
+        } else {
+          // Fallback if AI not loaded
+          report.suggestions.push("⚠️ Smart AI Module not loaded. Check console.");
+        }
 
         return report;
       },
