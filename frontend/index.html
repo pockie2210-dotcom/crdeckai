@@ -5334,15 +5334,20 @@
         // 1. Check Explicit Pairs (SYNERGIES array)
         if (smart.SYNERGIES) {
           smart.SYNERGIES.forEach(pair => {
-            if (deckNames.includes(pair[0]) && deckNames.includes(pair[1])) {
+            const c1 = pair.cards?.[0] || pair[0];
+            const c2 = pair.cards?.[1] || pair[1];
+            const tier = pair.tier || 'S';
+            const desc = pair.desc || this.getDesc(c1, c2);
+
+            if (deckNames.includes(c1) && deckNames.includes(c2)) {
               synergies.push({
-                cards: [pair[0], pair[1]],
-                score: 90,
-                tier: 'S',
-                desc: this.getDesc(pair[0], pair[1])
+                cards: [c1, c2],
+                score: tier === 'S' ? 95 : tier === 'A' ? 85 : tier === 'B' ? 75 : 65,
+                tier: tier,
+                desc: desc
               });
-              usedCards.add(pair[0]);
-              usedCards.add(pair[1]);
+              usedCards.add(c1);
+              usedCards.add(c2);
             }
           });
         }
