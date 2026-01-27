@@ -5764,8 +5764,27 @@
 
         // Render HTML
         let html = `
-            <div style="display:flex; justify-content:center; margin-bottom:20px;">
-                <svg width="${size}" height="${size}" style="background:rgba(0,0,0,0.2); border-radius:50%;">
+            <!-- Tier Filter Controls -->
+            <div style="display:flex; gap:8px; justify-content:center; margin-bottom:15px; flex-wrap:wrap;">
+              <button id="tierFilterS" onclick="SynergyMatrix.toggleTier('S')" class="action-btn" style="background:#C130D1; padding:6px 12px; font-size:12px; opacity:1;">
+                S-Tier
+              </button>
+              <button id="tierFilterA" onclick="SynergyMatrix.toggleTier('A')" class="action-btn" style="background:#f1c40f; color:#000; padding:6px 12px; font-size:12px; opacity:1;">
+                A-Tier
+              </button>
+              <button id="tierFilterB" onclick="SynergyMatrix.toggleTier('B')" class="action-btn" style="background:#2ecc71; color:#000; padding:6px 12px; font-size:12px; opacity:1;">
+                B-Tier
+              </button>
+              <button id="tierFilterC" onclick="SynergyMatrix.toggleTier('C')" class="action-btn" style="background:#95a5a6; padding:6px 12px; font-size:12px; opacity:1;">
+                C-Tier
+              </button>
+              <button onclick="SynergyMatrix.exportAsPNG()" class="action-btn" style="background:#3498db; padding:6px 12px; font-size:12px; margin-left:10px;">
+                📥 Export PNG
+              </button>
+            </div>
+
+            <div id="synergyGraphContainer" style="display:flex; justify-content:center; margin-bottom:20px;">
+                <svg id="synergyGraphSVG" width="${size}" height="${size}" style="background:rgba(0,0,0,0.2); border-radius:50%;">
                     ${svgLines}
                     ${svgNodes}
                 </svg>
