@@ -4790,47 +4790,78 @@
         const result = window.MatchupAnalyzer.analyzeMatchup(myDeck, enemyDeck);
 
         // RENDER RESULT
-        const advantage = result.advantage; // -10 to +10 roughly
+        // RENDER V2 MATCHUP DASHBOARD
+        const report = result; // Use V2 report structure
 
-        let barColor = '#3498db'; // blue
-        let advText = "Even";
-        if (advantage > 2) { barColor = '#2ecc71'; advText = "Advantage: YOU"; }
-        if (advantage < -2) { barColor = '#e74c3c'; advText = "Advantage: ENEMY"; }
+        // Win Probability Gauge
+        let winColor = '#3498db';
+        if (report.winProbability >= 60) winColor = '#2ecc71';
+        if (report.winProbability <= 40) winColor = '#e74c3c';
 
-        // Clamp for bar display (50% is 0)
-        let pct = 50 + (advantage * 4);
-        if (pct < 10) pct = 10;
-        if (pct > 90) pct = 90;
+        const gaugePct = report.winProbability || 50;
 
-        resultArea.innerHTML = `
-           <div style="font-size:24px; font-weight:bold; margin-bottom:15px; text-align:center; color:${barColor}">
-              ${advText} (${advantage > 0 ? '+' : ''}${advantage})
-           </div>
-           
-           <div style="background:#444; height:20px; border-radius:10px; width:100%; position:relative; overflow:hidden; margin-bottom:20px;">
-              <div style="position:absolute; left:50%; top:0; bottom:0; width:2px; background:white; z-index:2; opacity:0.5;"></div>
-              <div style="background:${barColor}; width:${pct}%; height:100%; transition: width 0.5s;"></div>
-           </div>
-
-           <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-              <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
-                 <h4 style="color:#e74c3c; margin-top:0;">âš ï¸ Threats to You</h4>
-                 <ul style="padding-left:20px; margin:0; color:#ddd;">
-                    ${result.threats && result.threats.length ? result.threats.map(t => `<li>${t}</li>`).join('') : '<li style="color:#888">None detected</li>'}
-                 </ul>
-              </div>
-              <div style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
-                 <h4 style="color:#2ecc71; margin-top:0;">ðŸ’¡ Strategy Tips</h4>
-                 <ul style="padding-left:20px; margin:0; color:#ddd;">
-                    ${result.tips && result.tips.length ? result.tips.map(t => `<li>${t}</li>`).join('') : '<li style="color:#888">Play smart!</li>'}
-                 </ul>
+        let html = `
+           <!-- Header & Win Probability -->
+           <div style="background:linear-gradient(135deg, #1a1a1f, #25252b); padding:20px; border-radius:12px; margin-bottom:20px; border:1px solid #333; text-align:center;">
+              <div style="font-size:12px; text-transform:uppercase; color:#888; letter-spacing:1px; margin-bottom:5px;">Estimated Win Probability</div>
+              <div style="font-size:32px; font-weight:900; color:${winColor}; text-shadow:0 0 15px ${winColor}40;">${gaugePct}%</div>
+              <div style="margin-top:5px; color:#aaa; font-size:14px;">${report.advantageText}</div>
+              
+              <div style="background:#000; height:8px; border-radius:4px; margin:15px auto 0; max-width:300px; position:relative; overflow:hidden;">
+                 <div style="background:${winColor}; width:${gaugePct}%; height:100%; transition:width 1s ease-out; box-shadow:0 0 10px ${winColor};"></div>
               </div>
            </div>
-           
-           <div style="margin-top:20px; font-size:14px; color:#aaa; text-align:center;">
-             Avg Elixir: You <b>${result.myAvg}</b> vs Enemy <b>${result.enemyAvg}</b>
+
+           <!-- Battle Gameplan Timeline -->
+           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:20px;">
+              <div style="background:rgba(52, 152, 219, 0.1); border:1px solid #3498db40; padding:12px; border-radius:8px;">
+                 <div style="font-size:11px; color:#3498db; font-weight:bold; margin-bottom:5px;">1️⃣ SINGLE ELIXIR</div>
+                 <div style="font-size:12px; color:#ddd; line-height:1.4;">${report.gameplan?.singleElixir || 'Play passive.'}</div>
+              </div>
+              <div style="background:rgba(155, 89, 182, 0.1); border:1px solid #9b59b640; padding:12px; border-radius:8px;">
+                 <div style="font-size:11px; color:#9b59b6; font-weight:bold; margin-bottom:5px;">2️⃣ DOUBLE ELIXIR</div>
+                 <div style="font-size:12px; color:#ddd; line-height:1.4;">${report.gameplan?.doubleElixir || 'Stick to gameplan.'}</div>
+              </div>
+              <div style="background:rgba(231, 76, 60, 0.1); border:1px solid #c0392b40; padding:12px; border-radius:8px;">
+                 <div style="font-size:11px; color:#e74c3c; font-weight:bold; margin-bottom:5px;">💀 SUDDEN DEATH</div>
+                 <div style="font-size:12px; color:#ddd; line-height:1.4;">${report.gameplan?.suddenDeath || 'Avoid mistakes.'}</div>
+              </div>
+           </div>
+
+           <!-- Key Interactions -->
+           <div style="background:#1a1a1f; border-radius:12px; padding:20px; border:1px solid #333; margin-bottom:20px;">
+              <h4 style="margin:0 0 15px 0; color:#gold; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:18px;">⚔️</span> Key Interactions
+              </h4>
+              
+              <div style="display:grid; gap:10px;">
+                ${report.keyInteractions && report.keyInteractions.length > 0 ? report.keyInteractions.map(k => {
+          const statusColor = k.status === 'CHECKED' ? '#2ecc71' : '#e74c3c';
+          const statusIcon = k.status === 'CHECKED' ? '✅' : '⚠️';
+          return `
+                    <div style="display:flex; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:6px; border-left:3px solid ${statusColor};">
+                      <div style="font-size:20px; margin-right:12px;">${statusIcon}</div>
+                      <div>
+                        <div style="font-size:13px; color:#fff; font-weight:bold;">vs ${k.threat}</div>
+                        <div style="font-size:12px; color:#aaa;">${k.desc || (k.status === 'CHECKED' ? 'You have counters.' : 'No direct counter found.')}</div>
+                      </div>
+                    </div>
+                  `;
+        }).join('') : '<div style="color:#666; font-style:italic;">No critical interactions found.</div>'}
+              </div>
+           </div>
+
+           <!-- Threats and Tips -->
+           <div style="display:grid; grid-template-columns:1fr; gap:10px;">
+              ${report.tips && report.tips.length > 0 ? report.tips.map(t => `
+                 <div style="background:rgba(241, 196, 15, 0.1); border-left:3px solid #f1c40f; padding:10px; border-radius:4px; font-size:13px; color:#ddd;">
+                    ${t}
+                 </div>
+              `).join('') : ''}
            </div>
         `;
+
+        resultArea.innerHTML = html;
         resultArea.style.display = 'block';
         resultArea.scrollIntoView({ behavior: 'smooth' });
       };
