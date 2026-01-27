@@ -5935,6 +5935,157 @@
 
       },
 
+      toggleTier: function (tier) {
+        // Initialize filter state if not exists
+        if (!window._synergyFilterState) {
+          window._synergyFilterState = { S: true, A: true, B: true, C: true, God: true };
+        }
+
+        // Toggle the tier
+        window._synergyFilterState[tier] = !window._synergyFilterState[tier];
+
+        // Update button appearance
+        const btn = document.getElementById(`tierFilter${tier}`);
+        if (btn) {
+          btn.style.opacity = window._synergyFilterState[tier] ? '1' : '0.3';
+          btn.style.textDecoration = window._synergyFilterState[tier] ? 'none' : 'line-through';
+        }
+
+        // Get filtered synergies from current deck
+        const deck = window.currentAppDeck;
+        if (!deck) {
+          alert('No deck loaded');
+          return;
+        }
+
+        const smart = window.SmartAI;
+        const deckNames = deck.map(c => c.name);
+        const synergies = [];
+
+        if (smart.SYNERGIES) {
+          smart.SYNERGIES.forEach(pair => {
+            const c1 = pair.cards?.[0] || pair[0];
+            const c2 = pair.cards?.[1] || pair[1];
+            const tierValue = pair.tier || 'S';
+
+            // Apply filter
+            if (!window._synergyFilterState[tierValue]) return;
+
+            const desc = pair.desc || this.getDesc(c1, c2);
+            if (deckNames.includes(c1) && deckNames.includes(c2)) {
+              synergies.push({
+                cards: [c1, c2],
+                score: tierValue === 'S' ? 95 : tierValue === 'A' ? 85 : tierValue === 'B' ? 75 : 65,
+                tier: tierValue,
+                desc: desc
+              });
+            }
+          });
+        }
+
+        // Update synergy list display only (keep graph unchanged)
+        const body = document.getElementById('synergyBody');
+        const synergyListSection = body.querySelector('div[style*="grid-template-columns"]')?.parentElement;
+
+        let listHTML = '';
+        if (synergies.length === 0) {
+          listHTML = `<div style="text-align:center; padding:30px; color:#aaa; font-style:italic;">No synergies for selected tiers.</div>`;
+        } else {
+          synergies.sort((a, b) => b.score - a.score);
+          listHTML = `<div style="display:grid; grid-template-columns: 1fr; gap:10px;">`;
+
+          synergies.forEach(s => {
+            const c1 = deck.find(x => x.name === s.cards[0]);
+            const c2 = deck.find(x => x.name === s.cards[1]);
+            const img1 = c1 ? (c1.iconUrls?.medium || c1.iconUrl) : '';
+            const img2 = c2 ? (c2.iconUrls?.medium || c2.iconUrl) : '';
+
+            let tierColor = '#3498db';
+            if (s.tier === 'God') tierColor = '#C130D1';
+            if (s.tier === 'S') tierColor = '#f1c40f';
+            if (s.tier === 'A') tierColor = '#f1c40f';
+            if (s.tier === 'B') tierColor = '#2ecc71';
+
+            listHTML += `
+              <div style="background:rgba(255,255,255,0.05); border-left:4px solid ${tierColor}; padding:15px; border-radius:8px; display:flex; align-items:center; gap:15px;">
+                <div style="display:flex; align-items:center;">
+                  <img src="${img1}" style="width:50px; height:auto; margin-right:-10px; z-index:1; border-radius:4px; border:1px solid #000;">
+                  <img src="${img2}" style="width:50px; height:auto; border-radius:4px; border:1px solid #000;">
+                </div>
+                <div style="flex:1;">
+                  <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <div style="color:#fff; font-weight:bold; font-size:14px;">${s.cards[0]} + ${s.cards[1]}</div>
+                    <div style="background:${tierColor}; color:#000; padding:1px 6px; border-radius:4px; font-size:10px; font-weight:bold;">${s.tier} TIER</div>
+                  </div>
+                  <div style="color:#bbb; font-size:12px; line-height:1.4;">${s.desc}</div>
+                </div>
+              </div>
+            `;
+          });
+          listHTML += `</div>`;
+        }
+
+        // Find and update the synergies section
+        const h3 = Array.from(body.querySelectorAll('h3')).find(el => el.textContent === 'Active Synergies');
+        if (h3 && h3.nextElementSibling) {
+          h3.nextElementSibling.innerHTML = listHTML;
+        }
+      },
+
+      exportAsPNG: function () {
+        const svg = document.getElementById('synergyGraphSVG');
+        if (!svg) {
+          alert('Graph not found!');
+          return;
+        }
+
+        // Simple approach: use canvas to render SVG
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const size = 340;
+        canvas.width = size;
+        canvas.height = size;
+
+        // Draw dark background
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, size, size);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Convert SVG to data URL and draw
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+
+        const img = new Image();
+        img.onload = function () {
+          ctx.drawImage(img, 0, 0, size, size);
+          URL.revokeObjectURL(url);
+
+          // Download
+          canvas.toBlob(function (blob) {
+            const a = document.createElement('a');
+            a.download = `synergy-matrix-${Date.now()}.png`;
+            a.href = URL.createObjectURL(blob);
+            a.click();
+            URL.revokeObjectURL(a.href);
+
+            // Show success message
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✅ Downloaded!';
+            btn.style.background = '#2ecc71';
+            setTimeout(() => {
+              btn.textContent = originalText;
+              btn.style.background = '#3498db';
+            }, 2000);
+          });
+        };
+        img.src = url;
+      },
+
       getDesc: function (c1, c2) {
         const r1 = window.getCardRole ? window.getCardRole(c1) : [];
         const r2 = window.getCardRole ? window.getCardRole(c2) : [];
