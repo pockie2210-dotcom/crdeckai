@@ -5191,33 +5191,85 @@
       renderReport: function (deck, suggestions, health) {
         const body = document.getElementById('optimizerBody');
 
+        // Calculate Current Deck Stats
+        const currentElixir = deck.reduce((sum, c) => sum + (c.elixirCost || 0), 0) / deck.length;
+
+        // Calculate Optimized Deck Stats (if all swaps applied)
+        let optimizedDeck = [...deck];
+        suggestions.forEach(s => {
+          const idx = optimizedDeck.findIndex(c => c.name === s.remove.name);
+          if (idx !== -1) {
+            // Find card object for swap
+            let newCard = window.allCards?.find(c => c.name === s.add);
+            if (!newCard) {
+              newCard = { name: s.add, elixirCost: s.remove.elixirCost || 3 };
+            }
+            optimizedDeck[idx] = newCard;
+          }
+        });
+        const optimizedElixir = optimizedDeck.reduce((sum, c) => sum + (c.elixirCost || 0), 0) / optimizedDeck.length;
+        const elixirDelta = optimizedElixir - currentElixir;
+
+        // Calculate Synergy Scores
+        const currentSynergy = this.calculateSynergyScore(deck);
+        const optimizedSynergy = this.calculateSynergyScore(optimizedDeck);
+        const synergyDelta = optimizedSynergy - currentSynergy;
+
         // Calculate Color based on Health
         let healthColor = '#2ecc71';
-        // Safe check for health property
         const healthScore = health.health !== undefined ? health.health : 50;
 
         if (healthScore < 60) healthColor = '#e74c3c';
         else if (healthScore < 80) healthColor = '#f1c40f';
 
         let html = `
-                <div style="text-align:center; margin-bottom:20px;">
-                    <div style="font-size:14px; color:#aaa; letter-spacing:1px; text-transform:uppercase;">Deck Integrity</div>
-                    <div style="font-size:64px; font-weight:900; color:${healthColor}; text-shadow:0 0 20px ${healthColor}40;">${healthScore}%</div>
-                </div>
-            `;
+          <!-- Deck Stats Summary -->
+          <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; margin-bottom:25px;">
+            <div style="background:#1a1a1a; padding:15px; border-radius:8px; border:2px solid ${healthColor}; text-align:center;">
+              <div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px;">Deck Health</div>
+              <div style="font-size:36px; font-weight:900; color:${healthColor}; text-shadow:0 0 15px ${healthColor}40; margin:5px 0;">${healthScore}%</div>
+            </div>
+            <div style="background:#1a1a1a; padding:15px; border-radius:8px; border:1px solid #333; text-align:center;">
+              <div style="font-size:11px; color:#888; text-transform:uppercase;">Avg Elixir</div>
+              <div style="font-size:24px; font-weight:bold; color:#9b59b6; margin:5px 0;">${currentElixir.toFixed(2)}</div>
+              ${suggestions.length > 0 ? `<div style="font-size:11px; color:${elixirDelta < 0 ? '#2ecc71' : elixirDelta > 0 ? '#e74c3c' : '#888'};">
+                ${elixirDelta !== 0 ? (elixirDelta > 0 ? '+' : '') + elixirDelta.toFixed(2) : 'No change'}
+              </div>` : ''}
+            </div>
+            <div style="background:#1a1a1a; padding:15px; border-radius:8px; border:1px solid #333; text-align:center;">
+              <div style="font-size:11px; color:#888; text-transform:uppercase;">Synergy</div>
+              <div style="font-size:24px; font-weight:bold; color:#3498db; margin:5px 0;">${currentSynergy}%</div>
+              ${suggestions.length > 0 && synergyDelta !== 0 ? `<div style="font-size:11px; color:${synergyDelta > 0 ? '#2ecc71' : '#e74c3c'};">
+                ${synergyDelta > 0 ? '+' : ''}${synergyDelta}%
+              </div>` : ''}
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          ${suggestions.length > 0 ? `
+          <div style="display:flex; gap:8px; margin-bottom:20px;">
+            <button onclick="DeckOptimizer.applyAllSwaps()" class="action-btn" style="flex:1; background:linear-gradient(135deg, #2ecc71, #27ae60); font-size:13px;">
+              ✅ Apply All Fixes
+            </button>
+            <button onclick="DeckOptimizer.copyDeckCode()" class="action-btn" style="flex:1; background:#3498db; font-size:13px;">
+              📋 Copy Optimized Deck
+            </button>
+          </div>
+          ` : ''}
+        `;
 
         if (suggestions.length === 0 && (!health.issues || health.issues.length === 0)) {
           html += `
-                    <div style="background:rgba(46, 204, 113, 0.1); border:1px solid #2ecc71; padding:20px; border-radius:12px; text-align:center;">
-                        <div style="font-size:24px; margin-bottom:10px;">🏆 Perfect Deck!</div>
-                        <div style="color:#ddd;">No obvious improvements found. You are ready for the arena!</div>
-                    </div>
-                `;
+            <div style="background:rgba(46, 204, 113, 0.1); border:2px solid #2ecc71; padding:30px; border-radius:12px; text-align:center;">
+              <div style="font-size:48px; margin-bottom:10px;">🏆</div>
+              <div style="font-size:20px; color:#2ecc71; font-weight:bold; margin-bottom:8px;">Perfect Deck!</div>
+              <div style="color:#ddd; font-size:14px;">No improvements needed. Your deck is optimized and ready for battle!</div>
+            </div>
+          `;
         } else {
-          html += `<div style="max-height:400px; overflow-y:auto; padding-right:5px;">`;
+          html += `<div style="max-height:450px; overflow-y:auto; padding-right:5px;">`;
 
-          // Render Suggestions (Ranked)
-          // Sort by Priority (1 > 2 > 3) then Score (Desc)
+          // Sort suggestions by priority
           suggestions.sort((a, b) => {
             if (a.priority !== b.priority) return (a.priority || 99) - (b.priority || 99);
             return (b.score || 0) - (a.score || 0);
@@ -5227,56 +5279,73 @@
             const priorityColor = s.priority === 1 ? '#e74c3c' : (s.priority === 2 ? '#f1c40f' : '#3498db');
             const priorityLabel = s.priority === 1 ? 'CRITICAL' : (s.priority === 2 ? 'MAJOR' : 'MINOR');
 
-            // Fallback for icons if findCardImage or s.add/s.remove are missing
             const removeIcon = s.remove && s.remove.iconUrls ? s.remove.iconUrls.medium : '';
             let addIcon = '';
             if (window.findCardImage) addIcon = window.findCardImage(s.add);
-            else addIcon = `https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards/${s.add.toLowerCase().replace(/\./g, '').replace(/\s+/g, '-')}.png`;
+            else addIcon = `https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards/${s.add.toLowerCase().replace(/\\./g, '').replace(/\\s+/g, '-')}.png`;
+
+            // Get elixir costs
+            const removeElixir = s.remove.elixirCost || '?';
+            let addElixir = '?';
+            const addCard = window.allCards?.find(c => c.name === s.add);
+            if (addCard) addElixir = addCard.elixirCost;
 
             html += `
-                        <div style="background:#25252b; border-left:4px solid ${priorityColor}; padding:15px; border-radius:8px; margin-bottom:15px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                                <div style="color:${priorityColor}; font-weight:bold; font-size:12px; letter-spacing:1px;">${priorityLabel} FIX</div>
-                                <div style="background:#000; color:#fff; padding:2px 8px; border-radius:4px; font-size:11px;">+${s.score || '?'} Score</div>
-                            </div>
-                            
-                            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;">
-                                <!-- REMOVE -->
-                                <div style="text-align:center; flex:1; opacity:0.7;">
-                                    <img src="${removeIcon}" style="width:50px; filter:grayscale(100%);">
-                                    <div style="font-size:11px; color:#aaa; margin-top:2px;">${s.remove.name}</div>
-                                </div>
-                                <div style="font-size:18px; color:#555;">➔</div>
-                                <!-- ADD -->
-                                <div style="text-align:center; flex:1;">
-                                    <img src="${addIcon}" style="width:60px; filter:drop-shadow(0 0 5px ${priorityColor});">
-                                    <div style="font-size:12px; color:#fff; font-weight:bold; margin-top:2px;">${s.add}</div>
-                                </div>
-                            </div>
+              <div style="background:linear-gradient(135deg, #25252b, #1a1a1f); border-left:4px solid ${priorityColor}; padding:18px; border-radius:10px; margin-bottom:15px; box-shadow:0 4px 12px rgba(0,0,0,0.3); transition:transform 0.2s; position:relative;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                  <div style="color:${priorityColor}; font-weight:bold; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;">${priorityLabel} FIX</div>
+                  <div style="background:rgba(0,0,0,0.5); color:#2ecc71; padding:3px 10px; border-radius:6px; font-size:12px; font-weight:bold;">+${s.score || '?'} Score</div>
+                </div>
+                
+                <!-- Before/After Comparison -->
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:15px; margin-bottom:15px; background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
+                  <!-- BEFORE -->
+                  <div style="text-align:center; flex:1;">
+                    <div style="font-size:10px; color:#e74c3c; text-transform:uppercase; margin-bottom:5px; font-weight:bold;">❌ Remove</div>
+                    <div style="position:relative;">
+                      <img src="${removeIcon}" style="width:55px; filter:grayscale(80%) brightness(0.6);">
+                      <div style="position:absolute; top:0; right:0; background:#e74c3c; color:#fff; font-size:9px; padding:2px 5px; border-radius:4px;">${removeElixir}<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fff' width='10' height='10'%3E%3Cpath d='M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7z'/%3E%3C/svg%3E" style="width:10px; height:10px; margin-left:2px;"></div>
+                    </div>
+                    <div style="font-size:11px; color:#aaa; margin-top:4px;">${s.remove.name}</div>
+                  </div>
+                  
+                  <div style="font-size:24px; color:#555;">→</div>
+                  
+                  <!-- AFTER -->
+                  <div style="text-align:center; flex:1;">
+                    <div style="font-size:10px; color:#2ecc71; text-transform:uppercase; margin-bottom:5px; font-weight:bold;">✅ Add</div>
+                    <div style="position:relative;">
+                      <img src="${addIcon}" style="width:65px; filter:drop-shadow(0 0 8px ${priorityColor});">
+                      <div style="position:absolute; top:0; right:0; background:#2ecc71; color:#000; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold;">${addElixir}<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000' width='10' height='10'%3E%3Cpath d='M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7z'/%3E%3C/svg%3E" style="width:10px; height:10px; margin-left:2px;"></div>
+                    </div>
+                    <div style="font-size:12px; color:#fff; font-weight:bold; margin-top:4px;">${s.add}</div>
+                  </div>
+                </div>
 
-                            <div style="font-size:13px; color:#ccc; line-height:1.4; margin-bottom:12px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px;">
-                                ${s.reason}
-                            </div>
+                <!-- Reason -->
+                <div style="font-size:13px; color:#ddd; line-height:1.6; margin-bottom:15px; background:rgba(0,0,0,0.4); padding:12px; border-radius:6px; border-left:3px solid ${priorityColor};">
+                  💡 ${s.reason}
+                </div>
 
-                            <button onclick="DeckOptimizer.applySwap(${idx})" 
-                                class="action-btn" 
-                                style="width:100%; background:linear-gradient(90deg, ${priorityColor}, #444); font-size:13px; padding:8px;">
-                                Apply Fix
-                            </button>
-                        </div>
-                    `;
+                <button onclick="DeckOptimizer.applySwap(${idx})" 
+                  class="action-btn" 
+                  style="width:100%; background:linear-gradient(90deg, ${priorityColor}, #2a2a2f); font-size:13px; padding:10px; font-weight:bold; border:1px solid ${priorityColor}40;">
+                  ⚡ Apply This Fix
+                </button>
+              </div>
+            `;
           });
 
-          // Render Issues if no suggestions found (Fallback)
+          // Render Issues if no suggestions found
           if (suggestions.length === 0 && health.issues && health.issues.length > 0) {
             health.issues.forEach(issue => {
               html += `
-                            <div style="padding:15px; background:rgba(231, 76, 60, 0.1); border:1px solid #c0392b; border-radius:8px; margin-bottom:10px; color:#e74c3c;">
-                                ⚠️ ${issue}
-                            </div>
-                        `;
+                <div style="padding:15px; background:rgba(231, 76, 60, 0.1); border:1px solid #c0392b; border-radius:8px; margin-bottom:10px; color:#e74c3c;">
+                  ⚠️ ${issue}
+                </div>
+              `;
             });
-            html += `<div style="text-align:center; color:#aaa; font-size:12px;">No specific swaps found. Try manual adjustments.</div>`;
+            html += `<div style="text-align:center; color:#aaa; font-size:12px; margin-top:10px;">No specific swaps available. Try manual adjustments.</div>`;
           }
 
           html += `</div>`;
@@ -5284,8 +5353,82 @@
 
         body.innerHTML = html;
 
-        // Store suggestions properly via window for the onclick handler
+        // Store suggestions for onclick handlers
         window._optimizerSuggestions = suggestions;
+        window._optimizedDeck = optimizedDeck;
+      },
+
+      calculateSynergyScore: function (deck) {
+        if (!window.SmartAI || !window.SmartAI.SYNERGIES) return 50;
+
+        const deckNames = deck.map(c => c.name);
+        let synergyCount = 0;
+
+        window.SmartAI.SYNERGIES.forEach(pair => {
+          const c1 = pair.cards?.[0] || pair[0];
+          const c2 = pair.cards?.[1] || pair[1];
+          if (deckNames.includes(c1) && deckNames.includes(c2)) {
+            synergyCount++;
+          }
+        });
+
+        // Score: 0-5 synergies = percentage
+        return Math.min(100, Math.round((synergyCount / 8) * 100));
+      },
+
+      applyAllSwaps: function () {
+        const suggestions = window._optimizerSuggestions;
+        if (!suggestions || suggestions.length === 0) return;
+
+        if (!confirm(`Apply all ${suggestions.length} recommended fixes?`)) return;
+
+        let currentDeck = [...window.currentAppDeck];
+
+        suggestions.forEach(swap => {
+          const idx = currentDeck.findIndex(c => c.name === swap.remove.name);
+          if (idx !== -1) {
+            let newCard = window.allCards?.find(c => c.name === swap.add);
+            if (!newCard) {
+              newCard = { name: swap.add, id: 999, iconUrls: { medium: `https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards/${swap.add.toLowerCase().replace(/\\./g, '').replace(/\\s+/g, '-')}.png` } };
+            }
+            currentDeck[idx] = newCard;
+          }
+        });
+
+        window.currentAppDeck = currentDeck;
+        if (window.builderDeck) window.builderDeck = currentDeck;
+
+        if (window.renderDeck) window.renderDeck({ currentDeck });
+        if (window.renderBuilderGrid) {
+          window.renderBuilderGrid();
+          window.updateStats();
+        }
+
+        document.getElementById('optimizerModal').style.display = 'none';
+        alert(`✅ Applied ${suggestions.length} fixes to your deck!`);
+      },
+
+      copyDeckCode: function () {
+        const deck = window._optimizedDeck || window.currentAppDeck;
+        if (!deck || deck.length !== 8) {
+          alert('No valid deck to copy!');
+          return;
+        }
+
+        const deckNames = deck.map(c => c.name).join(', ');
+
+        navigator.clipboard.writeText(deckNames).then(() => {
+          alert('📋 Optimized deck copied to clipboard!');
+        }).catch(() => {
+          // Fallback if clipboard API fails
+          const textArea = document.createElement('textarea');
+          textArea.value = deckNames;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          alert('📋 Deck copied to clipboard!');
+        });
       },
 
       renderError: function (msg) {
