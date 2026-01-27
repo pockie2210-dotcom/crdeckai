@@ -6039,51 +6039,118 @@
           return;
         }
 
-        // Simple approach: use canvas to render SVG
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        // Show loading feedback
+        const btn = event?.target;
+        if (btn) {
+          btn.textContent = '⏳ Preparing...';
+          btn.disabled = true;
+        }
+
+        // Clone SVG to avoid modifying original
+        const svgClone = svg.cloneNode(true);
         const size = 340;
-        canvas.width = size;
-        canvas.height = size;
 
-        // Draw dark background
-        ctx.fillStyle = '#0a0a0a';
-        ctx.fillRect(0, 0, size, size);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.beginPath();
-        ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
-        ctx.fill();
+        // Get card images and convert to data URLs
+        const images = svgClone.querySelectorAll('image');
+        let loaded = 0;
+        const total = images.length;
 
-        // Convert SVG to data URL and draw
-        const svgData = new XMLSerializer().serializeToString(svg);
-        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(svgBlob);
+        const processImage = (imgEl) => {
+          return new Promise((resolve) => {
+            const href = imgEl.getAttribute('href') || imgEl.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+            if (!href || href.startsWith('data:')) {
+              resolve();
+              return;
+            }
 
-        const img = new Image();
-        img.onload = function () {
-          ctx.drawImage(img, 0, 0, size, size);
-          URL.revokeObjectURL(url);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 48;
+            tempCanvas.height = 48;
+            const tempCtx = tempCanvas.getContext('2d');
 
-          // Download
-          canvas.toBlob(function (blob) {
-            const a = document.createElement('a');
-            a.download = `synergy-matrix-${Date.now()}.png`;
-            a.href = URL.createObjectURL(blob);
-            a.click();
-            URL.revokeObjectURL(a.href);
+            const tempImg = new Image();
+            tempImg.crossOrigin = 'anonymous';
 
-            // Show success message
-            const btn = event.target;
-            const originalText = btn.textContent;
-            btn.textContent = '✅ Downloaded!';
-            btn.style.background = '#2ecc71';
-            setTimeout(() => {
-              btn.textContent = originalText;
-              btn.style.background = '#3498db';
-            }, 2000);
+            tempImg.onload = () => {
+              try {
+                tempCtx.drawImage(tempImg, 0, 0, 48, 48);
+                const dataURL = tempCanvas.toDataURL('image/png');
+                imgEl.setAttribute('href', dataURL);
+                imgEl.setAttributeNS('http://www.w3.org/1999/xlink', 'href', dataURL);
+              } catch (e) {
+                console.warn('Image conversion failed:', e);
+              }
+              resolve();
+            };
+
+            tempImg.onerror = () => {
+              console.warn('Image load failed');
+              resolve();
+            };
+
+            // Add cache buster for CORS
+            tempImg.src = href + (href.includes('?') ? '&' : '?') + 't=' + Date.now();
           });
         };
-        img.src = url;
+
+        // Process all images
+        Promise.all(Array.from(images).map(processImage)).then(() => {
+          // Create final canvas
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = size;
+          canvas.height = size;
+
+          // Draw background
+          ctx.fillStyle = '#1a1a1f';
+          ctx.fillRect(0, 0, size, size);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+          ctx.beginPath();
+          ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+          ctx.fill();
+
+          // Serialize SVG
+          const svgData = new XMLSerializer().serializeToString(svgClone);
+          const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+          const url = URL.createObjectURL(svgBlob);
+
+          const finalImg = new Image();
+          finalImg.onload = function () {
+            ctx.drawImage(finalImg, 0, 0, size, size);
+            URL.revokeObjectURL(url);
+
+            // Download
+            canvas.toBlob(function (blob) {
+              const a = document.createElement('a');
+              const date = new Date().toISOString().slice(0, 10);
+              a.download = `synergy-matrix-${date}.png`;
+              a.href = URL.createObjectURL(blob);
+              a.click();
+              URL.revokeObjectURL(a.href);
+
+              // Success feedback
+              if (btn) {
+                btn.textContent = '✅ Downloaded!';
+                btn.style.background = '#2ecc71';
+                btn.disabled = false;
+                setTimeout(() => {
+                  btn.textContent = '📥 Export PNG';
+                  btn.style.background = '#3498db';
+                }, 2000);
+              }
+            });
+          };
+
+          finalImg.onerror = () => {
+            alert('Export failed. Try again.');
+            if (btn) {
+              btn.textContent = '📥 Export PNG';
+              btn.disabled = false;
+            }
+          };
+
+          finalImg.src = url;
+        });
       },
 
       getDesc: function (c1, c2) {
