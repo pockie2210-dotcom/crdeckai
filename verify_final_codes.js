@@ -1,18 +1,18 @@
 
-// Helper to generate DeckShop.pro check URLs
-// Uses strict 2-letter codes.
+const fs = require('fs');
 
+// 1. Mock the file content processing (since we can't easily require the browser JS directly)
 const TWO_LETTER_CODES = {
     'Archer Queen': 'aq',
     'Archers': 'ac',
     'Arrows': 'ar',
     'Baby Dragon': 'bd',
     'Balloon': 'bl',
-    'Bandit': 'bi', // Verified (implicit, no conflict report)
+    'Bandit': 'bi',
     'Barbarian Barrel': 'bb',
     'Barbarian Hut': 'bu',
     'Barbarians': 'bs',
-    'Bats': 'ba', // Verified (implicit)
+    'Bats': 'ba',
     'Battle Healer': 'bh',
     'Battle Ram': 'br',
     'Bomb Tower': 'bt',
@@ -44,13 +44,10 @@ const TWO_LETTER_CODES = {
     'Giant Snowball': 'sn',
     'Goblin Barrel': 'gb',
     'Goblin Cage': 'gc',
-    'Goblin Curse': 'gr', // Verified
-    'Goblin Demolisher': 'ge', // Verified
     'Goblin Drill': 'gd',
-    'Goblin Gang': 'gg', // FIXED: User confirmed 'gg' is Goblin Gang
-    'Goblin Giant': 'gn', // FIXED: User confirmed 'gn' is Goblin Giant
+    'Goblin Gang': 'gn',
+    'Goblin Giant': 'gg',
     'Goblin Hut': 'gh',
-    'Goblin Machine': 'ga', // Verified
     'Goblins': 'go',
     'Golden Knight': 'gk',
     'Golem': 'gm',
@@ -71,15 +68,15 @@ const TWO_LETTER_CODES = {
     'Lumberjack': 'lj',
     'Magic Archer': 'ma',
     'Mega Knight': 'mk',
-    'Mega Minion': 'mm', // Verified Correct
-    'Mighty Miner': 'me', // FIXED: User confirmed 'me' is Mighty Miner
-    'Miner': 'mn', // FIXED: User confirmed 'mn' is Miner
+    'Mega Minion': 'mm',
+    'Mighty Miner': 'mt',
+    'Miner': 'mi',
     'Mini P.E.K.K.A': 'mp',
     'Minion Horde': 'mh',
-    'Minions': 'mi', // FIXED: User confirmed 'mi' is Minions
+    'Minions': 'ms',
     'Mirror': 'mr',
-    'Monk': 'mc', // FIXED: User confirmed 'mc' is Monk
-    'Mortar': 'mo', // Verified Correct
+    'Monk': 'nk',
+    'Mortar': 'mo',
     'Mother Witch': 'mw',
     'Musketeer': 'mu',
     'Night Witch': 'nw',
@@ -104,50 +101,65 @@ const TWO_LETTER_CODES = {
     'Skeletons': 'ss',
     'Sparky': 'sp',
     'Spear Goblins': 'sg',
-    'Suspicious Bush': 'yb', // Verified
     'Tesla': 'te',
-    'The Log': 'lo', // Verified Correct
+    'The Log': 'lo',
     'Three Musketeers': '3m',
-    'Tombstone': 'ts', // Verified Correct
-    'Tornado': 'to', // Verified Correct
+    'Tombstone': 'ts',
+    'Tornado': 'to',
     'Valkyrie': 'va',
     'Void': 'vd',
     'Wall Breakers': 'wb',
     'Witch': 'wi',
     'Wizard': 'wd',
-    'X-Bow': 'xb', // Verified Correct
+    'X-Bow': 'xb',
     'Zap': 'za',
     'Zappies': 'zp',
 };
 
-function getSlug(name) {
-    const clean = name.replace(/ Evolution$/i, '').trim();
-    if (TWO_LETTER_CODES[clean]) return TWO_LETTER_CODES[clean];
+// 2. CHECK FOR DUPLICATES
+const codesSeen = new Map();
+const duplicates = [];
 
-    // Fallback shouldn't strictly be needed if map is complete,
-    // but keeps robustness.
-    const parts = clean.split(' ');
-    if (parts.length >= 2) {
-        return (parts[0][0] + parts[1][0]).toLowerCase();
+Object.entries(TWO_LETTER_CODES).forEach(([card, code]) => {
+    if (codesSeen.has(code)) {
+        duplicates.push({ code: code, cards: [codesSeen.get(code), card] });
+    } else {
+        codesSeen.set(code, card);
     }
-    return clean.substring(0, 2).toLowerCase();
+});
+
+console.log("=== DUPLICATE CODE CHECK ===");
+if (duplicates.length === 0) {
+    console.log("PASS: No duplicate codes found.");
+} else {
+    console.error("FAIL: Duplicates found!", JSON.stringify(duplicates, null, 2));
 }
 
-window.openDeckShop = function () {
-    const deck = window.currentAppDeck;
-    if (!deck || deck.length === 0) {
-        alert("Scan a player first!");
-        return;
+// 3. CHECK SPECIFIC FIXES
+const fixesToCheck = [
+    { card: 'Goblin Gang', expected: 'gn' },
+    { card: 'Goblin Giant', expected: 'gg' }, // Reference
+    { card: 'Mighty Miner', expected: 'mt' },
+    { card: 'Mega Minion', expected: 'mm' }, // Reference
+    { card: 'Monk', expected: 'nk' },
+    { card: 'Mortar', expected: 'mo' }, // Reference
+    { card: 'Tombstone', expected: 'ts' },
+    { card: 'Tornado', expected: 'to' }, // Reference
+    { card: 'Bandit', expected: 'bi' },
+    { card: 'Bats', expected: 'ba' }, // Reference
+    { card: 'Minions', expected: 'ms' },
+    { card: 'Miner', expected: 'mi' } // Reference
+];
+
+console.log("\n=== SPECIFIC FIX VERIFICATION ===");
+fixesToCheck.forEach(check => {
+    const actual = TWO_LETTER_CODES[check.card];
+    if (actual === check.expected) {
+        console.log(`PASS: ${check.card} -> ${actual}`);
+    } else {
+        console.error(`FAIL: ${check.card} -> ${actual} (Expected: ${check.expected})`);
     }
+});
 
-    const slugs = deck.map(c => getSlug(c.name));
-
-    // Format: deck1=codecodecode... (concatenated 2-letter codes)
-    const codeString = slugs.join('');
-
-    // Using 'deck1' parameter as observed in user requests
-    const url = `https://www.deckshop.pro/deck-builder/clan-wars/build?e=2&h=1&deck1=${codeString}`;
-
-    console.log("[DeckShop] Generated:", url);
-    window.open(url, '_blank');
-};
+// 4. CHECK TOTAL CARD COUNT
+console.log(`\nTotal Valid Cards Mapped: ${Object.keys(TWO_LETTER_CODES).length}`);

@@ -1,5 +1,5 @@
-// SmartAI: The "Pro Player" Logic
-// This module upgrades the AI from "Random Good Cards" to "Synergy-Based Builder".
+// SmartAI: The "Pro Player" Logic (V2 - Grand Champion Update)
+// This module upgrades the AI from "Random Good Cards" to "Synergy-Based Builder" + "Meta Deck Completion".
 
 const SmartAI = (() => {
 
@@ -94,20 +94,133 @@ const SmartAI = (() => {
             alternates: ['Cannon Cart', 'Spear Goblins', 'Fireball', 'The Log', 'Dart Goblin'],
             archetype: 'Siege',
             advice: "Mortar has a blind spot! Use it defensively to pull hogs, or offensively to chip the tower."
+        },
+        'Goblin Giant': {
+            mustHave: ['Sparky', 'Rage'],
+            alternates: ['Mini P.E.K.K.A', 'Mega Minion', 'Zap', 'Dark Prince', 'Electro Wizard'],
+            archetype: 'Beatdown',
+            advice: "Goblin Giant protects Sparky perfectly. Rage them both for destructive power."
         }
     };
 
-    // --- 2. GENERATION LOGIC ---
+    const ROLES = {
+        winCon: ['Hog Rider', 'Ram Rider', 'Battle Ram', 'Golem', 'Elixir Golem', 'Giant', 'Royal Giant', 'Goblin Giant', 'Electro Giant', 'Lava Hound', 'Balloon', 'Graveyard', 'Goblin Barrel', 'Wall Breakers', 'Miner', 'Mortar', 'X-Bow', 'Three Musketeers', 'Sparky', 'Skeleton Barrel', 'Goblin Drill', 'Royal Hogs'],
+        spellSmall: ['The Log', 'Zap', 'Giant Snowball', 'Arrows', 'Barbarian Barrel', 'Royal Delivery', 'Rage', 'Tornado'],
+        spellBig: ['Fireball', 'Poison', 'Rocket', 'Lightning', 'Earthquake', 'Void'],
+        airCounter: ['Musketeer', 'Wizard', 'Executioner', 'Hunter', 'Electro Wizard', 'Ice Wizard', 'Witch', 'Mother Witch', 'Firecracker', 'Archer Queen', 'Little Prince', 'Princess', 'Dart Goblin', 'Magic Archer', 'Flying Machine', 'Minions', 'Minion Horde', 'Bats', 'Mega Minion', 'Phoenix', 'Inferno Dragon', 'Spear Goblins', 'Tesla', 'Inferno Tower', 'Zappies'],
+        building: ['Cannon', 'Tesla', 'Inferno Tower', 'Bomb Tower', 'Tombstone', 'Goblin Cage', 'Furnace', 'Barbarian Hut', 'Goblin Hut', 'Elixir Collector', 'Mortar', 'X-Bow'],
+        swarm: ['Skeleton Army', 'Goblin Gang', 'Guards', 'Skeletons', 'Bats', 'Minions', 'Minion Horde', 'Goblins', 'Spear Goblins'],
+        miniTank: ['Knight', 'Valkyrie', 'Ice Golem', 'Royal Ghost', 'Bandit', 'Dark Prince', 'Golden Knight', 'Skeleton King', 'Mighty Miner', 'Miner', 'Fisherman', 'Lumberjack', 'Prince', 'Mega Knight', 'Monk'],
+        tankKiller: ['Mini P.E.K.K.A', 'P.E.K.K.A', 'Prince', 'Lumberjack', 'Elite Barbarians', 'Inferno Dragon', 'Mighty Miner', 'Hunter', 'Inferno Tower', 'Barbarians', 'Cannon Cart']
+    };
+
+    // TIERED SYNERGIES (V10) - Revised for Accuracy & Meta Relevance
+    const SYNERGIES = [
+        // S-TIER (God Combo - Core Win Conditions)
+        { cards: ['Hog Rider', 'Ice Golem'], tier: 'S', desc: "Pig Push: Ice Golem tanks damage and pushes the Hog past buildings." },
+        { cards: ['Hog Rider', 'Earthquake'], tier: 'S', desc: "Hard Counter: EQ destroys buildings (Tesla, Cannon) that stop the Hog." },
+        { cards: ['Golem', 'Night Witch'], tier: 'S', desc: "Beatdown Core: Night Witch's spawned bats accumulate behind the Golem to overwhelm." },
+        { cards: ['Lava Hound', 'Balloon'], tier: 'S', desc: "LavaLoon: The Hound tanks for the Balloon, which deals massive damage if unconnected." },
+        { cards: ['Miner', 'Wall Breakers'], tier: 'S', desc: "Magic Archer/Miner: Miner tanks the tower shot so Wall Breakers connect." },
+        { cards: ['Miner', 'Poison'], tier: 'S', desc: "Miner Control: Miner chips the tower while Poison area denies defending troops." },
+        { cards: ['X-Bow', 'Tesla'], tier: 'S', desc: "Siege Defense: Tesla protects the X-Bow from tanks and minions while it locks on." },
+        { cards: ['Tornado', 'Executioner'], tier: 'S', desc: "Exenado: Tornado pulls everything into a clump; Executioner's axe hits them all twice." },
+        { cards: ['Tornado', 'Ice Wizard'], tier: 'S', desc: "IceWall: Tornado groups units; Ice Wizard slows them to a crawl. Impenetrable defense." },
+        { cards: ['Goblin Barrel', 'Princess'], tier: 'S', desc: "Log Bait: If they Log the Princess, the Barrel gets guaranteed damage." },
+        { cards: ['Royal Giant', 'Fisherman'], tier: 'S', desc: "RG Support: Fisherman pulls tank killers (Pekka, Mini Pekka) away from the RG." },
+        { cards: ['Electro Giant', 'Tornado'], tier: 'S', desc: "Zap Reflex: Tornado pulls ranged units into E-Giant's zap reflection radius." },
+        { cards: ['Elixir Golem', 'Battle Healer'], tier: 'S', desc: "Egolem Spam: Healer keeps the blobs alive indefinitely. Toxic but effective." },
+
+        // A-TIER (Strong Meta Combos)
+        { cards: ['P.E.K.K.A', 'Battle Ram'], tier: 'A', desc: "Pekka Bridge Spam: Pekka defends; Battle Ram punishes the other lane." },
+        { cards: ['Giant', 'Prince'], tier: 'A', desc: "Old School Beatdown: Giant tanks; Prince charges and clears the path." },
+        { cards: ['Mega Knight', 'Zap'], tier: 'A', desc: "MK Entry: Zap resets Infernos and kills Bats specifically to save the MK." },
+        { cards: ['Balloon', 'Lumberjack'], tier: 'A', desc: "LumberLoon: Lumberjack tanks and drops Rage upon death to speed up the Balloon." },
+        { cards: ['Sparky', 'Goblin Giant'], tier: 'A', desc: "Green Machine: Goblin Giant provides a moving shield for the glass cannon Sparky." },
+        { cards: ['Graveyard', 'Freeze'], tier: 'A', desc: "GY Freeze: Freezing the tower + counters allows Skeletons to shred it in seconds." },
+        { cards: ['Lava Hound', 'Flying Machine'], tier: 'A', desc: "Air Support: Flying Machine snipes units from long range behind the Hound." },
+        { cards: ['Magic Archer', 'Tornado'], tier: 'A', desc: "Geometry: Tornado aligns enemies so Magic Archer pierces through to the tower." },
+
+        // B-TIER (Good Synergies)
+        { cards: ['Valkyrie', 'Hog Rider'], tier: 'B', desc: "Valk Hog: Valkyrie in front clears swarms (Skarmy/Goblins) for the Hog." },
+        { cards: ['Knight', 'Graveyard'], tier: 'B', desc: "Tank & Spank: Knight is the most efficient cheap tank for a Graveyard push." },
+        { cards: ['Baby Dragon', 'Tornado'], tier: 'B', desc: "Splashnado: Groups units for Baby Dragon's splash attack." },
+        { cards: ['Hunter', 'Fisherman'], tier: 'B', desc: "FishHunter: Fisherman pulls tanks directly into Hunter's max damage range." },
+        { cards: ['Bandit', 'Battle Ram'], tier: 'B', desc: "Bridge Rush: Two charging units that demand immediate answers." },
+        { cards: ['Giant Skeleton', 'Clone'], tier: 'B', desc: "Nuke Clone: Cloning Giant Skeleton doubles the death bomb damage." },
+
+        // C-TIER (Decent / Situational)
+        { cards: ['Zap', 'Fireball'], tier: 'C', desc: "Standard double spell combo." },
+        { cards: ['Archers', 'Knight'], tier: 'C', desc: "Cycle Defense: Cheap, effective defense against almost anything." },
+        { cards: ['Musketeer', 'Ice Spirit'], tier: 'C', desc: "2.6 Defense: Ice Spirit freezes targets for the Musketeer to finish off." },
+        { cards: ['Cannon', 'Skeletons'], tier: 'C', desc: "Distraction: Pulls tanks (Hog/Giant) to the middle for max value." },
+        { cards: ['Bats', 'Clone'], tier: 'C', desc: "Clone Swarm: Doubles the DPS instantly, deadly if they have no Zap." }
+    ];
+
+    // Legacy Support: Convert object style to simple pairs if needed
+    // But for now, we exported SYNERGIES in V1, let's keep it as is but note it's objects now.
+    // NOTE: The previous code anticipated array of strings. We need to update usages.
+
+    function normalizeLevel(card) {
+        // Simple normalization: Max is 14/15, Min is 1
+        return card.level || card.cardLevel || 9;
+    }
+
+    // --- 2. HELPERS ---
+
+    function getCardRole(name) {
+        // Use our robust internal list
+        const roles = [];
+        for (const [role, list] of Object.entries(ROLES)) {
+            // Check exact match or evolution removal
+            const clean = name.replace(/ Evolution$/, '');
+            if (list.includes(name) || list.includes(clean)) roles.push(role);
+        }
+        return roles;
+    }
+
+    function getMetaScore(name) {
+        const cleanName = name.replace(/ Evolution$/i, '').trim();
+        if (window.META_QUALITY) {
+            return window.META_QUALITY[name] || window.META_QUALITY[cleanName] || 50;
+        }
+        return 50;
+    }
+
+    function identifyCaptain(deck) {
+        const winCons = deck.filter(c => getCardRole(c.name).includes('winCon'));
+        if (winCons.length === 0) return null;
+        winCons.sort((a, b) => (b.elixirCost || 0) - (a.elixirCost || 0));
+        return winCons[0];
+    }
+
+    function findCard(name, collection) {
+        // ... (this function seems useful, keep it)
+        let c = collection.find(x => x.name === name);
+        if (c) return c;
+        c = collection.find(x => x.name.includes(name));
+        return c;
+    }
+
+    // Helper to check if tags roughly match (Moved here to fix ReferenceError)
+    function tagsMatch(a, b) {
+        const roleA = getCardRole(a.name);
+        const roleB = getCardRole(b.name);
+        return roleA.some(r => roleB.includes(r));
+    }
+
+
+    // --- 3. GENERATION LOGIC ---
 
     function optimize(partialDeck, fullCollection) {
-        // ... (existing optimize logic from previous step, kept for functionality) ...
-        console.log("🧠 SmartAI: Thinking...");
+        console.log("🧠 SmartAI: Thinking (V2)...");
         let captain = identifyCaptain(partialDeck);
         if (!captain && partialDeck.length > 0) captain = partialDeck[0];
 
         let smartDeck = [...partialDeck];
         const deckNames = new Set(smartDeck.map(c => c.name));
 
+        // 1. Core Synergy (Must Haves)
         if (captain && SYNERGY_MAP[captain.name]) {
             const synergy = SYNERGY_MAP[captain.name];
             for (const name of synergy.mustHave) {
@@ -117,48 +230,38 @@ const SmartAI = (() => {
                     if (card) { smartDeck.push(card); deckNames.add(name); }
                 }
             }
-            for (const name of synergy.alternates) {
-                if (smartDeck.length >= 8) break;
-                if (!deckNames.has(name) && (Math.random() > 0.3 || smartDeck.length < 4)) {
-                    const card = findCard(name, fullCollection);
-                    if (card) { smartDeck.push(card); deckNames.add(name); }
-                }
-            }
         }
-        fillRole(smartDeck, deckNames, 'spellSmall', ['The Log', 'Zap', 'Barbarian Barrel', 'Arrows', 'Giant Snowball'], fullCollection);
-        fillRole(smartDeck, deckNames, 'spellBig', ['Fireball', 'Poison', 'Rocket', 'Lightning', 'Earthquake'], fullCollection);
+        // 2. Fill Critical Roles
+        fillRole(smartDeck, deckNames, 'spellSmall', ROLES.spellSmall, fullCollection);
+        fillRole(smartDeck, deckNames, 'spellBig', ROLES.spellBig, fullCollection);
+
         const isBeatdown = captain && SYNERGY_MAP[captain.name]?.archetype === 'Beatdown';
         if (!isBeatdown) {
+            // Control/Cycle decks want buildings usually
             fillRole(smartDeck, deckNames, 'building', ['Cannon', 'Tesla', 'Inferno Tower', 'Bomb Tower', 'Tombstone'], fullCollection);
         }
+
+        // 3. Fill Remaining with Meta Cards
         fillRemaining(smartDeck, deckNames, fullCollection);
         return smartDeck;
     }
 
-    // --- HELPERS (Same as before) ---
-    function identifyCaptain(deck) {
-        const winCons = deck.filter(c => getCardRole(c.name).includes('winCon'));
-        if (winCons.length === 0) return null;
-        winCons.sort((a, b) => b.elixirCost - a.elixirCost);
-        return winCons[0];
-    }
-    function findCard(name, collection) {
-        let c = collection.find(x => x.name === name);
-        if (c) return c;
-        c = collection.find(x => x.name.includes(name));
-        return c;
-    }
     function fillRole(deck, deckNames, roleTag, candidates, collection) {
         if (deck.length >= 8) return;
         const hasRole = deck.some(c => getCardRole(c.name).includes(roleTag));
         if (hasRole) return;
-        for (const name of candidates) {
+
+        // Try to find highest rated candidate available
+        const sortedCandidates = candidates.sort((a, b) => getMetaScore(b) - getMetaScore(a));
+
+        for (const name of sortedCandidates) {
             if (!deckNames.has(name)) {
                 const card = findCard(name, collection);
                 if (card) { deck.push(card); deckNames.add(name); return; }
             }
         }
     }
+
     function fillRemaining(deck, deckNames, collection) {
         const sorted = [...collection].sort((a, b) => (getMetaScore(b.name) - getMetaScore(a.name)));
         for (const card of sorted) {
@@ -166,32 +269,23 @@ const SmartAI = (() => {
             if (!deckNames.has(card.name)) { deck.push(card); deckNames.add(card.name); }
         }
     }
-    function getCardRole(name) {
-        if (window.getCardRole) return window.getCardRole(name);
-        return [];
-    }
-    function getMetaScore(name) {
-        const cleanName = name.replace(/ Evolution$/i, '').trim();
-        if (window.META_QUALITY) {
-            // Check full name first, then clean name
-            return window.META_QUALITY[name] || window.META_QUALITY[cleanName] || 50;
-        }
-        return 50;
-    }
 
+    // --- 4. EXPORTED FUNCTIONS ---
 
     return {
         optimize: optimize,
         SYNERGY_MAP: SYNERGY_MAP,
+        SYNERGIES: SYNERGIES,
 
         /**
          * Enhanced Suggestion Engine (Coach Notes)
          */
         generateCoachNotes: function (deck) {
             const notes = [];
-            // ... (Same logic as previous step) ...
             const captain = identifyCaptain(deck);
             const deckNames = new Set(deck.map(c => c.name));
+
+            // Win Con Check
             if (captain) {
                 notes.push(`👑 <strong>Core Strategy:</strong> Built around <strong>${captain.name}</strong>.`);
                 if (SYNERGY_MAP[captain.name]) {
@@ -199,33 +293,60 @@ const SmartAI = (() => {
                     if (info.advice) notes.push(`ℹ️ ${info.advice}`);
                     const missingKeys = info.mustHave.filter(key => !deckNames.has(key));
                     if (missingKeys.length > 0) {
-                        notes.push(`💡 <strong>Pro Tip:</strong> ${captain.name} has huge synergy with <strong>${missingKeys[0]}</strong>. Consider adding it!`);
+                        notes.push(`💡 <strong>Pro Tip:</strong> ${captain.name} relies on <strong>${missingKeys[0]}</strong>.`);
                     }
                 }
             } else {
                 notes.push("❌ <strong>Critical:</strong> You have no clear Win Condition!");
             }
-            const smallSpells = deck.filter(c => ['The Log', 'Zap', 'Giant Snowball', 'Arrows', 'Barbarian Barrel', 'Tornado', 'Rage', 'Royal Delivery'].includes(c.name));
-            const bigSpells = deck.filter(c => ['Fireball', 'Poison', 'Rocket', 'Lightning', 'Earthquake', 'Void'].includes(c.name));
-            if (smallSpells.length === 0) notes.push("⚠️ <strong>Defense Gap:</strong> You need a Small Spell!");
-            if (bigSpells.length === 0) notes.push("⚠️ <strong>Offense Gap:</strong> You need a Big Spell!");
+
+            // Role Gaps
+            const roles = {
+                spellSmall: deck.filter(c => getCardRole(c.name).includes('spellSmall')),
+                spellBig: deck.filter(c => getCardRole(c.name).includes('spellBig')),
+                air: deck.filter(c => getCardRole(c.name).includes('airCounter'))
+            };
+
+            if (roles.spellSmall.length === 0) notes.push("⚠️ <strong>Defense Gap:</strong> You need a Small Spell!");
+            if (roles.spellBig.length === 0) notes.push("⚠️ <strong>Offense Gap:</strong> You need a Big Spell!");
+            if (roles.air.length < 2) notes.push("🚨 <strong>CRITICAL:</strong> Weak air defense (need 2+ counters).");
+
             const avg = deck.reduce((a, b) => a + (b.elixirCost || 3), 0) / 8;
             notes.push(`📊 <strong>Average Elixir:</strong> ${avg.toFixed(1)}`);
-            const airCounters = deck.filter(c => ['Musketeer', 'Wizard', 'Executioner', 'Hunter', 'Electro Wizard', 'Witch', 'Firecracker', 'Phoenix', 'Archer Queen', 'Little Prince', 'Minions', 'Bats', 'Dart Goblin', 'Magic Archer', 'Ice Wizard', 'Inferno Dragon'].includes(c.name));
-            if (airCounters.length === 0) notes.push("🚨 <strong>CRITICAL:</strong> Zero air defense!");
+
             return notes;
         },
 
         /**
          * RECOMMENDER: User picks a card -> AI suggests removal
-         * @param {Array} deck 
-         * @param {Object} cardToAdd 
          */
         recommendSwap: function (deck, cardToAdd) {
             const rolesToAdd = getCardRole(cardToAdd.name);
             const deckNames = new Set(deck.map(c => c.name));
+            const captain = identifyCaptain(deck);
 
-            // --- PROTECTION LOGIC ---
+            // CONTEXT AWARENESS (V3)
+            const avgElixir = deck.reduce((a, b) => a + (b.elixirCost || 3), 0) / 8;
+            const isHeavyDeck = avgElixir > 4.0;
+            const isCycleDeck = avgElixir < 3.0;
+
+            // --- META DECK IDENTIFICATION (V8) ---
+            let bestMetaMatch = null;
+            if (window.META_DECKS) {
+                let maxOverlap = 0;
+                const currentNames = deck.map(c => c.name);
+                window.META_DECKS.forEach(meta => {
+                    const overlap = meta.full.filter(name => currentNames.includes(name)).length;
+                    // If we have >= 5 cards of a meta deck (and <=7 because if 8 we are done), we consider it a target
+                    if (overlap >= 5 && overlap < 8) {
+                        if (overlap > maxOverlap) {
+                            maxOverlap = overlap;
+                            bestMetaMatch = meta;
+                        }
+                    }
+                });
+            }
+
             // 1. DUPLICATE ROLE CHECK
             if (rolesToAdd.includes('winCon')) {
                 const winCons = deck.filter(c => getCardRole(c.name).includes('winCon'));
@@ -233,119 +354,280 @@ const SmartAI = (() => {
                     const weakest = winCons.sort((a, b) => getMetaScore(a.name) - getMetaScore(b.name))[0];
                     return {
                         remove: weakest,
-                        reason: `You're adding <strong>${cardToAdd.name}</strong>, so swap out <strong>${weakest.name}</strong> to keep your Win Condition slot.`
+                        reason: `Swap <strong>${weakest.name}</strong> for <strong>${cardToAdd.name}</strong> to switch Win Conditions.`
                     };
                 }
             }
 
-            // 2. SPELL SWAP
+            // 2. SPELL CAP (Context: Cycle decks can handle 3 spells, others 2)
+            const maxSpells = isCycleDeck ? 3 : 2;
             if (rolesToAdd.includes('spellSmall') || rolesToAdd.includes('spellBig')) {
                 const spells = deck.filter(c => getCardRole(c.name).includes('spellSmall') || getCardRole(c.name).includes('spellBig'));
-                if (spells.length >= 3) {
+                if (spells.length > maxSpells) { // Rigid strict cap
                     const weakest = spells.sort((a, b) => getMetaScore(a.name) - getMetaScore(b.name))[0];
                     return {
                         remove: weakest,
-                        reason: `You already have enough spells. Swap <strong>${weakest.name}</strong> for <strong>${cardToAdd.name}</strong>.`
+                        reason: `${maxSpells} spells is optimal for this deck. Swap <strong>${weakest.name}</strong>.`
                     };
                 }
             }
 
             // 3. GENERIC VALUE SWAP
-            // CRITICAL FIX: PROTECT WIN CONDITIONS
-            const captain = identifyCaptain(deck);
-
-            // Candidate Filtering
             let candidates = deck.filter(c => {
-                const role = getCardRole(c.name);
+                const r = getCardRole(c.name);
 
-                // NEVER remove the captain (Main Win Con)
+                // CRITICAL: Protect the Captain
                 if (captain && c.name === captain.name) return false;
 
-                // NEVER remove any Win Condition if we are not adding one
-                if (role.includes('winCon') && !rolesToAdd.includes('winCon')) return false;
+                // CRITICAL: Don't remove ANY Win Condition unless we are adding one
+                // (Prevents swapping Wall Breakers for Archers)
+                if (r.includes('winCon') && !rolesToAdd.includes('winCon')) return false;
 
-                // PROTECT EVOLUTIONS (User chose them for a reason)
-                if (c.name.includes('Evolution')) return false;
+                // CONTEXT: Elixir Management
+                // If deck is heavy, protect cheap cards (<= 2 elixir) unless adding a cheap card
+                if (isHeavyDeck && (c.elixirCost || 3) <= 2 && (cardToAdd.elixirCost || 3) > 3) return false;
 
-                // PROTECT BUILDINGS if we are adding a troop (maintain structure)
-                if (role.includes('building') && !rolesToAdd.includes('building')) {
-                    // Only allow removing building if we have >1
-                    const buildingCount = deck.filter(b => getCardRole(b.name).includes('building')).length;
-                    if (buildingCount <= 1) return false;
+                // CRITICAL (V4): Role Scarcity Guard
+                // Don't remove the ONLY card of a critical role (Air, Big Spell, Killer, Small Spell)
+                if (r.includes('airCounter')) {
+                    const airCounters = deck.filter(c => getCardRole(c.name).includes('airCounter'));
+                    // If this is the only air counter (or one of only 2), don't remove unless adding one
+                    if (airCounters.length <= 2 && !rolesToAdd.includes('airCounter')) return false;
+                }
+                if (r.includes('tankKiller')) {
+                    const killers = deck.filter(c => getCardRole(c.name).includes('tankKiller'));
+                    if (killers.length <= 1 && !rolesToAdd.includes('tankKiller')) return false;
+                }
+
+                // CRITICAL (V8): Small Spell Bodyguard
+                // A deck without a small spell is suicide. Never remove the last one.
+                if (r.includes('spellSmall')) {
+                    const smallSpells = deck.filter(c => getCardRole(c.name).includes('spellSmall'));
+                    if (smallSpells.length <= 1 && !rolesToAdd.includes('spellSmall')) return false;
+                }
+
+                // CRITICAL (V5): Bodyguard Rule
+                // If we have a fragile Win Condition (Barrel, GY, Wall Breakers), we MUST keep a Mini Tank
+                if (r.includes('miniTank')) {
+                    const tanks = deck.filter(c => getCardRole(c.name).includes('miniTank'));
+                    // If this is the last mini tank, protect it
+                    if (tanks.length <= 1 && !rolesToAdd.includes('miniTank') && !rolesToAdd.includes('winCon')) return false;
                 }
 
                 return true;
             });
 
-            // If candidates empty (e.g. deck full of win cons/evos?), fall back to lowest score but try to keep Win Con
+            // Fallback: If EVERYTHING is protected (rare), relax ONLY the "Optional" rules
             if (candidates.length === 0) {
-                candidates = deck.filter(c => c.name !== (captain ? captain.name : ''));
+                // Relax: Elixir Guard & Role Scarcity Guard
+                // Keep: Captain & Win Condition Guard
+                candidates = deck.filter(c => {
+                    // 1. Captain Protect
+                    if (captain && c.name === captain.name) return false;
+
+                    // 2. Win Con Protect
+                    const r = getCardRole(c.name);
+                    if (r.includes('winCon') && !rolesToAdd.includes('winCon')) return false;
+
+                    return true;
+                });
             }
 
-            // Find weakest
-            candidates.sort((a, b) => getMetaScore(a.name) - getMetaScore(b.name));
-
-            // Fallback safety
-            const worst = candidates[0] || deck[0];
-
-            return {
-                remove: worst,
-                reason: `<strong>${worst.name}</strong> is your weakest link compared to <strong>${cardToAdd.name}</strong>.`
-            };
-        },
-
-        /**
-         * NEW: Propose Specific Swaps
-         * @param {Array} deck 
-         * @returns {Array} Array of { remove: Card, add: StringName, reason: String }
-         */
-        proposeSwaps: function (deck) {
-            const proposals = [];
-            const captain = identifyCaptain(deck);
-            const deckNames = new Set(deck.map(c => c.name));
-
-            // 1. SYNERGY FIXES
-            if (captain && SYNERGY_MAP[captain.name]) {
-                const info = SYNERGY_MAP[captain.name];
-
-                // Check if we are missing a "Must Have"
-                const missingKey = info.mustHave.find(key => !deckNames.has(key));
-
-                if (missingKey) {
-                    // Try to find a "bad" card to swap out
-                    // A bad card is one that doesn't fit the archetype or is low tier
-                    const worstCard = deck.find(c => {
-                        const roles = getCardRole(c.name);
-                        // Don't remove the captain!
-                        if (c.name === captain.name) return false;
-                        // Don't remove spells if we are short on them
-                        if (roles.includes('spellSmall') || roles.includes('spellBig')) return false;
-
-                        return true; // Candidate for removal
-                    });
-
-                    if (worstCard) {
-                        proposals.push({
-                            remove: worstCard,
-                            add: missingKey,
-                            reason: `<strong>${captain.name}</strong> needs support. Swap <strong>${worstCard.name}</strong> for <strong>${missingKey}</strong> to complete the synergy.`
-                        });
-                    }
+            // Prioritize removing duplicates in role
+            for (const r of rolesToAdd) {
+                const dups = candidates.filter(c => getCardRole(c.name).includes(r));
+                if (dups.length > 0) {
+                    candidates = dups; // Focus on these
+                    break;
                 }
             }
 
-            // 2. SPELL FIXES
-            const smallSpells = deck.filter(c => getCardRole(c.name).includes('spellSmall'));
-            if (smallSpells.length === 0) {
-                // Suggest Zap/Log
-                const suggestion = 'The Log';
-                // Remove a weak troop
-                const sacrifice = deck.find(c => !getCardRole(c.name).includes('winCon') && getMetaScore(c.name) < 70);
-                if (sacrifice) {
+            // SORT CANDIDATES BY "VALUE SCORE" (V3 Strategy)
+            // Value = MetaScore + SynergyBonus + RoleBonus + LEVEL_BONUS
+            candidates.sort((a, b) => {
+                let scoreA = getMetaScore(a.name);
+                let scoreB = getMetaScore(b.name);
+
+                // --- 0. META DECK PROTECTION (V8) ---
+                // If we are building a specific Meta Deck, PROTECT its components at all costs.
+                if (bestMetaMatch) {
+                    if (bestMetaMatch.full.includes(a.name)) scoreA += 500; // DO NOT TOUCH
+                    if (bestMetaMatch.full.includes(b.name)) scoreB += 500;
+                }
+
+                // 1. SYNERGY BONUS (Captain Specific)
+                if (captain && SYNERGY_MAP[captain.name]?.mustHave.includes(a.name)) scoreA += 50;
+                if (captain && SYNERGY_MAP[captain.name]?.mustHave.includes(b.name)) scoreB += 50;
+
+                // 2. GENERIC SYNERGY SCAN (V7)
+                // Does this card synergize with ANY other card in the deck?
+                deck.forEach(mate => {
+                    if (mate.name === a.name) return;
+                    // Check SYNERGIES list (Object Structure V9)
+                    const pairA = SYNERGIES.find(p => p.cards.includes(a.name) && p.cards.includes(mate.name));
+                    if (pairA) scoreA += 15; // Moderate bonus for known combos
+                });
+                deck.forEach(mate => {
+                    if (mate.name === b.name) return;
+                    const pairB = SYNERGIES.find(p => p.cards.includes(b.name) && p.cards.includes(mate.name));
+                    if (pairB) scoreB += 15;
+                });
+
+                // 3. LEVEL AWARENESS (V7)
+                // Huge weight for levels. Level 14 vs 11 is a massive difference.
+                const levelA = normalizeLevel(a);
+                const levelB = normalizeLevel(b);
+                scoreA += (levelA * 5); // Example: Lvl 14 = +70 pts, Lvl 10 = +50 pts
+                scoreB += (levelB * 5);
+
+                return scoreA - scoreB; // Ascending (remove lowest score)
+            });
+
+            const remove = candidates[0] || deck[0];
+
+            // Rich Reasoning Generation
+            const newMeta = getMetaScore(cardToAdd.name);
+            const oldMeta = getMetaScore(remove.name);
+            const qualityDiff = newMeta - oldMeta;
+
+            let reason = "";
+
+            // Meta Deck Reason Override
+            if (bestMetaMatch && bestMetaMatch.full.includes(cardToAdd.name)) {
+                reason = `🎯 <strong>Essential Piece!</strong> Adding <strong>${cardToAdd.name}</strong> helps complete the <strong>${bestMetaMatch.name}</strong> archetype.`;
+            }
+            else if (tagsMatch(cardToAdd, remove)) reason = `<strong>${remove.name}</strong> performs the same role but <strong>${cardToAdd.name}</strong> is stronger here.`;
+            else if (qualityDiff > 15) reason = `<strong>${cardToAdd.name}</strong> is a massive upgrade in the current meta (+${qualityDiff}% Strength).`;
+            else if ((cardToAdd.elixirCost || 3) < (remove.elixirCost || 3)) reason = `<strong>${cardToAdd.name}</strong> provides similar value for less Elixir.`;
+            else reason = `<strong>${remove.name}</strong> is the best cut to make room for <strong>${cardToAdd.name}</strong>.`;
+
+            return {
+                remove: remove,
+                reason: reason
+            };
+        },
+
+
+        /**
+         * NEW: Propose Specific Swaps (The SMART Logic)
+         */
+        proposeSwaps: function (deck) {
+            const proposals = [];
+            const currentNames = deck.map(c => c.name);
+            const captain = identifyCaptain(deck);
+
+            // 1. META DECK COMPLETION (The "Genius" Move)
+            if (window.META_DECKS) {
+                let bestMatch = null;
+                let maxOverlap = 0;
+
+                window.META_DECKS.forEach(meta => {
+                    const overlap = meta.full.filter(name => currentNames.includes(name)).length;
+                    // Strict threshold: Must have 5+ cards of a specific deck to suggest completing it
+                    // This prevents suggesting "Hog 2.6" just because you have Skeletons.
+                    if (overlap >= 5 && overlap < 8) {
+                        if (overlap > maxOverlap) {
+                            maxOverlap = overlap;
+                            bestMatch = meta;
+                        }
+                    }
+                });
+
+                if (bestMatch) {
+                    const missing = bestMatch.full.filter(name => !currentNames.includes(name));
+                    // Suggest the first 2 missing cards
+                    missing.slice(0, 2).forEach(miss => {
+                        // Find a candidate to remove (not in meta deck)
+                        const toRemove = deck.find(c => !bestMatch.full.includes(c.name));
+                        if (toRemove) {
+                            proposals.push({
+                                remove: toRemove,
+                                add: miss,
+                                reason: `🎯 <strong>Meta Match:</strong> You are building <strong>${bestMatch.name}</strong> (${maxOverlap}/8). Swap <strong>${toRemove.name}</strong> for <strong>${miss}</strong>.`,
+                                priority: 1, // CRITICAL
+                                score: 100
+                            });
+                        }
+                    });
+                    if (proposals.length > 0) return proposals; // Return immediately if we found a pro deck match
+                }
+            }
+
+            // 2. CRITICAL GAPS
+            const roles = {
+                winCon: deck.filter(c => getCardRole(c.name).includes('winCon')),
+                spellSmall: deck.filter(c => getCardRole(c.name).includes('spellSmall')),
+                spellBig: deck.filter(c => getCardRole(c.name).includes('spellBig')),
+                airCounter: deck.filter(c => getCardRole(c.name).includes('airCounter'))
+            };
+
+            // A. No Win Condition
+            if (roles.winCon.length === 0) {
+                const suggestion = 'Hog Rider'; // Generic good pick
+                const worst = deck.sort((a, b) => getMetaScore(a.name) - getMetaScore(b.name))[0];
+                proposals.push({
+                    remove: worst,
+                    add: suggestion,
+                    reason: "🛑 <strong>No Win Condition!</strong> You need a tower-targeter. Add <strong>Hog Rider</strong> (or Giant/Miner).",
+                    priority: 1, // CRITICAL
+                    score: 90
+                });
+            }
+
+            // B. No Small Spell (Critical for Swarms)
+            if (roles.spellSmall.length === 0) {
+                const worst = deck.find(c => !getCardRole(c.name).includes('winCon')); // Don't remove WC
+                if (worst) {
                     proposals.push({
-                        remove: sacrifice,
-                        add: suggestion,
-                        reason: `You have no small spell! Swap <strong>${sacrifice.name}</strong> for <strong>${suggestion}</strong> to clear swarms.`
+                        remove: worst,
+                        add: 'The Log',
+                        reason: "⚠️ <strong>Vulnerable to Swarms.</strong> Add <strong>The Log</strong> or Zap.",
+                        priority: 2, // HIGH
+                        score: 80
+                    });
+                }
+            }
+
+            // C. No Big Spell (Critical for Pumps/Sparky)
+            if (roles.spellBig.length === 0) {
+                const worst = deck.find(c => !getCardRole(c.name).includes('winCon') && !getCardRole(c.name).includes('spellSmall'));
+                if (worst) {
+                    proposals.push({
+                        remove: worst,
+                        add: 'Fireball',
+                        reason: "⚠️ <strong>No Heavy Spell.</strong> Add <strong>Fireball</strong> to finish towers or pumps.",
+                        priority: 2, // HIGH
+                        score: 75
+                    });
+                }
+            }
+
+            // D. No Air Counters
+            if (roles.airCounter.length < 2) {
+                const worst = deck.find(c => !getCardRole(c.name).includes('winCon') && !getCardRole(c.name).includes('spellSmall') && !getCardRole(c.name).includes('spellBig') && !getCardRole(c.name).includes('airCounter'));
+                if (worst) {
+                    proposals.push({
+                        remove: worst,
+                        add: 'Musketeer',
+                        reason: "🦅 <strong>Weak Air Defense.</strong> Add <strong>Musketeer</strong> or Wizard.",
+                        priority: 2, // HIGH
+                        score: 70
+                    });
+                }
+            }
+
+            // 3. SYNERGY_MAP Fallback
+            if (captain && SYNERGY_MAP[captain.name] && proposals.length === 0) {
+                const info = SYNERGY_MAP[captain.name];
+                const missingKey = info.mustHave.find(key => !currentNames.includes(key));
+                if (missingKey) {
+                    const worst = deck.find(c => c.name !== captain.name);
+                    proposals.push({
+                        remove: worst,
+                        add: missingKey,
+                        reason: `🔗 <strong>Synergy:</strong> ${captain.name} works best with <strong>${missingKey}</strong>.`,
+                        priority: 3, // MEDIUM
+                        score: 60
                     });
                 }
             }

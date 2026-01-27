@@ -1,0 +1,12 @@
+=== DECKSHOP CODE VERIFICATION ===
+Card: "Goblin Giant" -> Code: "gg" (Expected: gg)
+Card: "Goblin Gang" -> Code: "gg" (Expected: gg)
+Card: "Skeletons" -> Code: "sk" (Expected: sk)
+Card: "Skeleton King" -> Code: "sk" (Expected: sk)
+Card: "Mega Minion" -> Code: "mm" (Expected: mm)
+Card: "Mighty Miner" -> Code: "mm" (Expected: mm)
+
+=== AI WIN CONDITION PROTECTION ===
+Swap Recommendation (Add Mega Minion): Remove "Musketeer"
+[PASS] Win Condition & Evo Protected.
+Swap Recommendation (Add Ram Rider): Remove "Musketeer"

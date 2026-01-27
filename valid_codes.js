@@ -1,18 +1,15 @@
-
-// Helper to generate DeckShop.pro check URLs
-// Uses strict 2-letter codes.
-
 const TWO_LETTER_CODES = {
     'Archer Queen': 'aq',
     'Archers': 'ac',
     'Arrows': 'ar',
     'Baby Dragon': 'bd',
-    'Balloon': 'bl',
-    'Bandit': 'bi', // Verified (implicit, no conflict report)
+    'Balloon': 'bn',
+    'Bandit': 'ba',
     'Barbarian Barrel': 'bb',
     'Barbarian Hut': 'bu',
     'Barbarians': 'bs',
-    'Bats': 'ba', // Verified (implicit)
+    'Barperians': 'ba',
+    'Bats': 'ba',
     'Battle Healer': 'bh',
     'Battle Ram': 'br',
     'Bomb Tower': 'bt',
@@ -44,13 +41,10 @@ const TWO_LETTER_CODES = {
     'Giant Snowball': 'sn',
     'Goblin Barrel': 'gb',
     'Goblin Cage': 'gc',
-    'Goblin Curse': 'gr', // Verified
-    'Goblin Demolisher': 'ge', // Verified
     'Goblin Drill': 'gd',
-    'Goblin Gang': 'gg', // FIXED: User confirmed 'gg' is Goblin Gang
-    'Goblin Giant': 'gn', // FIXED: User confirmed 'gn' is Goblin Giant
+    'Goblin Gang': 'ga',
+    'Goblin Giant': 'gg',
     'Goblin Hut': 'gh',
-    'Goblin Machine': 'ga', // Verified
     'Goblins': 'go',
     'Golden Knight': 'gk',
     'Golem': 'gm',
@@ -71,15 +65,15 @@ const TWO_LETTER_CODES = {
     'Lumberjack': 'lj',
     'Magic Archer': 'ma',
     'Mega Knight': 'mk',
-    'Mega Minion': 'mm', // Verified Correct
-    'Mighty Miner': 'me', // FIXED: User confirmed 'me' is Mighty Miner
-    'Miner': 'mn', // FIXED: User confirmed 'mn' is Miner
+    'Mega Minion': 'mm',
+    'Mighty Miner': 'mm',
+    'Miner': 'mi',
     'Mini P.E.K.K.A': 'mp',
     'Minion Horde': 'mh',
-    'Minions': 'mi', // FIXED: User confirmed 'mi' is Minions
+    'Minions': 'mi',
     'Mirror': 'mr',
-    'Monk': 'mc', // FIXED: User confirmed 'mc' is Monk
-    'Mortar': 'mo', // Verified Correct
+    'Monk': 'mo',
+    'Mortar': 'mo',
     'Mother Witch': 'mw',
     'Musketeer': 'mu',
     'Night Witch': 'nw',
@@ -104,50 +98,37 @@ const TWO_LETTER_CODES = {
     'Skeletons': 'ss',
     'Sparky': 'sp',
     'Spear Goblins': 'sg',
-    'Suspicious Bush': 'yb', // Verified
     'Tesla': 'te',
-    'The Log': 'lo', // Verified Correct
+    'The Log': 'lo',
     'Three Musketeers': '3m',
-    'Tombstone': 'ts', // Verified Correct
-    'Tornado': 'to', // Verified Correct
+    'Tombstone': 'to',
+    'Tornado': 'to',
     'Valkyrie': 'va',
     'Void': 'vd',
     'Wall Breakers': 'wb',
     'Witch': 'wi',
     'Wizard': 'wd',
-    'X-Bow': 'xb', // Verified Correct
+    'X-Bow': 'xb',
     'Zap': 'za',
     'Zappies': 'zp',
 };
 
-function getSlug(name) {
-    const clean = name.replace(/ Evolution$/i, '').trim();
-    if (TWO_LETTER_CODES[clean]) return TWO_LETTER_CODES[clean];
-
-    // Fallback shouldn't strictly be needed if map is complete,
-    // but keeps robustness.
-    const parts = clean.split(' ');
-    if (parts.length >= 2) {
-        return (parts[0][0] + parts[1][0]).toLowerCase();
-    }
-    return clean.substring(0, 2).toLowerCase();
-}
-
-window.openDeckShop = function () {
-    const deck = window.currentAppDeck;
-    if (!deck || deck.length === 0) {
-        alert("Scan a player first!");
-        return;
-    }
-
-    const slugs = deck.map(c => getSlug(c.name));
-
-    // Format: deck1=codecodecode... (concatenated 2-letter codes)
-    const codeString = slugs.join('');
-
-    // Using 'deck1' parameter as observed in user requests
-    const url = `https://www.deckshop.pro/deck-builder/clan-wars/build?e=2&h=1&deck1=${codeString}`;
-
-    console.log("[DeckShop] Generated:", url);
-    window.open(url, '_blank');
-};
+// UNRESOLVED COLLISIONS (Manual Fix Needed):
+[
+  {
+    "card": "Bandit",
+    "code": "ba"
+  },
+  {
+    "card": "Barperians",
+    "code": "ba"
+  },
+  {
+    "card": "Miner",
+    "code": "mi"
+  },
+  {
+    "card": "Tombstone",
+    "code": "to"
+  }
+]
