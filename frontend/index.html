@@ -347,7 +347,13 @@
   <h1>Player tag (insert player tag) <span style="font-size:12px; color:#f1c40f;">v11.0 (Synergy Update)</span></h1>
 
   <div class="card">
-    <input id="tagInput" placeholder="#PLAYER TAG">
+    <input id="tagInput" placeholder="#PLAYER TAG" autocomplete="off">
+    <div id="recentSearches" style="position:relative; display:none;">
+      <div
+        style="position:absolute; top:5px; left:0; right:0; background:#1a1a1a; border:1px solid var(--gold); border-radius:8px; max-height:200px; overflow-y:auto; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.5);">
+        <div id="recentSearchesList" style="padding:5px;"></div>
+      </div>
+    </div>
     <br><br>
     <div class="actions">
       <button id="scanBtn">Scan Player</button>
@@ -4847,11 +4853,112 @@
     // ============================================================
     const API_BASE_URL = window.location.origin;
 
+    // ===== ENHANCED PLAYER SCANNER V2 =====
+
+    // Recent Searches Manager
+    const RecentSearches = {
+      MAX_SEARCHES: 10,
+      STORAGE_KEY: 'cr_recent_searches',
+
+      get() {
+        try {
+          const saved = localStorage.getItem(this.STORAGE_KEY);
+          return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+          return [];
+        }
+      },
+
+      add(tag) {
+        const searches = this.get();
+        const cleanTag = tag.toUpperCase().trim();
+
+        // Remove if already exists
+        const filtered = searches.filter(t => t !== cleanTag);
+
+        // Add to front
+        filtered.unshift(cleanTag);
+
+        // Keep only MAX_SEARCHES
+        const trimmed = filtered.slice(0, this.MAX_SEARCHES);
+
+        try {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(trimmed));
+        } catch (e) {
+          console.warn('Failed to save recent searches:', e);
+        }
+      },
+
+      clear() {
+        localStorage.removeItem(this.STORAGE_KEY);
+      }
+    };
+
+    // Show Recent Searches Dropdown
+    window.showRecentSearches = function () {
+      const input = document.getElementById('tagInput');
+      const dropdown = document.getElementById('recentSearches');
+      const listContainer = document.getElementById('recentSearchesList');
+
+      const searches = RecentSearches.get();
+
+      if (searches.length === 0) {
+        dropdown.style.display = 'none';
+        return;
+      }
+
+      listContainer.innerHTML = `
+        <div style="padding:8px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:11px; color:#888; text-transform:uppercase;">Recent Searches</span>
+          <button onclick="RecentSearches.clear(); showRecentSearches();" style="background:transparent; border:none; color:#e74c3c; cursor:pointer; font-size:11px;">Clear All</button>
+        </div>
+        ${searches.map(tag => `
+          <div onclick="document.getElementById('tagInput').value='${tag}'; document.getElementById('recentSearches').style.display='none'; window.scanPlayerFromInput();" 
+               style="padding:10px; cursor:pointer; border-bottom:1px solid #2a2a2a; color:#fff; font-size:13px; transition:background 0.2s;"
+               onmouseover="this.style.background='#2a2a2a'" onmouseout="this.style.background='transparent'">
+            <span style="color:var(--gold);">📌</span> ${tag}
+          </div>
+        `).join('')}
+      `;
+
+      dropdown.style.display = 'block';
+    };
+
+    // Input Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      const tagInput = document.getElementById('tagInput');
+      const dropdown = document.getElementById('recentSearches');
+
+      if (tagInput) {
+        tagInput.addEventListener('focus', () => {
+          window.showRecentSearches();
+        });
+
+        tagInput.addEventListener('input', () => {
+          // Hide dropdown when typing
+          if (tagInput.value.trim().length > 0) {
+            dropdown.style.display = 'none';
+          } else {
+            window.showRecentSearches();
+          }
+        });
+
+        // Click outside to close
+        document.addEventListener('click', (e) => {
+          if (!tagInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+          }
+        });
+      }
+    });
+
+    // Enhanced Scanner Function
     window.scanPlayerFromInput = async function () {
       const tagInput = document.getElementById('tagInput');
       const deckContainer = document.getElementById('deckContainer');
       const statsContainer = document.getElementById('statsContainer');
       const scanBtn = document.getElementById('scanBtn');
+      const dropdown = document.getElementById('recentSearches');
 
       if (!tagInput || !deckContainer) {
         alert('Page elements not found!');
@@ -4867,11 +4974,21 @@
       const tag = rawTag.startsWith('#') ? rawTag : '#' + rawTag;
       const encodedTag = encodeURIComponent(tag);
 
+      // Hide dropdown
+      dropdown.style.display = 'none';
+
+      // Enhanced Loading State
       if (scanBtn) {
         scanBtn.disabled = true;
-        scanBtn.textContent = 'Loading...';
+        scanBtn.innerHTML = '⏳ Loading...';
       }
-      deckContainer.innerHTML = '<p style="color:#aaa; text-align:center;">🔄 Fetching player data...</p>';
+
+      deckContainer.innerHTML = `
+        <div style="text-align:center; padding:40px;">
+          <div class="loader" style="margin:0 auto 20px;"></div>
+          <p style="color:#aaa; font-size:14px; animation: pulse 1.5s infinite;">🔍 Fetching player data...</p>
+        </div>
+      `;
 
       try {
         console.log('[SCAN] Fetching:', `${API_BASE_URL}/player/${encodedTag}`);
@@ -4885,11 +5002,27 @@
 
         if (!response.ok) {
           const errText = await response.text();
-          throw new Error(`HTTP ${response.status}: ${errText}`);
+
+          // Enhanced Error Messages
+          let userMessage = '';
+          if (response.status === 404) {
+            userMessage = '❌ Player not found! Check the tag and try again.';
+          } else if (response.status === 503) {
+            userMessage = '🚧 Clash Royale API is temporarily unavailable. Try again in a few minutes.';
+          } else if (response.status === 429) {
+            userMessage = '⏱️ Too many requests. Please wait a moment and try again.';
+          } else {
+            userMessage = `❌ Error ${response.status}: ${errText || 'Unknown error'}`;
+          }
+
+          throw new Error(userMessage);
         }
 
         const data = await response.json();
         console.log('[SCAN] Data received:', data);
+
+        // Save to recent searches
+        RecentSearches.add(tag);
 
         window.currentPlayerData = data;
 
@@ -4900,22 +5033,26 @@
             elixirCost: card.elixirCost || 0,
             iconUrl: card.iconUrls?.medium || '',
             level: card.level || 1,
-            maxLevel: card.maxLevel || 14
+            maxLevel: card.maxLevel || 14,
+            evolutionLevel: card.evolutionLevel || 0
           }));
         }
 
         window.currentAppDeck = currentDeck;
 
         if (currentDeck.length === 0) {
-          deckContainer.innerHTML = '<p style="color:#f39c12; text-align:center;">⚠️ No current deck found.</p>';
+          deckContainer.innerHTML = '<p style="color:#f39c12; text-align:center;">⚠️ No current deck found for this player.</p>';
         } else {
-          deckContainer.innerHTML = currentDeck.map(card => `
-            <div class="deck-card" title="${card.name}">
-              <img src="${card.iconUrl}" alt="${card.name}" style="width:80px; height:auto; border-radius:8px;">
-              <div style="font-size:12px; text-align:center; margin-top:5px;">${card.name}</div>
-              <div style="font-size:10px; color:#888; text-align:center;">Lv.${card.level}</div>
+          deckContainer.innerHTML = currentDeck.map(card => {
+            const isEvolved = (card.evolutionLevel || 0) > 0;
+            return `
+            <div class="deck-card" title="${card.name}" style="animation: fadeInUp 0.4s ease-out;">
+              <img src="${card.iconUrl}" alt="${card.name}" style="width:80px; height:auto; border-radius:8px; ${isEvolved ? 'box-shadow: 0 0 15px rgba(138,43,226,0.8);' : ''}">
+              <div style="font-size:12px; text-align:center; margin-top:5px; color:${isEvolved ? '#a855f7' : '#fff'};">${card.name}</div>
+              <div style="font-size:10px; color:#888; text-align:center;">Lv.${card.level}${isEvolved ? ' ⚡' : ''}</div>
             </div>
-          `).join('');
+          `;
+          }).join('');
 
           deckContainer.style.display = 'flex';
           deckContainer.style.flexWrap = 'wrap';
@@ -4923,19 +5060,46 @@
           deckContainer.style.justifyContent = 'center';
         }
 
+        // Enhanced Player Profile
         if (statsContainer) {
+          const arena = data.arena?.name || 'Unknown Arena';
+          const expLevel = data.expLevel || 1;
+          const clan = data.clan?.name || 'No Clan';
+          const clanBadge = data.clan?.badgeId || null;
+
           statsContainer.innerHTML = `
-            <div style="background:#222; padding:15px; border-radius:10px; border:1px solid var(--gold); margin-top:15px;">
-              <h3 style="color:var(--gold);  margin-top:0;">👤 ${data.name || 'Unknown'}</h3>
-              <p style="color:#ccc; margin:5px 0;">🏆 Trophies: <strong>${data.trophies || 0}</strong></p>
-              <p style="color:#ccc; margin:5px 0;">⭐ Highest: <strong>${data.bestTrophies || 0}</strong></p>
-              <p style="color:#ccc; margin:5px 0;">🎮 Wins: <strong>${data.wins || 0}</strong></p>
-              <p style="color:#ccc; margin:5px 0;">📦 Cards: <strong>${data.cards?.length || 0}</strong></p>
+            <div style="background:linear-gradient(135deg, #1a1a1a, #2a2a2a); padding:20px; border-radius:12px; border:2px solid var(--gold); margin-top:15px; box-shadow:0 4px 20px rgba(255,215,0,0.15); animation: fadeIn 0.5s;">
+              <h3 style="color:var(--gold); margin-top:0; font-size:20px; display:flex; align-items:center; gap:10px;">
+                👤 ${data.name || 'Unknown'}
+                <span style="background:linear-gradient(135deg, #667eea, #764ba2); padding:3px 8px; border-radius:6px; font-size:11px; color:#fff;">Lv. ${expLevel}</span>
+              </h3>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px;">
+                <div style="background:#151515; padding:10px; border-radius:8px; border:1px solid #333;">
+                  <p style="color:#888; margin:0; font-size:11px;">🏆 Trophies</p>
+                  <p style="color:#f1c40f; margin:5px 0 0; font-size:18px; font-weight:bold;">${data.trophies || 0}</p>
+                </div>
+                <div style="background:#151515; padding:10px; border-radius:8px; border:1px solid #333;">
+                  <p style="color:#888; margin:0; font-size:11px;">⭐ Best</p>
+                  <p style="color:#e67e22; margin:5px 0 0; font-size:18px; font-weight:bold;">${data.bestTrophies || 0}</p>
+                </div>
+                <div style="background:#151515; padding:10px; border-radius:8px; border:1px solid #333;">
+                  <p style="color:#888; margin:0; font-size:11px;">🎮 Wins</p>
+                  <p style="color:#2ecc71; margin:5px 0 0; font-size:18px; font-weight:bold;">${data.wins || 0}</p>
+                </div>
+                <div style="background:#151515; padding:10px; border-radius:8px; border:1px solid #333;">
+                  <p style="color:#888; margin:0; font-size:11px;">🎯 Arena</p>
+                  <p style="color:#9b59b6; margin:5px 0 0; font-size:12px; font-weight:bold;">${arena}</p>
+                </div>
+              </div>
+              <div style="margin-top:15px; padding:10px; background:#151515; border-radius:8px; border:1px solid #333;">
+                <p style="color:#888; margin:0; font-size:11px;">👥 Clan</p>
+                <p style="color:#3498db; margin:5px 0 0; font-size:14px; font-weight:bold;">${clan}</p>
+              </div>
             </div>
           `;
         }
 
-        const hiddenBtns = ['aiDoctorBtn', 'substitutionsBtn', 'weaknessReportBtn', 'buildBtn'];
+        const hiddenBtns = ['optimizeDeckBtn', 'synergyBtn', 'radarBtn', 'substitutionBtn', 'checkDeckBtn'];
         hiddenBtns.forEach(id => {
           const btn = document.getElementById(id);
           if (btn) btn.style.display = 'inline-block';
@@ -4945,17 +5109,35 @@
 
       } catch (err) {
         console.error('[SCAN] Error:', err);
-        deckContainer.innerHTML = `<p style="color:#e74c3c; text-align:center;">❌ Error: ${err.message}</p>`;
+        deckContainer.innerHTML = `
+          <div style="text-align:center; padding:30px; background:#2a1515; border:2px solid #e74c3c; border-radius:12px; margin:20px 0;">
+            <div style="font-size:48px; margin-bottom:15px;">😞</div>
+            <p style="color:#e74c3c; font-size:16px; font-weight:bold; margin-bottom:10px;">${err.message}</p>
+            <p style="color:#aaa; font-size:13px;">Make sure the player tag is correct (e.g., #2PP)</p>
+            <button onclick="window.showRecentSearches()" style="margin-top:15px; background:#3498db; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">
+              View Recent Searches
+            </button>
+          </div>
+        `;
         if (statsContainer) statsContainer.innerHTML = '';
       } finally {
         if (scanBtn) {
           scanBtn.disabled = false;
-          scanBtn.textContent = 'Scan Player';
+          scanBtn.innerHTML = 'Scan Player';
         }
       }
     };
 
-    console.log('[INIT] Scan function loaded!');
+    console.log('[INIT] Enhanced scanner v2 loaded!');
+
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    `;
+    document.head.appendChild(style);
   </script>
   <script type="module">
     import { WIN_CONDITION_GUIDES } from './win_conditions.js';
