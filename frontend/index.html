@@ -713,6 +713,7 @@
     </div>
   </div>
 
+  <script src="win_conditions.js"></script>
   <script src="meta_decks.js?v=4"></script>
   <script src="smart_engine_v11.js"></script>
   <script src="deckshop_helper.js?v=1"></script>
@@ -6276,6 +6277,207 @@
     window.suggestImprovements = function () { SimpleDeckBuilder.analyze('optimize'); };
     window.openSubstitutions = function () { SimpleDeckBuilder.analyze('swap'); };
 
+    // --- WIN CONDITION MASTERCLASS LOGIC ---
+    const winConBtn = document.getElementById('winConGuideBtn');
+    if (winConBtn) {
+      winConBtn.onclick = function () {
+        const modal = document.getElementById('winConditionModal');
+        const grid = document.getElementById('winConditionGrid');
+        const guideList = document.getElementById('guideList');
+        const guideDetail = document.getElementById('guideDetail');
+
+        if (!modal || !grid) return;
+
+        // Reset View
+        guideList.style.display = 'block';
+        guideDetail.style.display = 'none';
+        modal.style.display = 'flex';
+        grid.innerHTML = '';
+
+        // Check if data loaded
+        if (!window.WIN_CONDITION_GUIDES) {
+          grid.innerHTML = '<p style="color:red;">Error: Strategies not loaded.</p>';
+          return;
+        }
+
+        // Render Grid
+        Object.keys(window.WIN_CONDITION_GUIDES).forEach(key => {
+          const guide = window.WIN_CONDITION_GUIDES[key];
+          const div = document.createElement('div');
+          div.className = 'win-con-card';
+
+          div.innerHTML = `
+            <img src="${guide.imgUrl}" loading="lazy">
+            <div class="win-con-label">${key}</div>
+          `;
+
+          div.onclick = () => showGuideDetail(key);
+          grid.appendChild(div);
+        });
+      };
+    }
+
+    function showGuideDetail(key) {
+      const guide = window.WIN_CONDITION_GUIDES[key];
+      const guideList = document.getElementById('guideList');
+      const guideDetail = document.getElementById('guideDetail');
+      const title = document.getElementById('guideTitle');
+      const body = document.getElementById('guideBody');
+
+      if (!guide) return;
+
+      guideList.style.display = 'none';
+      guideDetail.style.display = 'block';
+      title.innerText = key;
+      title.style.color = '#f1c40f'; // Gold
+
+      // Build Detail HTML
+      let html = `
+        <div style="display:flex; gap:15px; margin-bottom:20px; align-items:center; background:rgba(0,0,0,0.3); padding:15px; border-radius:8px;">
+           <img src="${guide.imgUrl}" style="width:80px; border-radius:8px; border:2px solid #f1c40f;">
+           <div style="text-align:left;">
+             <div style="color:#aaa; font-size:12px; text-transform:uppercase;">Role: ${guide.role}</div>
+             <div style="color:#fff; font-size:14px; margin-top:5px;">"${guide.description}"</div>
+             <div style="color:${guide.difficulty.includes('Hard') ? '#e74c3c' : '#2ecc71'}; font-size:12px; margin-top:5px;">Difficulty: ${guide.difficulty}</div>
+           </div>
+        </div>
+      `;
+
+      // Composition Grid
+      html += `<h3 style="color:#2ecc71; border-bottom:1px solid #333; padding-bottom:5px;">Required Deck Components</h3>`;
+      html += `<p style="font-size:11px; color:#aaa; margin-bottom:10px;">Click a card below to see details.</p>`;
+
+      // Dynamic Detail Box (Hidden initially)
+      html += `<div id="roleDetailBox" style="display:none; background:#222; border:1px solid #444; padding:15px; border-radius:8px; margin-bottom:20px; text-align:left;">
+          <div id="roleDetailTitle" style="font-weight:bold; color:#fff; font-size:14px; margin-bottom:5px;"></div>
+          <div id="roleDetailDesc" style="color:#ccc; font-size:13px; margin-bottom:8px; font-style:italic;"></div>
+          <div id="roleDetailExamples" style="color:#2ecc71; font-size:12px;"></div>
+      </div>`;
+
+      html += `<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:20px;">`;
+
+      // Helper to escape quotes safely
+      const escape = (str) => str.replace(/'/g, "\\'");
+
+      guide.composition.forEach(comp => {
+        // Solid Color Style (Classic)
+        const safeRole = escape(comp.role);
+        const safeReason = escape(comp.reason);
+        const safeExamples = escape(comp.examples.join(', '));
+        const safeColor = comp.color;
+        const safeAbbr = comp.abbr;
+
+        html += `
+            <div onclick="showRoleInfo('${safeAbbr}', '${safeRole}', '${safeReason}', '${safeExamples}', '${safeColor}')" 
+                 style="background:${comp.color}; padding:10px; border-radius:12px; border:3px solid #000; text-align:center; box-shadow:0 4px 0 rgba(0,0,0,0.5); display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:100px; cursor:pointer; transition:transform 0.1s;" 
+                 onmouseover="this.style.transform='translateY(-3px)'" 
+                 onmouseout="this.style.transform='translateY(0)'">
+               
+               <div style="font-family:'Arial Black', sans-serif; font-size:24px; color:white; text-shadow:2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; margin-bottom:5px;">${comp.abbr}</div>
+               <div style="font-size:10px; color:#fff; font-weight:bold; text-shadow:1px 1px 0 #000; background:rgba(0,0,0,0.4); padding:2px 6px; border-radius:4px;">${comp.role}</div>
+            </div>
+          `;
+      });
+      html += `</div>`;
+
+      // Strategy
+      html += `<h3 style="color:#3498db; border-bottom:1px solid #333; padding-bottom:5px;">Gameplan</h3>`;
+      html += `<ul style="color:#ddd; padding-left:20px; font-size:13px; line-height:1.6;">`;
+      guide.strategy.forEach(tip => html += `<li>${tip}</li>`);
+      html += `</ul>`;
+
+      // Hard Counters
+      if (guide.hardCounters && guide.hardCounters.length > 0) {
+        html += `<h3 style="color:#e74c3c; border-bottom:1px solid #333; padding-bottom:5px;">Threats</h3>`;
+        html += `<div style="display:flex; gap:10px; flex-wrap:wrap;">`;
+        guide.hardCounters.forEach(c => {
+          html += `<span style="background:rgba(231, 76, 60, 0.2); color:#e74c3c; padding:4px 8px; border-radius:4px; font-size:12px;">⚠️ ${c.name}</span>`;
+        });
+        html += `</div>`;
+      }
+
+      body.innerHTML = html;
+    }
+
+    // Helper to show role info
+    window.showRoleInfo = function (abbr, role, reason, examples, color) {
+      const box = document.getElementById('roleDetailBox');
+      if (!box) return;
+
+      box.style.display = 'block';
+      box.style.borderColor = color;
+      box.style.boxShadow = `0 0 10px ${color}40`;
+
+      document.getElementById('roleDetailTitle').innerHTML = `<span style="color:${color}">${abbr}</span> - ${role}`;
+      document.getElementById('roleDetailDesc').innerText = `"${reason}"`;
+      document.getElementById('roleDetailExamples').innerHTML = `Examples: <span style="color:#fff">${examples}</span>`;
+    };
+
+    // Back Button Logic
+    const backBtn = document.getElementById('backToGuideList');
+    if (backBtn) {
+      backBtn.onclick = () => {
+        document.getElementById('guideDetail').style.display = 'none';
+        document.getElementById('guideList').style.display = 'block';
+      };
+    }
+
+    // --- ROBUST WIN CONDITION LOGIC (OVERRIDE) ---
+    // --- ROBUST WIN CONDITION LOGIC (EVENT DELEGATION V2) ---
+    // Using delegation to handle cases where button is replaced or lazy-loaded
+    document.body.addEventListener('click', function (e) {
+      if (e.target && (e.target.id === 'winConGuideBtn' || e.target.closest('#winConGuideBtn'))) {
+        e.preventDefault(); // Prevent any default form submissions
+
+        const modal = document.getElementById('winConditionModal');
+        const grid = document.getElementById('winConditionGrid');
+        const guideList = document.getElementById('guideList');
+        const guideDetail = document.getElementById('guideDetail');
+
+        if (!modal || !grid) return;
+
+        // Reset View
+        guideList.style.display = 'block';
+        guideDetail.style.display = 'none';
+        modal.style.display = 'flex';
+        grid.innerHTML = '';
+
+        // Check if data loaded
+        if (!window.WIN_CONDITION_GUIDES) {
+          alert("Error: Data not loaded. Please wait a moment and try again.");
+          grid.innerHTML = '<p style="color:red;">Error: Strategies not loaded.</p>';
+          return;
+        }
+
+        // Render Grid
+        Object.keys(window.WIN_CONDITION_GUIDES).forEach(key => {
+          const guide = window.WIN_CONDITION_GUIDES[key];
+          const div = document.createElement('div');
+          div.className = 'win-con-card';
+
+          const imgUrl = guide.imgUrl || (window.findCardImage ? window.findCardImage(key) : '');
+
+          div.innerHTML = `
+                <img src="${imgUrl}" loading="lazy" onerror="this.src='https://placehold.co/100?text=${key}'">
+                <div class="win-con-label">${key}</div>
+              `;
+
+          // Direct onclick for grid items
+          div.onclick = (ev) => {
+            ev.stopPropagation();
+            showGuideDetail(key);
+          };
+          grid.appendChild(div);
+        });
+      }
+    });
+
+    // Ensure findCardImage fallback exists
+    if (!window.findCardImage) {
+      window.findCardImage = function (name) {
+        return `https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards/${name.toLowerCase().replace(/\./g, "").replace(/\s+/g, "-")}.png`;
+      };
+    }
   </script>
 </body>
 
