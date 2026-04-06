@@ -1,15 +1,7 @@
 [build]
-  base = "StudyAI"
-  command = "npm run build"
-  publish = "dist"
-
-[functions]
-  directory = "api"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+  command = "cd StudyAI && npm install && npm run build"
+  publish = "StudyAI/dist"
+  functions = "netlify/functions"
 
 [[redirects]]
   from = "/*"
