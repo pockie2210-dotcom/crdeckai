@@ -1,7 +1,6 @@
 [build]
   command = "cd StudyAI && npm install && npm run build"
   publish = "StudyAI/dist"
-  functions = "StudyAI/netlify/functions"
 
 [[redirects]]
   from = "/*"

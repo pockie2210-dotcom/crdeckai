@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Target, FileText, Youtube, ArrowRight } from 'lucide-react';
-import { analyzeText, analyzeYouTube, getApiKey } from '../utils/openai';
+import { Target, FileText, Globe, ArrowRight } from 'lucide-react';
+import { analyzeText, analyzeWebLink, getApiKey } from '../utils/openai';
 import { incrementTopics } from '../utils/stats';
 
 const ContentAnalyzer = () => {
@@ -20,8 +20,8 @@ const ContentAnalyzer = () => {
     
     try {
       let result;
-      if (inputType === 'youtube') {
-        result = await analyzeYouTube(content, length);
+      if (inputType === 'link') {
+        result = await analyzeWebLink(content, length);
       } else {
         result = await analyzeText(content, length);
       }
@@ -42,14 +42,14 @@ const ContentAnalyzer = () => {
 
       <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', gap: '1rem' }}>
         <button onClick={() => { setInputType('text'); setContent(''); setResults(null); setError(''); }} className={inputType === 'text' ? 'btn-primary' : 'btn-secondary'} style={{ flex: 1 }}><FileText size={18} /> Text Paste</button>
-        <button onClick={() => { setInputType('youtube'); setContent(''); setResults(null); setError(''); }} className={inputType === 'youtube' ? 'btn-primary' : 'btn-secondary'} style={{ flex: 1 }}><Youtube size={18} /> YouTube Link</button>
+        <button onClick={() => { setInputType('link'); setContent(''); setResults(null); setError(''); }} className={inputType === 'link' ? 'btn-primary' : 'btn-secondary'} style={{ flex: 1 }}><Globe size={18} /> Web Link</button>
       </div>
 
       <div className="glass-panel" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {inputType === 'text' ? (
           <textarea placeholder="Paste your large text or document content here..." value={content} onChange={(e) => setContent(e.target.value)} style={{ width: '100%', minHeight: '150px', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontFamily: 'inherit', resize: 'vertical', fontSize: '1.05rem' }} />
         ) : (
-          <input type="text" placeholder="Paste YouTube Video URL here (e.g. https://www.youtube.com/watch?v=...)" value={content} onChange={(e) => setContent(e.target.value)} style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: '1.05rem' }} />
+          <input type="text" placeholder="Paste any article or website URL here (e.g. Wikipedia...)" value={content} onChange={(e) => setContent(e.target.value)} style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: '1.05rem' }} />
         )}
 
         <div>
@@ -65,7 +65,7 @@ const ContentAnalyzer = () => {
           {isAnalyzing ? (
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{ width: '16px', height: '16px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-              {inputType === 'youtube' ? 'Fetching & Analyzing Video...' : 'Analyzing Content...'}
+              {inputType === 'link' ? 'Scraping & Analyzing Site...' : 'Analyzing Content...'}
             </span>
           ) : <>Analyze Content <ArrowRight size={18} /></>}
         </button>

@@ -113,20 +113,16 @@ export async function analyzeText(text, length) {
 }
 
 /**
- * Fetch YouTube transcript via the local server bridge and analyze it.
+ * Fetch a website's content via r.jina.ai (client-side) and analyze it.
  */
-export async function analyzeYouTube(url, length) {
-  const isProd = !window.location.hostname.includes('localhost');
-  const endpoint = isProd ? '/.netlify/functions/transcript' : '/api/transcript';
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url })
+export async function analyzeWebLink(url, length) {
+  // Use Jina Reader to get a clean text/markdown version of any URL
+  const response = await fetch(`https://r.jina.ai/${url}`, {
+    headers: { 'Accept': 'text/plain' }
   });
   
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'YouTube Transcript Error');
+  const text = await response.text();
+  if (!response.ok) throw new Error('Could not extract content from this link. Make sure it is a public website.');
   
-  return analyzeText(data.text, length);
+  return analyzeText(text, length);
 }
