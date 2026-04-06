@@ -98,7 +98,7 @@ window.WIN_CONDITION_GUIDES = {
             { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Royal Giant'], reason: 'Guaranteed damage if protected. He dictates the pace of the game.' },
             { role: 'Fisherman', abbr: 'UT', color: '#f1c40f', needed: true, examples: ['Fisherman'], reason: 'The playing partner. Use him to pull Mini-PEKKAs or Hunters away from your RG.' },
             { role: 'Hunter', abbr: 'TK', color: '#e74c3c', needed: true, examples: ['Hunter'], reason: 'Point-blank defense against tanks and balloons. Protects the RG from swarms.' },
-            { role: 'Cycle', abbr: 'CC', color: '#2ecc71', needed: true, examples: ['Skeletons', 'E-Spirit'], reason: 'Fast cycle to get back to RG or Fisherman quickly.' },
+            { role: 'Cycle', abbr: 'CC', color: '#2ecc71', needed: true, examples: ['Skeletons', 'Electro Spirit'], reason: 'Fast cycle to get back to RG or Fisherman quickly.' },
             { role: 'Air Defense', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Mother Witch', 'Phoenix'], reason: 'Mother Witch turns defensive swarms into your own offensive hogs.' },
             { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Fireball', 'Lightning'], reason: 'Lightning is king here—resets Infernos and kills heavy hitters/buildings.' },
             { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['The Log'], reason: 'Pushback and area denial for ground swarms.' },
@@ -151,7 +151,7 @@ window.WIN_CONDITION_GUIDES = {
         composition: [
             { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Electro Giant'], reason: 'The "Walking Tesla". Any unit nearby that attacks him gets zapped back.' },
             { role: 'Tornado', abbr: 'UT', color: '#d456fd', needed: true, examples: ['Tornado'], reason: 'MANDATORY. Pull ranged units (Musketeer, Wizard) INTO his zap radius to kill them instantly.' },
-            { role: 'Building', abbr: 'BD', color: '#95a5a6', needed: true, examples: ['Cannon', 'Cage'], reason: 'Defensive structure to survive while you build elixir for the E-Giant.' },
+            { role: 'Building', abbr: 'BD', color: '#95a5a6', needed: true, examples: ['Cannon', 'Goblin Cage'], reason: 'Defensive structure to survive while you build elixir for the E-Giant.' },
             { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Lightning'], reason: 'The ultimate counter to buildings. Reset Infernos and destroy Cannons clearing the path.' },
             { role: 'Splash', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Bowler', 'Baby Dragon'], reason: 'Support behind E-Giant to clean up swarms he doesn\'t zap.' },
             { role: 'Tank Killer', abbr: 'TK', color: '#f1c40f', needed: true, examples: ['Prince', 'Mini PEKKA'], reason: 'You need high single-target damage for defense against enemy tanks.' },
@@ -196,7 +196,7 @@ window.WIN_CONDITION_GUIDES = {
         role: 'Beatdown',
         archetype: 'Beatdown',
         difficulty: 'Easy (3/10)',
-        hardCounters: [{ name: 'Inferno Tower', reason: 'Melts.' }, { name: 'PEKKA', reason: 'Shreds.' }],
+        hardCounters: [{ name: 'Inferno Tower', reason: 'Melts.' }, { name: 'P.E.K.K.A', reason: 'Shreds.' }],
         imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/golem.png',
         description: 'The ultimate tank. Ignore damage, build a deathball, and 3-crown.',
         composition: [
@@ -230,7 +230,7 @@ window.WIN_CONDITION_GUIDES = {
             { role: 'Rage', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Rage'], reason: 'Increases attack speed and healing speed of the Battle Healer.' },
             { role: 'Tornado', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Tornado'], reason: 'Clumps defenders together for your E-Dragon chains.' },
             { role: 'Support', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Night Witch'], reason: 'Adds excessive DPS and bat swarm.' },
-            { role: 'Defense', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Barb Barrel'], reason: 'Cheap defense.' },
+            { role: 'Defense', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Barbarian Barrel'], reason: 'Cheap defense.' },
             { role: 'Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Arrows'], reason: 'Clear minion hordes or firecrackers.' }
         ],
         strategy: [
@@ -249,10 +249,10 @@ window.WIN_CONDITION_GUIDES = {
         description: 'Chip damage specialist. Can be placed anywhere.',
         composition: [
             { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Miner'], reason: 'Your primary way to deal damage. Send him to the tower constantly to chip it down.' },
-            { role: 'Secondary', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Wall Breakers', 'Poison'], reason: 'Miner tanks for these cards (WB) or Poison damages troops trying to catch the Miner.' },
+            { role: 'Secondary', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Wall Breakers'], reason: 'Miner tanks for these cards (WB) acts as consistent chip damage.' },
             { role: 'Mini Tank', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Knight', 'Valkyrie'], reason: 'Standard defense against support troops. Cheap and durable.' },
             { role: 'Building', abbr: 'BD', color: '#95a5a6', needed: true, examples: ['Bomb Tower', 'Tesla'], reason: 'Required to stop Hogs and Balloons since you have low DPS.' },
-            { role: 'Air Defense', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Marcher', 'Musketeer'], reason: 'Geometric damage (Marcher) or solid single target DPS (Musk) from a distance.' },
+            { role: 'Air Defense', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Magic Archer', 'Musketeer'], reason: 'Geometric damage (Marcher) or solid single target DPS (Musk) from a distance.' },
             { role: 'Cycle', abbr: 'CC', color: '#2ecc71', needed: true, examples: ['Bats', 'Spears'], reason: 'Pair with Miner for a cheap push. Miner tanks, Bats deal the damage.' },
             { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['The Log'], reason: 'Pushback and chip damage. Essential for survivability.' },
             { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Poison'], reason: 'The "Miner Poison" classic. Kill their defense and damage the tower simultaneously.' }
@@ -369,9 +369,9 @@ window.WIN_CONDITION_GUIDES = {
             { role: 'Spam 2', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Royal Ghost'], reason: 'Invisible threat. Forces a response.' },
             { role: 'P.E.K.K.A', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['P.E.K.K.A'], reason: 'The big wall. Drops on E-Giants, Golems, and Mega Knights.' },
             { role: 'Air', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Electro Wizard'], reason: 'Spawn zap + stun. Essential synergy with PEKKA.' },
-            { role: 'Spell 1', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Barb Barrel'], reason: 'Cheap defense + mini tank.' },
+            { role: 'Spell 1', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Barbarian Barrel'], reason: 'Cheap defense + mini tank.' },
             { role: 'Spell 2', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Fireball', 'Lightning'], reason: 'Clear support troops or reset Infernos.' },
-            { role: 'Flex', abbr: 'CC', color: '#95a5a6', needed: false, examples: ['Archer Queen', 'Marcher'], reason: 'High DPS ranged support.' }
+            { role: 'Flex', abbr: 'CC', color: '#95a5a6', needed: false, examples: ['Archer Queen', 'Magic Archer'], reason: 'High DPS ranged support.' }
         ],
         strategy: [
             'Use Ram Rider on DEFENSE first to stop a Hog/Loon, then counter-push.',
@@ -388,7 +388,7 @@ window.WIN_CONDITION_GUIDES = {
         description: 'Charges building. Spawns two Barbarians. Can separate kiting troops.',
         composition: [
             { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Battle Ram'], reason: 'Shield allows it to tank a hit (like Sparky/Lightning) before Barbs spawn.' },
-            { role: 'PEKKA', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['P.E.K.K.A'], reason: 'The boss. Kills tanks. Support her with spam cards.' },
+            { role: 'P.E.K.K.A', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['P.E.K.K.A'], reason: 'The boss. Kills tanks. Support her with spam cards.' },
             { role: 'Spam', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Bandit', 'Ghost'], reason: 'Cheap punishment cards. Play them when opponent taps out.' },
             { role: 'Stun', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Electro Wizard'], reason: 'Stops Sparky, I-Dragon, and I-Tower. Key PEKKA support.' },
             { role: 'Sniper', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Magic Archer'], reason: 'Poke damage through units. Forces them to react awkwardly.' },
@@ -417,7 +417,7 @@ window.WIN_CONDITION_GUIDES = {
             { role: 'Spell 1', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Arrows'], reason: 'Kill Minions/Firecrackers guarding the tower.' },
             { role: 'Spell 2', abbr: 'BS', color: '#e67e22', needed: false, examples: ['Fireball'], reason: 'Your own heavy response.' },
             { role: 'Killer', abbr: 'TK', color: '#f1c40f', needed: true, examples: ['Hunter'], reason: 'Shotgun blast defense.' },
-            { role: 'Cycle', abbr: 'CC', color: '#2ecc71', needed: true, examples: ['E-Spirit'], reason: 'Chain damage and cycle.' }
+            { role: 'Cycle', abbr: 'CC', color: '#2ecc71', needed: true, examples: ['Electro Spirit'], reason: 'Chain damage and cycle.' }
         ],
         strategy: [
             'Always split pigs 2-2 at the river to pressure both lanes.',
@@ -433,13 +433,13 @@ window.WIN_CONDITION_GUIDES = {
         imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/three-musketeers.png',
         description: 'High risk high reward. 9 Elixir card that controls the whole map if kept alive.',
         composition: [
-            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['3M'], reason: 'The ladies. Split them 2-1. They shred towers in seconds.' },
+            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Three Musketeers'], reason: 'The ladies. Split them 2-1. They shred towers in seconds.' },
             { role: 'Pump', abbr: 'UT', color: '#f1c40f', needed: true, examples: ['Elixir Collector'], reason: 'MANDATORY. Use it to bait out the big spell so 3M are safe.' },
             { role: 'Tank', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Royal Ghost', 'Bandit'], reason: 'Cheap tanks to place in front of the split musketeers.' },
             { role: 'Kite', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Ice Golem'], reason: 'Kite enemies into the 3M firing range.' },
             { role: 'Ram', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Battle Ram'], reason: 'Lightning rod (blocks lightning for 3M) and pressure.' },
             { role: 'Bait', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Minion Horde'], reason: 'Additional fireball bait. Punish if they spell the pump.' },
-            { role: 'Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Barb Barrel'], reason: 'Cheap ground defense.' },
+            { role: 'Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Barbarian Barrel'], reason: 'Cheap ground defense.' },
             { role: 'Heal', abbr: 'SS', color: '#d456fd', needed: false, examples: ['Heal Spirit'], reason: 'Keeps the Musketeers topped up.' }
         ],
         strategy: [
@@ -507,7 +507,7 @@ window.WIN_CONDITION_GUIDES = {
             { role: 'Splash', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Baby Dragon', 'Ice Wiz'], reason: 'Defensive control. Slows down pushes and survives to tank for Graveyard.' },
             { role: 'Building', abbr: 'BD', color: '#95a5a6', needed: true, examples: ['Tombstone'], reason: 'Classic defense. Spawns more skeletons effectively.' },
             { role: 'Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Poison'], reason: 'Mandatory. Kills the Minions/Archers they place to defend your Graveyard.' },
-            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Barb Barrel'], reason: 'Tank + Defense in one card.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Barbarian Barrel'], reason: 'Tank + Defense in one card.' },
             { role: 'Support', abbr: 'CC', color: '#2ecc71', needed: true, examples: ['Zappies'], reason: 'Stun lock capability.' },
             { role: 'Killer', abbr: 'UT', color: '#f1c40f', needed: true, examples: ['Cannon Cart'], reason: 'The "Tank on Wheels". Turn into a building on death.' }
         ],
@@ -516,5 +516,255 @@ window.WIN_CONDITION_GUIDES = {
             'Wait for their Poison to be out of cycle.',
             'Counter-push: Defend with troops, then pop Graveyard when they cross the bridge.'
         ]
+    }
+};
+
+window.SECONDARY_WIN_CONDITION_GUIDES = {
+    'Mega Knight': {
+        role: 'Tank / Defense',
+        archetype: 'Control',
+        difficulty: 'Easy (3/10)',
+        hardCounters: [{ name: 'P.E.K.K.A', reason: 'Shreds him.' }, { name: 'Inferno Tower', reason: 'Melts.' }],
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/mega-knight.png',
+        description: 'The mid-ladder menace. Land with a force of 1000 mustaches.',
+        composition: [
+            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Mega Knight'], reason: 'Use his spawn damage to kill support troops, then counter-push.' },
+            { role: 'Win Condition 2', abbr: 'WC2', color: '#1abc9c', needed: true, examples: ['Wall Breakers', 'Ram Rider', 'Hog Rider'], reason: 'MK tanks, these deal the damage.' },
+            { role: 'Air Defense', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Musketeer', 'Inferno Dragon'], reason: 'He can\'t hit air. You need strong air defense.' },
+            { role: 'Bait', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Bats', 'Spear Goblins'], reason: 'Zap bait synergy with MK.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Zap', 'Snowball'], reason: 'Reset Infernos.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: false, examples: ['Fireball', 'Lightning'], reason: 'Clear support.' },
+            { role: 'Support', abbr: 'SP', color: '#f39c12', needed: true, examples: ['Bandit', 'Prince'], reason: 'Bridge spam pressure.' },
+            { role: 'Cycle', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Ice Spirit', 'Skeletons'], reason: 'Keep cycle fast.' }
+        ],
+        strategy: ['Never play at the bridge.', 'Drop on top of Wizard/Musketeer/Witch.', 'Let him tank for Wall Breakers.']
+    },
+    'P.E.K.K.A': {
+        role: 'Tank Killer',
+        archetype: 'Control',
+        difficulty: 'Medium (5/10)',
+        hardCounters: [{ name: 'Swarm', reason: 'Distracted easily.' }, { name: 'Inferno', reason: 'Melts.' }],
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/pekka.png',
+        description: 'BUTTERFLY. heavy hitter that stops all tanks.',
+        composition: [
+            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Battle Ram', 'Hog Rider'], reason: 'PEKKA is defensive. You need a real win con.' },
+            { role: 'Tank Killer', abbr: 'TK', color: '#f1c40f', needed: true, examples: ['P.E.K.K.A'], reason: 'Stops E-Giant, Golem, Mega Knight.' },
+            { role: 'Splash', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Baby Dragon', 'Wizard'], reason: 'Clear swamps for her.' },
+            { role: 'Stun', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Electro Wizard'], reason: 'Essential synergy.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Poison', 'Fireball'], reason: 'Clear graveyard/minions.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Zap'], reason: 'Reset infernos.' },
+            { role: 'Pressure', abbr: 'PR', color: '#f39c12', needed: true, examples: ['Bandit', 'Royal Ghost'], reason: 'Support the push.' },
+            { role: 'Cycle', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Skeletons', 'Minions'], reason: 'Distraction.' }
+        ],
+        strategy: ['Defense into counter-push.', 'Don\'t leak elixir.', 'Support with spells.']
+    },
+    'Sparky': {
+        role: 'Glass Cannon',
+        archetype: 'Beatdown',
+        difficulty: 'Hard (8/10)',
+        hardCounters: [{ name: 'Rocket', reason: 'Neutralizes.' }, { name: 'Electro Wizard', reason: 'Permastun.' }],
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/sparky.png',
+        description: 'Trash can on wheels? No, a nuclear weapon.',
+        composition: [
+            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Goblin Giant'], reason: 'Fast tank for Sparky.' },
+            { role: 'DPS', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Sparky'], reason: 'Protect her at all costs.' },
+            { role: 'Rage', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Rage'], reason: 'Speed is key.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Zap', 'Arrows'], reason: 'Clear swarms.' },
+            { role: 'Anti-Air', abbr: 'AA', color: '#e74c3c', needed: true, examples: ['Minion Horde', 'Hunter'], reason: 'Protect from loon/minions.' },
+            { role: 'Support', abbr: 'SP', color: '#f39c12', needed: true, examples: ['Mini P.E.K.K.A', 'Dark Prince'], reason: 'Ground defense.' },
+            { role: 'Heavy Spell/Support', abbr: 'HS', color: '#e67e22', needed: true, examples: ['Mother Witch', 'Heal Spirit'], reason: 'Synergy.' },
+            { role: 'Cycle', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Elixir Collector', 'Goblins'], reason: 'Ramp or defense.' }
+        ],
+        strategy: ['Bait out Zap/Rocket.', 'Sparky in the back.', 'Don\'t miss.']
+    },
+    'Elite Barbarians': {
+        role: 'Punish',
+        archetype: 'Bridge Spam',
+        difficulty: 'Easy (2/10)',
+        hardCounters: [{ name: 'Mega Knight', reason: 'Splats them.' }, { name: 'Rocket', reason: 'Positive trade.' }],
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/elite-barbarians.png',
+        description: 'Fast, angry, and high DPS. The bridge spam punishment.',
+        composition: [
+            { role: 'Win Condition', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Elite Barbarians'], reason: 'Rush when they are low on elixir.' },
+            { role: 'Support', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Rage', 'Heal Spirit'], reason: 'Keep them moving and alive.' },
+            { role: 'Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Zap', 'Arrows'], reason: 'Kill Skarmy instantly.' },
+            { role: 'Tank/Mini Tank', abbr: 'TK', color: '#f1c40f', needed: true, examples: ['Valkyrie', 'Golem'], reason: 'Lead the charge.' },
+            { role: 'Air Defense', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Musketeer', 'Firecracker'], reason: 'Clear air.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Fireball'], reason: 'Direct damage.' },
+            { role: 'Bait', abbr: 'BT', color: '#2ecc71', needed: true, examples: ['Skeleton Army', 'Goblin Gang'], reason: 'Bait out spells.' },
+            { role: 'Cycle', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Skeletons', 'Ice Spirit'], reason: 'Fast cycle.' }
+        ],
+        strategy: ['Wait for them to overcommit.', 'Split lane pressure.', 'Rage + E-Barbs = Win?']
+    },
+    'Giant Skeleton': {
+        role: 'Defense / Bomb',
+        archetype: 'Clone',
+        difficulty: 'Medium',
+        hardCounters: [{ name: 'DPS', reason: 'Melts before tower.' }],
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/giant-skeleton.png',
+        description: 'The big bomb. Stops massive pushes or nukes the tower.',
+        composition: [
+            { role: 'Tank', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Giant Skeleton'], reason: 'Death damage is the main value.' },
+            { role: 'Clone', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Clone'], reason: 'Double bomb, double trouble.' },
+            { role: 'Swarm', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Skeleton Barrel'], reason: 'Bait spells for the clone.' },
+            { role: 'Secondary Win Con', abbr: 'WC2', color: '#1abc9c', needed: true, examples: ['Hog Rider', 'Balloon'], reason: 'Reliable damage.' },
+            { role: 'Air Defense', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Witch', 'Flying Machine'], reason: 'Clone synergy.' },
+            { role: 'Defensive Building', abbr: 'DB', color: '#7f8c8d', needed: true, examples: ['Cannon', 'Furnace'], reason: 'Distract building targeters.' },
+            { role: 'Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Tornado'], reason: 'Pull to bomb.' },
+            { role: 'Cycle', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Guards', 'Skeletons'], reason: 'Defense.' }
+        ],
+        strategy: ['Defensive nuke.', 'Clone skip technique.', 'Tank for Hogs.']
+    },
+    'Prince': {
+        role: 'Punish',
+        archetype: 'Beatdown',
+        difficulty: 'Medium',
+        hardCounters: [{ name: 'Swarm', reason: 'Distracted.' }],
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/prince.png',
+        description: 'Charging lance deals double damage. Pressure card.',
+        composition: [
+            { role: 'Win Con', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Giant', 'Goblin Giant'], reason: 'Tanks for Prince.' },
+            { role: 'Punish', abbr: 'TK', color: '#f1c40f', needed: true, examples: ['Prince'], reason: 'Threat in the other lane.' },
+            { role: 'Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['The Log', 'Zap'], reason: 'Clear swarm.' },
+            { role: 'Support', abbr: 'SP', color: '#f39c12', needed: true, examples: ['Dark Prince'], reason: 'Double Prince synergy.' },
+            { role: 'Air Defense', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Mega Minion', 'Electro Dragon'], reason: 'Support.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Fireball', 'Poison'], reason: 'Medium removal.' },
+            { role: 'Cycle', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Skeletons', 'Spirit'], reason: 'Cycle.' },
+            { role: 'Building', abbr: 'BD', color: '#7f8c8d', needed: false, examples: ['Goblin Cage', 'Tombstone'], reason: 'Defense.' }
+        ],
+        strategy: ['Charge!', 'Split push.', 'Defend then counter.']
+    },
+    'Bandit': {
+        role: 'Bridge Spam',
+        archetype: 'Bridge Spam',
+        difficulty: 'High (Skill)',
+        hardCounters: [{ name: 'Swarm', reason: 'Stops dash.' }],
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/bandit.png',
+        description: 'Dashes and becomes invulnerable.',
+        composition: [
+            { role: 'Pressure', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['P.E.K.K.A', 'Battle Ram'], reason: 'Works well in Pekka BS.' },
+            { role: 'Dash', abbr: 'TK', color: '#f1c40f', needed: true, examples: ['Bandit'], reason: 'Snipe princesses etc.' },
+            { role: 'Air Defense', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Electro Wizard'], reason: 'Stun support.' },
+            { role: 'Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Zap', 'Royal Delivery'], reason: 'Clear swarm.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Poison', 'Fireball'], reason: 'Area control.' },
+            { role: 'Ghost', abbr: 'SP', color: '#f39c12', needed: true, examples: ['Royal Ghost'], reason: 'Invisible pressure.' },
+            { role: 'Cycle', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Skeletons'], reason: 'Distraction.' },
+            { role: 'Building/Fish', abbr: 'BD', color: '#7f8c8d', needed: false, examples: ['Fisherman', 'Cannon'], reason: 'Pull.' }
+        ],
+        strategy: ['Dash interaction knowledge.', 'Bridge spam.', 'Pressure.']
+    },
+    'Golden Knight': {
+        role: 'Chain Dash',
+        archetype: 'Beatdown / Bridge Spam',
+        difficulty: 'Medium',
+        hardCounters: [{ name: 'Air', reason: 'Cant hit air.' }],
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/golden-knight.png',
+        description: 'Dashing Handsome Boy. Dashes towards the tower if chained correctly.',
+        composition: [
+            { role: 'Tank', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Electro Giant', 'Golem'], reason: 'He supports tanks by clearing swarms.' },
+            { role: 'Nado', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Tornado'], reason: 'Pull units to create a dash chain to the tower.' },
+            { role: 'Air Defense', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Phoenix', 'Baby Dragon'], reason: 'Air support.' },
+            { role: 'Building', abbr: 'BD', color: '#7f8c8d', needed: true, examples: ['Cannon', 'Tombstone'], reason: 'Defense.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Lightning'], reason: 'Reset/Kill buildings.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Barbarian Barrel'], reason: 'Ground defense.' },
+            { role: 'Champion', abbr: 'TK', color: '#f1c40f', needed: true, examples: ['Golden Knight'], reason: 'The carry.' },
+            { role: 'Cycle', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Skeletons'], reason: 'Cycle.' }
+        ],
+        strategy: ['Use ability to chain onto tower.', 'Dash grants invulnerability.', 'Pressure lane.']
+    },
+    'Skeleton King': {
+        role: 'Swarm Tank',
+        archetype: 'Graveyard / Bait',
+        difficulty: 'Medium',
+        hardCounters: [{ name: 'Mother Witch', reason: 'Hard counter.' }, { name: 'Valkyrie', reason: 'Splash.' }],
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/skeleton-king.png',
+        description: 'Collects souls and spawns a graveyard on command.',
+        composition: [
+            { role: 'Swarm', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Tombstone', 'Skeleton Army'], reason: 'Feed his soul meter.' },
+            { role: 'Win Con', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Graveyard', 'Mortar'], reason: 'Double danger.' },
+            { role: 'Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Arrows', 'Zap'], reason: 'Clear minions.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Fireball', 'Poison'], reason: 'Area denial.' },
+            { role: 'Air Defense', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Zappies', 'Musketeer'], reason: 'Stun/DPS.' },
+            { role: 'Champion', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Skeleton King'], reason: 'The King himself.' },
+            { role: 'Cycle', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Guards'], reason: 'Swarm.' },
+            { role: 'Building', abbr: 'BD', color: '#7f8c8d', needed: true, examples: ['Cannon Cart'], reason: 'Counterpush.' }
+        ],
+        strategy: ['Charge ability before bridge.', 'Bait out splash first.', 'Tank for the swarm.']
+    },
+    'Archer Queen': {
+        role: 'DPS / Cloak',
+        archetype: 'Cycle / Beatdown',
+        difficulty: 'Easy (Ability)',
+        hardCounters: [{ name: 'Lightning', reason: 'Kills her.' }],
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/archer-queen.png',
+        description: 'Goes invisible and deals massive damage. The Queen Walk.',
+        composition: [
+            { role: 'Win Con', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Royal Hogs', 'X-Bow'], reason: 'She defends, then you counterpush.' },
+            { role: 'Cycle', abbr: 'CC', color: '#2ecc71', needed: true, examples: ['Skeletons', 'Spirit'], reason: 'Cycle back to her ability.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Earthquake', 'Fireball'], reason: 'Clear buildings.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['The Log'], reason: 'Pushback.' },
+            { role: 'Mini Tank', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Knight', 'Valkyrie'], reason: 'Protect the queen.' },
+            { role: 'Building', abbr: 'BD', color: '#7f8c8d', needed: true, examples: ['Cannon', 'Tesla'], reason: 'Defense.' },
+            { role: 'Support', abbr: 'SP', color: '#f39c12', needed: true, examples: ['Fire Spirit'], reason: 'Cycle/Splash.' },
+            { role: 'Champion', abbr: 'BU', color: '#95a5a6', needed: true, examples: ['Archer Queen'], reason: 'DPS Carry.' }
+        ],
+        strategy: ['Save ability for big interactions.', 'Cloak drops aggro.', 'Snipe tower from bridge.']
+    },
+    'Mighty Miner': {
+        role: 'Lane Switch',
+        archetype: 'Bait / Cycle',
+        difficulty: 'Medium',
+        hardCounters: [{ name: 'Air', reason: 'Helpless.' }],
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/mighty-miner.png',
+        description: 'Tank killer that switches lanes. Leaves a bomb behind.',
+        composition: [
+            { role: 'Bait', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Goblin Barrel', 'Wall Breakers'], reason: 'He tanks for bait cards.' },
+            { role: 'Air Def', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Musketeer', 'Dart Goblin'], reason: 'Cover his weakness.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Rocket', 'Fireball'], reason: 'Finish tower.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['The Log'], reason: 'Bait.' },
+            { role: 'Building', abbr: 'BD', color: '#7f8c8d', needed: true, examples: ['Bomb Tower', 'Inferno Tower'], reason: 'Defense.' },
+            { role: 'Cycle', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Goblins', 'Ice Spirit'], reason: 'Cycle.' },
+            { role: 'Support', abbr: 'SP', color: '#f39c12', needed: true, examples: ['Princess'], reason: 'Bait.' },
+            { role: 'Champion', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['Mighty Miner'], reason: 'Tank Killer.' }
+        ],
+        strategy: [' Lane switch to escape counters.', 'Ramps up damage like Inferno.', 'Bomb kills swarms.']
+    },
+    'Monk': {
+        role: 'Deflection',
+        archetype: 'Control / RG',
+        difficulty: 'Hard (Timing)',
+        hardCounters: [{ name: 'Zappies', reason: 'Stun lock.' }],
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/monk.png',
+        description: 'Reflects projectiles. Protects your win condition from spells.',
+        composition: [
+            { role: 'Win Con', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Royal Giant', 'Hog Rider'], reason: 'Reflects rockets/log away from them.' },
+            { role: 'DPS', abbr: 'SC', color: '#2ecc71', needed: true, examples: ['Phoenix'], reason: 'Push partner.' },
+            { role: 'Champion', abbr: 'SP', color: '#f39c12', needed: true, examples: ['Monk'], reason: 'Reflect.' },
+            { role: 'Small Spell', abbr: 'SS', color: '#d456fd', needed: true, examples: ['The Log'], reason: 'Clear swarm.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Fireball'], reason: 'Kill support.' },
+            { role: 'Building', abbr: 'BD', color: '#7f8c8d', needed: true, examples: ['Tombstone'], reason: 'Defense.' },
+            { role: 'Cycle', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Skeletons'], reason: 'Cycle.' },
+            { role: 'Air Def', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Mother Witch', 'Hunter'], reason: 'Swarm control.' }
+        ],
+        strategy: ['Predict the Rocket/Log.', 'Push opponent back.', 'Protect the carry.']
+    },
+    'Magic Archer': {
+        role: 'Geometry',
+        archetype: 'Control / Bridge Spam',
+        difficulty: 'Hard (Geometry)',
+        hardCounters: [{ name: 'Fireball', reason: 'Die.' }],
+        imgUrl: 'https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards-75/magic-archer.png',
+        description: 'It\'s not about hitting the troop, it\'s about hitting the tower behind it.',
+        composition: [
+            { role: 'Tornado', abbr: 'SS', color: '#d456fd', needed: true, examples: ['Tornado'], reason: 'Line them up.' },
+            { role: 'Tank', abbr: 'MT', color: '#f1c40f', needed: true, examples: ['P.E.K.K.A', 'Miner'], reason: 'Distraction.' },
+            { role: 'Win Con', abbr: 'WC', color: '#1abc9c', needed: true, examples: ['Wall Breakers', 'Ram Rider'], reason: 'Pressure.' },
+            { role: 'Big Spell', abbr: 'BS', color: '#e67e22', needed: true, examples: ['Fireball'], reason: 'Control.' },
+            { role: 'Building', abbr: 'BD', color: '#7f8c8d', needed: true, examples: ['Bomb Tower'], reason: 'Splash.' },
+            { role: 'Cycle', abbr: 'CC', color: '#95a5a6', needed: true, examples: ['Skeletons', 'Spirit'], reason: 'Cycle.' },
+            { role: 'Geometry', abbr: 'SP', color: '#f39c12', needed: true, examples: ['Magic Archer'], reason: 'Geometry.' },
+            { role: 'Air Def', abbr: 'AD', color: '#e74c3c', needed: true, examples: ['Electro Wizard'], reason: 'Control.' }
+        ],
+        strategy: ['Geometry is key.', 'Pierce through tanks.', 'Chip damage wins games.']
     }
 };

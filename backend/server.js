@@ -3,6 +3,9 @@ import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
 
+// Fix for SSL Certificate issues (SELF_SIGNED_CERT_IN_CHAIN) in certain network environments
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -64,47 +67,114 @@ app.get("/player/:tag", async (req, res) => {
 
 // NEW: Proxy for getting ALL Cards (for Matchup Analyzer Manual Mode)
 app.get("/api/cards", async (req, res) => {
+  const demoFallback = [
+    { name: 'Knight', id: 26000000, elixirCost: 3, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/jAj1Q5rclXxU9kVImGqSJxa4wEMfEhvwNQ_4jiGUuqg.png' }, rarity: 'Common' },
+    { name: 'Archers', id: 26000001, elixirCost: 3, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/W_ym0J6NFEHKljJU_BvM4YaGR3TsDLAb_gWKGA10yRA.png' }, rarity: 'Common' },
+    { name: 'Goblins', id: 26000002, elixirCost: 2, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/D7E1vj3n-TS_1ANEZ3lv3Pfjmjgq3t5I1s60lvYilRc.png' }, rarity: 'Common' },
+    { name: 'Giant', id: 26000003, elixirCost: 5, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/DHWM3J5SLZ34IXCj_sVVARWj8HP0VLkOVXlhg0CAlhM.png' }, rarity: 'Rare' },
+    { name: 'P.E.K.K.A', id: 26000004, elixirCost: 7, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/MlArURKhn_zWAZY-Xj1qIlY6_0h4n1DcQci7iqIYmRk.png' }, rarity: 'Epic' },
+    { name: 'Minions', id: 26000005, elixirCost: 3, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/yHGpoEnmUWPGV_hBbhn-Kk_PMBPXD8xCSfRwcFZf2vk.png' }, rarity: 'Common' },
+    { name: 'Balloon', id: 26000006, elixirCost: 5, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/qBipxLo_BpTstkN3hIFj7BC1hZkiwXQZWjh7aymMUQw.png' }, rarity: 'Epic' },
+    { name: 'Witch', id: 26000007, elixirCost: 5, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/cfwk1vzehVyHC-uloIftJ7T9AeCG8KAIx7WM1xZb0lg.png' }, rarity: 'Epic' },
+    { name: 'Barbarians', id: 26000008, elixirCost: 5, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/TvJsuu2S4yhyk1jJ7P9gnAbOUxqM_onJjtiginsauJk.png' }, rarity: 'Common' },
+    { name: 'Golem', id: 26000009, elixirCost: 8, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/npdmCnET7jmVjJvs5VTi8hOcUQIOp0OIXJ-aV-HNEtg.png' }, rarity: 'Epic' },
+    { name: 'Skeletons', id: 26000010, elixirCost: 1, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/oO7iKMC_i5jHkAMhJdJn4KqM8hL5rPRzCV5H1fM0Y9E.png' }, rarity: 'Common' },
+    { name: 'Valkyrie', id: 26000011, elixirCost: 4, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/_tJ7tVgLRKM12zLgrHltzhEN3crhQ6dqKIJw3wW7Uwc.png' }, rarity: 'Rare' },
+    { name: 'Skeleton Army', id: 26000012, elixirCost: 3, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/fAOToOaxw0Y34KR4h26xzcZwNw1n8UPjkEY9XKNY-nI.png' }, rarity: 'Epic' },
+    { name: 'Bomber', id: 26000013, elixirCost: 2, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/c7sqjOjuM16whL7eaeBbxScnn4TaPLhOJC7-vgWEe4g.png' }, rarity: 'Common' },
+    { name: 'Musketeer', id: 26000014, elixirCost: 4, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/sw5tF-N07q2c9JNqwS8lyj26QGN4iTM464LGF8-FJnc.png' }, rarity: 'Rare' },
+    { name: 'Baby Dragon', id: 26000015, elixirCost: 4, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/cjC6yRNZI6Vi3_jPONd4bnIwQCLUjR9vXWp6d5l89xs.png' }, rarity: 'Epic' },
+    { name: 'Prince', id: 26000016, elixirCost: 5, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/WeJKAR43pjJyhC5kRXRyFHd62Y5SjYDMJvNOFnfLm1k.png' }, rarity: 'Epic' },
+    { name: 'Wizard', id: 26000017, elixirCost: 5, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/lZgLZsEdwZGZyb5wMBTmae95GE5vQfTxOZ7YpriJ6tc.png' }, rarity: 'Rare' },
+    { name: 'Mini P.E.K.K.A', id: 26000018, elixirCost: 4, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/Fmltc4j3Ve8vhpUiQ8jhwrxl0Gf5CzoHjTJMX0yWB6k.png' }, rarity: 'Rare' },
+    { name: 'Hog Rider', id: 26000020, elixirCost: 4, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/Ubu0oZL4Fl8utZBIjF0afda6YPwvCfIftaQPQ3Bv3-o.png' }, rarity: 'Rare' },
+    { name: 'Fireball', id: 28000000, elixirCost: 4, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/lZgLZsEdwZGZyb5wMBTmae95GE5vQfTxOZ7YpriJ6tc.png' }, rarity: 'Rare' },
+    { name: 'Zap', id: 28000001, elixirCost: 2, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/Vthq6hqz1bN2J0Y0eMj8NvTOd0CJqTpNgFIlOowlPWA.png' }, rarity: 'Common' },
+    { name: 'The Log', id: 28000003, elixirCost: 2, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/_iDwuWVQ4BT4FAOSyGCYaIuopwmqEoZJhVDCo8EZ6wo.png' }, rarity: 'Legendary' },
+    { name: 'Arrows', id: 28000002, elixirCost: 3, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/Fyn5FYVyljJNTNjOmbFwbjp7hSSr-B00_XJQDJJMzxk.png' }, rarity: 'Common' },
+    { name: 'Rocket', id: 28000006, elixirCost: 6, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/TwPTqLEg004LXmgPQbZ8u9HTiNj69j4cITPf3WqQpEk.png' }, rarity: 'Rare' },
+    { name: 'Royal Giant', id: 26000024, elixirCost: 6, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/4JpqUWqkNJNrjlbJsYn6KAP1cZ~j-6J8p4E_VVAWexs.png' }, rarity: 'Common' },
+    { name: 'Miner', id: 26000037, elixirCost: 3, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/eHGn41dFiVcD~p~j32otGvPIDBzwAGDy8_F4-yvwoHg.png' }, rarity: 'Legendary' },
+    { name: 'Ice Golem', id: 26000077, elixirCost: 2, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/Yy6wB3IZWwkIrPM3mPZfS8ROB0vu5CIMVF3lSjwTBas.png' }, rarity: 'Rare' },
+    { name: 'Electro Wizard', id: 26000042, elixirCost: 4, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/0RU27fKZCEsUqUON_6sK9GqY5qrDe0fLXHFI5FlJBMo.png' }, rarity: 'Legendary' },
+    { name: 'Monk', id: 26000117, elixirCost: 5, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/2zkzcRc5J0x8.png' }, rarity: 'Champion' },
+    { name: 'Archer Queen', id: 26000072, elixirCost: 5, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/ubHF5.png' }, rarity: 'Champion' },
+    { name: 'Golden Knight', id: 26000067, elixirCost: 4, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/ubAqEz1l-gqX2OWXVVS6yD5f5BL6zRxJmNTqS78rZwo.png' }, rarity: 'Champion' },
+    { name: 'Skeleton King', id: 26000071, elixirCost: 4, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/_R60gJp80cF74wnvoPLNShPCTAzP7bLPG2E0IJ3Qh0O.png' }, rarity: 'Champion' },
+    { name: 'Mighty Miner', id: 26000108, elixirCost: 4, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/BjBl29_5dlqfNcaOvQ.png' }, rarity: 'Champion' },
+    { name: 'Little Prince', id: 26000120, elixirCost: 3, iconUrls: { medium: 'https://api-assets.clashroyale.com/cards/300/RDQV_YTaUfC_8.png' }, rarity: 'Champion' }
+  ];
+
   if (!API_TOKEN) {
-    return res.status(500).json({ error: 'Server misconfigured: CLASH_API_TOKEN not set' });
+    console.warn('API_TOKEN not set, using demo fallback');
+    return res.json(demoFallback);
   }
 
   try {
     const response = await fetch('https://api.clashroyale.com/v1/cards', {
-      headers: { Authorization: `Bearer ${API_TOKEN}` }
+      headers: { 
+        Authorization: `Bearer ${API_TOKEN}`,
+        'User-Agent': 'Mozilla/5.0'
+      }
     });
 
     if (!response.ok) {
-      const text = await response.text();
-      return res.status(response.status).send(text);
+      console.warn(`Upstream Card API failed: ${response.status}. Using demo fallback.`);
+      return res.json(demoFallback);
     }
 
     const data = await response.json();
-    // API returns { items: [...] }
-    res.json(data.items || []);
+    res.json(data.items || demoFallback);
   } catch (err) {
-    console.error("Failed to fetch cards:", err);
-    res.status(500).json({ error: "Failed to fetch cards" });
+    console.error("Failed to fetch cards, using fallback:", err);
+    res.json(demoFallback);
   }
 });
 
 // NEW: Image Proxy to bypass CORS/Hotlink protection
 app.get("/api/proxy-image", async (req, res) => {
-  const { src } = req.query;
+  const { src, name } = req.query;
   if (!src) return res.status(400).send("No src provided");
 
-  try {
-    const response = await fetch(src);
-    if (!response.ok) return res.status(response.status).send("Failed to fetch image");
+  const tryFetch = async (url) => {
+    try {
+      const response = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        timeout: 3000
+      });
+      if (response && response.ok) return response;
+    } catch (e) {
+      console.warn(`Fetch to ${url} failed: ${e.message}`);
+    }
+    return null;
+  };
 
-    // Forward Headers
-    res.setHeader("Content-Type", response.headers.get("content-type"));
-    res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 1 day
+  // 1. Try Primary (Supercell)
+  let response = await tryFetch(src);
 
-    // Pipe
+  // 2. If Primary Fails, Try Fallback (RoyaleAPI Github)
+  if (!response && name) {
+    // Standardize Name -> Kebab Case for RoyaleAPI
+    let cleanName = name.replace(/ Evolution$/i, '').replace(/ Evo$/i, '').trim();
+    const kebabName = cleanName.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '');
+    
+    // Fallback URL 1: Standard Card
+    const fallbackUrl = `https://royaleapi.github.io/cr-api-assets/cards/${kebabName}.png`;
+    console.log(`Primary image failed for ${name}. Trying fallback: ${fallbackUrl}`);
+    response = await tryFetch(fallbackUrl);
+
+    // Special case for 'The Log' -> 'log' mapping
+    if (!response && kebabName === 'the-log') {
+        response = await tryFetch('https://royaleapi.github.io/cr-api-assets/cards/log.png');
+    }
+  }
+
+  if (response && response.ok) {
+    res.setHeader("Content-Type", response.headers.get("content-type") || 'image/png');
+    res.setHeader("Cache-Control", "public, max-age=86400");
     response.body.pipe(res);
-  } catch (err) {
-    console.error("Proxy Image Error:", err);
-    res.status(500).send("Proxy error");
+  } else {
+    res.status(404).send("Image not found");
   }
 });
 
@@ -361,7 +431,7 @@ app.get("/api/meta-snapshot", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8888;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

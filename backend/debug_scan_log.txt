@@ -1,0 +1,32 @@
+[2026-02-13T12:19:27.128Z] Launching browser...
+[2026-02-13T12:19:28.398Z] Navigating to http://localhost:3000...
+[2026-02-13T12:19:28.568Z] BROWSER_CONSOLE: LOG Main Script Ended
+[2026-02-13T12:19:28.573Z] BROWSER_CONSOLE: LOG --- Initializing Matchup Controller ---
+[2026-02-13T12:19:28.575Z] BROWSER_CONSOLE: LOG Matchup Analyzer Script Loaded (Dual Manual Mode)
+[2026-02-13T12:19:28.577Z] BROWSER_CONSOLE: LOG [INIT] Enhanced scanner v2 loaded!
+[2026-02-13T12:19:28.584Z] BROWSER_CONSOLE: LOG 🚀 SimpleDeckBuilder Initializing...
+[2026-02-13T12:19:28.586Z] BROWSER_CONSOLE: LOG Fetching cards...
+[2026-02-13T12:19:28.588Z] BROWSER_CONSOLE: LOG ✅ SimpleDeckBuilder Loaded Successfully
+[2026-02-13T12:19:28.709Z] BROWSER_CONSOLE: ERROR Failed to load resource: the server responded with a status of 404 (Not Found)
+[2026-02-13T12:19:29.567Z] BROWSER_CONSOLE: LOG Loaded 121 cards.
+[2026-02-13T12:19:31.503Z] Page loaded.
+[2026-02-13T12:19:31.504Z] Typing tag: G9YV9GR8R
+[2026-02-13T12:19:31.636Z] Clicking scan button...
+[2026-02-13T12:19:32.038Z] BROWSER_CONSOLE: LOG [DeckHelper] scan start G9YV9GR8R attempt 1
+[2026-02-13T12:19:32.039Z] BROWSER_CONSOLE: LOG [DeckHelper] fetch /player/%23G9YV9GR8R
+[2026-02-13T12:19:32.048Z] Waiting 10 seconds...
+[2026-02-13T12:19:32.500Z] BROWSER_CONSOLE: LOG [DeckHelper] status 200
+[2026-02-13T12:19:32.503Z] BROWSER_CONSOLE: LOG [DeckHelper] data JSHandle@object
+[2026-02-13T12:19:32.505Z] BROWSER_CONSOLE: LOG DEBUG RENDER: Royal Ghost | Rarity: legendary | Evo: 1
+[2026-02-13T12:19:32.506Z] BROWSER_CONSOLE: LOG DEBUG RENDER: Bats | Rarity: common | Evo: 1
+[2026-02-13T12:19:32.508Z] BROWSER_CONSOLE: LOG DEBUG RENDER: Goblins | Rarity: common | Evo: 2
+[2026-02-13T12:19:32.509Z] BROWSER_CONSOLE: LOG DEBUG RENDER: Ice Golem | Rarity: rare | Evo: 2
+[2026-02-13T12:19:32.510Z] BROWSER_CONSOLE: LOG DEBUG RENDER: Miner | Rarity: legendary | Evo: 
+[2026-02-13T12:19:32.512Z] BROWSER_CONSOLE: LOG DEBUG RENDER: Poison | Rarity: epic | Evo: 
+[2026-02-13T12:19:32.513Z] BROWSER_CONSOLE: LOG DEBUG RENDER: Goblin Hut | Rarity: rare | Evo: 
+[2026-02-13T12:19:32.514Z] BROWSER_CONSOLE: LOG DEBUG RENDER: The Log | Rarity: legendary | Evo: 
+[2026-02-13T12:19:42.063Z] Found 0 .deck-card elements.
+[2026-02-13T12:19:42.066Z] Found 8 images.
+[2026-02-13T12:19:42.069Z] Container HTML length: 4778
+[2026-02-13T12:19:42.070Z] Taking screenshot to debug_scan_manual.png...
+[2026-02-13T12:19:42.883Z] Browser closed.

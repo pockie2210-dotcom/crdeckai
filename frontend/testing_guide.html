@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feature Testing Guide - Clash Royale Deck Helper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+            color: #00d2ff;
+        }
+
+        .feature-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 5px solid #00d2ff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-section:hover {
+            transform: translateX(10px);
+            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.3);
+        }
+
+        .feature-title {
+            font-size: 1.8em;
+            color: #ffd700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            font-size: 1.5em;
+        }
+
+        .feature-description {
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .test-steps {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .test-steps h4 {
+            color: #00d2ff;
+            margin-bottom: 10px;
+        }
+
+        .test-steps ol {
+            margin-left: 20px;
+        }
+
+        .test-steps li {
+            margin-bottom: 8px;
+            padding-left: 10px;
+        }
+
+        .expected-result {
+            background: rgba(46, 204, 113, 0.2);
+            border-left: 3px solid #2ecc71;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+
+        .expected-result strong {
+            color: #2ecc71;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .status.priority-high {
+            background: #e74c3c;
+        }
+
+        .status.priority-medium {
+            background: #f39c12;
+        }
+
+        .status.priority-low {
+            background: #3498db;
+        }
+
+        .player-tag {
+            text-align: center;
+            font-size: 1.5em;
+            background: rgba(255, 215, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 2px solid #ffd700;
+        }
+
+        .player-tag code {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .quick-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .quick-link {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .quick-link:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎮 Clash Royale Deck Helper</h1>
+        <div class="subtitle">Comprehensive Feature Testing Guide</div>
+
+        <div class="player-tag">
+            <strong>Test with Pro Player Mo Light:</strong> <code>#G9YV9GR8R</code>
+        </div>
+
+        <div class="quick-links">
+            <a href="http://localhost:3000" class="quick-link" target="_blank">🚀 Open Application</a>
+            <a href="http://localhost:3000/test.html" class="quick-link" target="_blank">🧪 Test Page</a>
+        </div>
+
+        <!-- Feature 1: Player Scan -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span class="icon">🔍</span>
+                1. Player Scan
+                <span class="status priority-high">CRITICAL</span>
+            </div>
+            <div class="feature-description">
+                Fetches player data from the Clash Royale API and displays stats, trophies, and current deck.
+            </div>
+            <div class="test-steps">
+                <h4>Testing Steps:</h4>
+                <ol>
+                    <li>Enter player tag: <code>#G9YV9GR8R</code> in the input field</li>
+                    <li>Click "🔍 Scan Player" button</li>
+                    <li>Wait 2-3 seconds for data to load</li>
+                </ol>
+                <div class="expected-result">
+                    <strong>✅ Expected Result:</strong> Player name "Mohamed Light" appears, trophies displayed, 8 cards
+                    shown in the deck with proper card images and levels
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 2: Deck Builder -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span class="icon">🏗️</span>
+                2. Manual Deck Builder
+                <span class="status priority-high">CRITICAL</span>
+            </div>
+            <div class="feature-description">
+                Build custom decks from scratch by selecting cards from the collection.
+            </div>
+            <div class="test-steps">
+                <h4>Testing Steps:</h4>
+                <ol>
+                    <li>Click "🛠️ Deck Tools" dropdown</li>
+                    <li>Select "🏗️ Build from Scratch"</li>
+                    <li>Click on various cards to add them to your deck</li>
+                    <li>Try adding more than 8 cards (should prevent)</li>
+                    <li>Right-click a card to exclude it (red X badge)</li>
+                </ol>
+                <div class="expected-result">
+                    <strong>✅ Expected Result:</strong> Card picker grid appears, cards can be clicked to add/remove,
+                    deck slots fill up to 8 maximum, excluded cards show red badge
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 3: Meta Deck Loading -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span class="icon">🔥</span>
+                3. Load Meta Deck
+                <span class="status priority-medium">IMPORTANT</span>
+            </div>
+            <div class="feature-description">
+                Loads top competitive decks from DeckShop.pro's meta snapshot.
+            </div>
+            <div class="test-steps">
+                <h4>Testing Steps:</h4>
+                <ol>
+                    <li>Click "🛠️ Deck Tools" dropdown</li>
+                    <li>Select "🔥 Load Meta Deck"</li>
+                    <li>Modal should appear showing 5 top meta decks</li>
+                    <li>Click on one of the decks</li>
+                </ol>
+                <div class="expected-result">
+                    <strong>✅ Expected Result:</strong> Modal shows live meta decks with card images, clicking a deck
+                    loads all 8 cards into the deck builder
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 4: AI Auto-Complete -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span class="icon">✨</span>
+                4. AI Auto-Complete Deck
+                <span class="status priority-high">CRITICAL</span>
+            </div>
+            <div class="feature-description">
+                Intelligent AI fills remaining deck slots based on selected playstyle and synergies.
+            </div>
+            <div class="test-steps">
+                <h4>Testing Steps:</h4>
+                <ol>
+                    <li>Build from scratch or scan a player</li>
+                    <li>Select a playstyle (e.g., "⚡ Cycle" or "👊 Beatdown")</li>
+                    <li>Add 2-3 cards manually (e.g., Hog Rider, Musketeer)</li>
+                    <li>Click "✨ Auto-Complete Deck" button</li>
+                    <li>Try "⚡ God Mode" toggle for stricter meta decks</li>
+                </ol>
+                <div class="expected-result">
+                    <strong>✅ Expected Result:</strong> AI fills remaining 5-6 slots with synergistic cards, deck
+                    quality score shows high offense/defense/synergy ratings, strategy guide appears below
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 5: Synergy Matrix -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span class="icon">🔗</span>
+                5. Synergy Matrix
+                <span class="status priority-medium">IMPORTANT</span>
+            </div>
+            <div class="feature-description">
+                Visualizes card synergies and combinations within the current deck.
+            </div>
+            <div class="test-steps">
+                <h4>Testing Steps:</h4>
+                <ol>
+                    <li>Have a full 8-card deck loaded</li>
+                    <li>Click "📊 Analysis Tools" dropdown</li>
+                    <li>Select "🔗 Synergy Matrix"</li>
+                </ol>
+                <div class="expected-result">
+                    <strong>✅ Expected Result:</strong> Modal appears showing an 8x8 grid of card combinations,
+                    synergies highlighted in green/gold, clicking cells shows combo descriptions
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 6: Optimize Deck -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span class="icon">✨</span>
+                6. Optimize Deck (Deck Perfector)
+                <span class="status priority-high">CRITICAL</span>
+            </div>
+            <div class="feature-description">
+                Analyzes current deck and suggests optimal improvements.
+            </div>
+            <div class="test-steps">
+                <h4>Testing Steps:</h4>
+                <ol>
+                    <li>Have a full 8-card deck loaded (use Mo Light's deck)</li>
+                    <li>Click "📊 Analysis Tools" dropdown</li>
+                    <li>Select "✨ Optimize Deck"</li>
+                </ol>
+                <div class="expected-result">
+                    <strong>✅ Expected Result:</strong> Modal shows analysis with suggestions for card replacements,
+                    each suggestion shows scores and reasoning
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 7: Smart Swap -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span class="icon">♻️</span>
+                7. Smart Swap
+                <span class="status priority-medium">IMPORTANT</span>
+            </div>
+            <div class="feature-description">
+                Click any card in your deck to see intelligent replacement suggestions.
+            </div>
+            <div class="test-steps">
+                <h4>Testing Steps:</h4>
+                <ol>
+                    <li>Have a full deck loaded</li>
+                    <li>Click "📊 Analysis Tools" → "♻️ Smart Swap"</li>
+                    <li>Click on any card in the deck</li>
+                    <li>Modal shows alternative cards with scores</li>
+                    <li>Click a replacement to swap</li>
+                </ol>
+                <div class="expected-result">
+                    <strong>✅ Expected Result:</strong> Swap modal appears with 3-5 alternative cards, each shows
+                    synergy score, clicking replaces the original card
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 8: Weakness Report -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span class="icon">⚠️</span>
+                8. Weakness Report
+                <span class="status priority-medium">IMPORTANT</span>
+            </div>
+            <div class="feature-description">
+                Comprehensive analysis of deck vulnerabilities and missing components.
+            </div>
+            <div class="test-steps">
+                <h4>Testing Steps:</h4>
+                <ol>
+                    <li>Have a full deck loaded</li>
+                    <li>Click "📊 Analysis Tools" dropdown</li>
+                    <li>Select "⚠️ Weakness Report"</li>
+                </ol>
+                <div class="expected-result">
+                    <strong>✅ Expected Result:</strong> Modal shows detailed breakdown of missing roles (air defense,
+                    building, spells), elixir warnings, and specific weaknesses with fixes
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 9: Substitutions -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span class="icon">♻️</span>
+                9. Substitutions Manager
+                <span class="status priority-low">NICE-TO-HAVE</span>
+            </div>
+            <div class="feature-description">
+                Choose a card you want to add, AI suggests which card to remove.
+            </div>
+            <div class="test-steps">
+                <h4>Testing Steps:</h4>
+                <ol>
+                    <li>Have a full deck loaded</li>
+                    <li>Click "📊 Analysis Tools" → "♻️ Substitutions"</li>
+                    <li>Search for a card (e.g., "Wizard")</li>
+                    <li>Click the card you want to add</li>
+                </ol>
+                <div class="expected-result">
+                    <strong>✅ Expected Result:</strong> AI suggests the best card to remove, explains reasoning, deck
+                    updates after confirmation
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 10: Win Condition Masterclass -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span class="icon">🎓</span>
+                10. Win Condition Masterclass
+                <span class="status priority-medium">IMPORTANT</span>
+            </div>
+            <div class="feature-description">
+                Educational guides for mastering specific win conditions and archetypes.
+            </div>
+            <div class="test-steps">
+                <h4>Testing Steps:</h4>
+                <ol>
+                    <li>Click "🎓 Win Condition Masterclass" button</li>
+                    <li>Browse the grid of win condition cards</li>
+                    <li>Click on one (e.g., "Hog Rider")</li>
+                    <li>Read the detailed guide with deck composition, strategy, counters</li>
+                    <li>Try the "Unique Strategies (Pseudo WC)" button for Miner/Graveyard</li>
+                </ol>
+                <div class="expected-result">
+                    <strong>✅ Expected Result:</strong> Modal shows all win conditions as card images, clicking opens
+                    detailed guide with 8-card archetype layout, strategy tips, and counter advice
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 11: DeckShop Verification -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span class="icon">✅</span>
+                11. DeckShop Verification
+                <span class="status priority-low">NICE-TO-HAVE</span>
+            </div>
+            <div class="feature-description">
+                Cross-references your deck with DeckShop.pro ratings (Attack, Defense, Synergy).
+            </div>
+            <div class="test-steps">
+                <h4>Testing Steps:</h4>
+                <ol>
+                    <li>Have a full deck loaded</li>
+                    <li>Click "🛠️ Deck Tools" → "✅ Check Deck"</li>
+                    <li>Wait 5-10 seconds for scraping</li>
+                </ol>
+                <div class="expected-result">
+                    <strong>✅ Expected Result:</strong> Shows Attack, Defense, Synergy, Versatility scores from
+                    DeckShop.pro, or provides debug screenshot if scraping fails
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 12: Matchup Analyzer -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span class="icon">⚔️</span>
+                12. Matchup Analyzer
+                <span class="status priority-low">BONUS</span>
+            </div>
+            <div class="feature-description">
+                Compare your deck against an enemy deck to analyze advantages/disadvantages.
+            </div>
+            <div class="test-steps">
+                <h4>Testing Steps:</h4>
+                <ol>
+                    <li>Have a deck loaded</li>
+                    <li>Find and click a matchup analyzer button/modal (may be in Analysis Tools)</li>
+                    <li>Build an enemy deck using the card picker</li>
+                    <li>Click "⚖️ Analyze Matchup"</li>
+                </ol>
+                <div class="expected-result">
+                    <strong>✅ Expected Result:</strong> Shows win probability, lists threats from enemy deck, provides
+                    counter strategies
+                </div>
+            </div>
+        </div>
+
+        <div
+            style="margin-top: 40px; padding: 20px; background: rgba(0, 210, 255, 0.2); border-radius: 10px; text-align: center;">
+            <h3 style="color: #00d2ff; margin-bottom: 10px;">🎯 Testing Priority</h3>
+            <p><strong style="color: #e74c3c;">HIGH PRIORITY:</strong> Player Scan, Deck Builder, AI Auto-Complete,
+                Optimize Deck</p>
+            <p><strong style="color: #f39c12;">MEDIUM PRIORITY:</strong> Meta Decks, Synergy Matrix, Weakness Report,
+                Win Condition Guides</p>
+            <p><strong style="color: #3498db;">LOW PRIORITY:</strong> Substitutions, DeckShop Verification, Matchup
+                Analyzer</p>
+        </div>
+    </div>
+</body>
+
+</html>

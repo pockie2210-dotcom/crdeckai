@@ -1,103 +1,127 @@
 
 // Mock window and alert
 global.window = {};
+global.grid = {}; // Mock grid for console
 global.alert = console.log;
 
-// Pasting content of deckshop_helper.js (adapted for node)
+// SINGLE SOURCE OF TRUTH: Copy of TWO_LETTER_CODES from frontend/deckshop_helper.js
 const TWO_LETTER_CODES = {
-    // --- CONFIRMED BY USER ---
-    'Wall Breakers': 'wb',
-    'Bomb Tower': 'bt',
-    'Lightning': 'lk',      // User: lk
-    'Hog Rider': 'hr',
-    'The Log': 'lo',
-    'Battle Ram': 'br',
-    'Ram Rider': 'rr',
-    'Mega Knight': 'mk',
-    'Mini P.E.K.K.A': 'mp',
-    'Dark Prince': 'dp',
-    'Night Witch': 'nw',
-    'Electro Wizard': 'ew',
+    'Archer Queen': 'aq',
+    'Archers': 'ac',
+    'Arrows': 'ar',
     'Baby Dragon': 'bd',
-    'Inferno Dragon': 'id',
-    'Skeleton Army': 'sa',
-    'Skeleton Barrel': 'sb', // User: sb
-    'Goblin Barrel': 'gb',
-    'Goblin Drill': 'gd',
-    'Fireball': 'fb',
-    'Graveyard': 'gy',
-    'Poison': 'po',
-    'Tornado': 'to',        // User: to
+    'Balloon': 'bl',
+    'Bandit': 'bi',
+    'Barbarian Barrel': 'bb',
+    'Barbarian Hut': 'bu',
+    'Barbarians': 'bs',
+    'Bats': 'ba',
+    'Battle Healer': 'bh',
+    'Battle Ram': 'br',
+    'Bomb Tower': 'bt',
+    'Bomber': 'bo',
+    'Bowler': 'bw',
+    'Cannon': 'cn',
+    'Cannon Cart': 'cc',
+    'Clone': 'cl',
+    'Dark Prince': 'dp',
+    'Dart Goblin': 'dg',
     'Earthquake': 'eq',
-    'Zap': 'za',
-    'Tesla': 'te',
-    'X-Bow': 'xb',
-    'Royal Giant': 'rg',
-    'Magic Archer': 'ma',
-    'Ice Golem': 'ig',
     'Electro Dragon': 'ed',
     'Electro Giant': 'eg',
-    'Goblin Giant': 'gg',
-    'Giant Skeleton': 'gs',
-    'Ice Wizard': 'iw',
-    'Lumberjack': 'lj',
-    'Lava Hound': 'lh',
-    'Minion Horde': 'mh',
-    'P.E.K.K.A': 'pk',
-    'Valkyrie': 'va',
-    'Inferno Tower': 'it',
-    'Goblin Cage': 'gc',
-    'Cannon Cart': 'cc',
-    'Flying Machine': 'fm',
-    'Royal Hogs': 'rh',
-    'Royal Recruits': 'rc', // Changed from rr (Ram Rider taken)
     'Electro Spirit': 'es',
-    'Heal Spirit': 'hs',
-    'Battle Healer': 'bh',
-    'Fisherman': 'fn',
-    'Mother Witch': 'mw',
-    'Elixir Golem': 'el',
-    'Zappies': 'zp',
-    'Sparky': 'sp',
-    'Bowler': 'bw',
-    'Executioner': 'ex',
-    'Cannon': 'cn',
-    'Mortar': 'mo',
-    'Princess': 'pr',
-    'Dart Goblin': 'dg',
-    'Archer Queen': 'aq',
-    'Golden Knight': 'gk',
-    'Skeleton King': 'sk',
-    'Mighty Miner': 'mm',
-    'Little Prince': 'lp',
-    'Monk': 'mo',
-    'Phoenix': 'ph',
-    'Giant Snowball': 'sn',
-    'Barbarian Barrel': 'bb',
-    'Arrows': 'ar',
-    'Royal Delivery': 'rd',
-    'Rocket': 'rk',
-    'Void': 'vd',
-    'Freeze': 'fz',
-    'Rage': 'ra',
-    'Clone': 'cl',
-    'Mirror': 'mr',
-    'Knight': 'kn',
-    'Archers': 'ac',
-    'Goblins': 'go',
-    'Spear Goblins': 'sg',
-    'Bats': 'ba',
-    'Minions': 'mi',
-    'Mega Minion': 'mm',
-    'Ice Spirit': 'is',
-    'Fire Spirit': 'fs',
+    'Electro Wizard': 'ew',
+    'Elite Barbarians': 'eb',
     'Elixir Collector': 'ec',
-    'Three Musketeers': '3m'
+    'Elixir Golem': 'el',
+    'Executioner': 'ex',
+    'Fire Spirit': 'fs',
+    'Fireball': 'fb',
+    'Firecracker': 'fi',
+    'Fisherman': 'fn',
+    'Flying Machine': 'fm',
+    'Freeze': 'fz',
+    'Furnace': 'fu',
+    'Giant': 'gi',
+    'Giant Skeleton': 'gs',
+    'Giant Snowball': 'sn',
+    'Goblin Barrel': 'gb',
+    'Goblin Cage': 'gc',
+    'Goblin Curse': 'gr',
+    'Goblin Demolisher': 'ge',
+    'Goblin Drill': 'gd',
+    'Goblin Gang': 'gg',
+    'Goblin Giant': 'gn',
+    'Goblin Hut': 'gh',
+    'Goblin Machine': 'ga',
+    'Goblins': 'go',
+    'Golden Knight': 'gk',
+    'Golem': 'gm',
+    'Graveyard': 'gy',
+    'Guards': 'gu',
+    'Heal Spirit': 'hs',
+    'Hog Rider': 'hr',
+    'Hunter': 'hu',
+    'Ice Golem': 'ig',
+    'Ice Spirit': 'is',
+    'Ice Wizard': 'iw',
+    'Inferno Dragon': 'id',
+    'Inferno Tower': 'it',
+    'Knight': 'kn',
+    'Lava Hound': 'lh',
+    'Lightning': 'lk',
+    'Little Prince': 'lp',
+    'Lumberjack': 'lj',
+    'Magic Archer': 'ma',
+    'Mega Knight': 'mk',
+    'Mega Minion': 'mm',
+    'Mighty Miner': 'me',
+    'Miner': 'mn',
+    'Mini P.E.K.K.A': 'mp',
+    'Minion Horde': 'mh',
+    'Minions': 'mi',
+    'Mirror': 'mr',
+    'Monk': 'mc',
+    'Mortar': 'mo',
+    'Mother Witch': 'mw',
+    'Musketeer': 'mu',
+    'Night Witch': 'nw',
+    'P.E.K.K.A': 'pk',
+    'Phoenix': 'ph',
+    'Poison': 'po',
+    'Prince': 'pe',
+    'Princess': 'pr',
+    'Rage': 'ra',
+    'Ram Rider': 'rr',
+    'Rascals': 'rs',
+    'Rocket': 'rk',
+    'Royal Delivery': 'rd',
+    'Royal Ghost': 'ro',
+    'Royal Giant': 'rg',
+    'Royal Hogs': 'rh',
+    'Royal Recruits': 'rc',
+    'Skeleton Army': 'sa',
+    'Skeleton Barrel': 'sb',
+    'Skeleton Dragons': 'sd',
+    'Skeleton King': 'sk',
+    'Skeletons': 'ss',
+    'Sparky': 'sp',
+    'Spear Goblins': 'sg',
+    'Suspicious Bush': 'yb',
+    'Tesla': 'te',
+    'The Log': 'lo',
+    'Three Musketeers': '3m',
+    'Tombstone': 'ts',
+    'Tornado': 'to',
+    'Valkyrie': 'va',
+    'Void': 'vd',
+    'Wall Breakers': 'wb',
+    'Witch': 'wi',
+    'Wizard': 'wd',
+    'X-Bow': 'xb',
+    'Zap': 'za',
+    'Zappies': 'zp',
 };
-
-// Conflict Cleanup (from file)
-TWO_LETTER_CODES['Giant Snowball'] = 'sn';
-TWO_LETTER_CODES['Skeleton Barrel'] = 'sb';
 
 function getSlug(name) {
     const clean = name.replace(/ Evolution$/i, '').trim();
@@ -125,20 +149,20 @@ function testDeckShopHeader(deckName, cards) {
 }
 
 // TEST CASES
-const test1 = testDeckShopHeader("Classic Log Bait", [
-    "Princess", "Goblin Barrel", "The Log", "Goblin Gang", // Goblin Gang missing in map?
+testDeckShopHeader("Classic Log Bait", [
+    "Princess", "Goblin Barrel", "The Log", "Goblin Gang",
     "Knight", "Rocket", "Ice Spirit", "Inferno Tower"
 ]);
 
-const test2 = testDeckShopHeader("Hog 2.6", [
-    "Hog Rider", "Fireball", "Zap", "Ice Golem", // Zap not log? usually log. 
+testDeckShopHeader("Hog 2.6", [
+    "Hog Rider", "Fireball", "The Log", "Ice Golem",
     "Ice Spirit", "Skeletons", "Musketeer", "Cannon"
 ]);
 
-const test3 = testDeckShopHeader("Conflict Check", [
+testDeckShopHeader("Conflict Check", [
     "Giant Snowball", "Skeleton Barrel", "Ram Rider", "Battle Ram", "Royal Recruits"
 ]);
 
-const test4 = testDeckShopHeader("Evolutions", [
+testDeckShopHeader("Evolutions", [
     "Knight Evolution", "Bats Evolution", "Royal Giant Evolution"
 ]);

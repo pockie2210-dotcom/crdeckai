@@ -134,7 +134,7 @@ function getSlug(name) {
 }
 
 window.openDeckShop = function () {
-    const deck = window.currentAppDeck;
+    const deck = window.builderDeck || window.currentAppDeck;
     if (!deck || deck.length === 0) {
         alert("Scan a player first!");
         return;

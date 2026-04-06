@@ -1,0 +1,99 @@
+// --- CONSOLIDATED CLASH ROYALE DECK HELPER LOGIC ---
+
+// --- 1. GLOBAL HELPERS ---
+function normalizeLevel(card) {
+  if (!card) return 0;
+  const level = card.level || 0;
+  const maxLevel = card.maxLevel || 14;
+  // If card is maxed, it's 14. If it's max - 1, it's 13, etc.
+  return 14 - (maxLevel - level);
+}
+
+// --- 2. DECK ANALYSIS & RADAR ---
+const DeckRadar = {
+  calculate: function (deck) {
+    if (deck.length === 0) return { offense: 0, defense: 0, cycle: 0, air: 0, synergy: 0, reasons: {} };
+    
+    // Placeholder logic - ideally this uses smart_engine_v11.js
+    let offense = 50, defense = 50, cycle = 50, air = 50, synergy = 50;
+    const reasons = { offense: ["Stable baseline"], defense: ["Stable baseline"] };
+    
+    const clamp = (v) => Math.min(100, Math.max(0, Math.round(v)));
+    return {
+      scores: {
+        offense: clamp(offense),
+        defense: clamp(defense),
+        cycle: clamp(cycle),
+        air: clamp(air),
+        synergy: clamp(synergy)
+      },
+      reasons: reasons
+    };
+  },
+  render: function (deck) {
+    const analysis = this.calculate(deck);
+    const { scores } = analysis;
+    const labels = ["OFF", "DEF", "CYC", "AIR", "SYN"];
+    const data = [scores.offense, scores.defense, scores.cycle, scores.air, scores.synergy];
+    
+    // In index.html, this uses SVG. We'll keep the SVG logic from the old scripts but cleaned.
+    console.log("Radar Logic Initialized", analysis);
+  }
+};
+
+// --- 3. DECK WEAKNESS CORE ---
+window.DeckWeakness = {
+  analyzeFlaws: function (deck) {
+    const flaws = [];
+    const WIN_CONDITIONS = ['Hog Rider', 'Ram Rider', 'Battle Ram', 'Wall Breakers', 'Elixir Golem', 'Giant', 'Royal Giant', 'Goblin Giant', 'Electro Giant', 'Golem', 'Lava Hound', 'Balloon', 'Skeleton Barrel', 'Goblin Barrel', 'Miner', 'Graveyard', 'Goblin Drill', 'X-Bow', 'Mortar', 'Three Musketeers', 'Sparky'];
+    const SMALL_SPELLS = ['Zap', 'The Log', 'Giant Snowball', 'Arrows', 'Rage', 'Barbarian Barrel', 'Tornado'];
+    const BIG_SPELLS = ['Fireball', 'Poison', 'Rocket', 'Lightning', 'Earthquake', 'Void', 'Freeze', 'Clone', 'Mirror'];
+    
+    const winCons = deck.filter(c => WIN_CONDITIONS.includes(c.name));
+    const spells = deck.filter(c => SMALL_SPELLS.includes(c.name) || BIG_SPELLS.includes(c.name));
+    const avgCost = deck.reduce((sum, c) => sum + (c.elixirCost || 0), 0) / 8;
+
+    if (winCons.length === 0) flaws.push("NO WIN CONDITION: You cannot win reliably.");
+    if (winCons.length > 2) flaws.push("TOO MANY WIN CONDITIONS: You have clashing win cons.");
+    if (spells.length < 2) flaws.push("NOT ENOUGH SPELLS: Minimum 2 spells required.");
+    if (avgCost > 4.5) flaws.push("TOO EXPENSIVE: Cycle is too slow.");
+
+    return flaws;
+  },
+  proposeRemoval: function (deck) {
+    const flaws = this.analyzeFlaws(deck);
+    if (flaws.some(f => f.includes("NO WIN CONDITION"))) return { card: deck[7], reason: "Add a Win Condition." };
+    return { card: deck[0], reason: "General optimization." };
+  }
+};
+
+// --- 4. PLAYER SCANNER V2 (Clean) ---
+const RecentSearches = {
+  MAX_SEARCHES: 10,
+  STORAGE_KEY: 'cr_recent_searches',
+  get() { try { const saved = localStorage.getItem(this.STORAGE_KEY); return saved ? JSON.parse(saved) : []; } catch(e) { return []; } },
+  add(tag) {
+    const searches = this.get();
+    const cleanTag = tag.toUpperCase().trim();
+    const filtered = searches.filter(t => t !== cleanTag);
+    filtered.unshift(cleanTag);
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered.slice(0, this.MAX_SEARCHES)));
+  },
+  clear() { localStorage.removeItem(this.STORAGE_KEY); }
+};
+
+window.scanPlayerFromInput = async function() {
+  const tagInput = document.getElementById('tagInput');
+  const tag = tagInput.value.trim();
+  if (!tag) return alert("Enter tag");
+  
+  // Logic from Section F but fixed for strings
+  console.log("Scanning player", tag);
+  // ... (Full implementation will be dropped in)
+};
+
+// --- 5. MATCHUP CONTROLLER (Clean) ---
+// (Will be dropped in from Section F)
+
+// --- 6. SIMPLE DECK BUILDER (Ultimate Champion AI) ---
+// (Will be dropped in from Section G)

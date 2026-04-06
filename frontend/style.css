@@ -269,6 +269,86 @@ button:hover {
   transform: translateY(-2px);
 }
 
+/* --- NEW PREMIUM DASHBOARD STYLES --- */
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 15px;
+  max-width: 900px;
+  margin: 0 auto 30px auto;
+  padding: 0 10px;
+}
+
+.pro-btn {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 215, 0, 0.1);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  margin: 0;
+  color: #fff;
+}
+
+.pro-btn-icon {
+  font-size: 28px;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+  flex-shrink: 0;
+}
+
+.pro-btn-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.pro-btn-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pro-btn-sub {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.pro-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 215, 0, 0.4);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(212, 175, 55, 0.2);
+}
+
+.pro-btn.elite {
+  border-color: rgba(212, 175, 55, 0.3);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.1);
+}
+
+.pro-btn.elite:hover {
+  border-color: var(--gold);
+  box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+}
+
+.pro-btn.compare {
+  border-color: rgba(123, 63, 228, 0.3);
+}
+
+.pro-btn.compare:hover {
+  border-color: var(--purple);
+  box-shadow: 0 10px 30px rgba(123, 63, 228, 0.3);
+}
+
 .warning-text {
   color: #ff6b6b;
   font-size: 14px;
@@ -384,6 +464,14 @@ button:hover {
 .empty-slot:hover {
   border-color: var(--gold);
   color: var(--gold);
+}
+
+.win-con-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 /* --- FUNCTIONAL FIX STYLES (Deckshop) --- */
@@ -540,5 +628,228 @@ button:hover {
 
   #analysisResult div[style*="display:flex"] {
     flex-direction: column;
+  }
+}
+
+/* =========================================
+   ELITE PRO DIAGNOSIS (Premium UI)
+   ========================================= */
+
+.elite-modal {
+  display: none;
+  position: fixed;
+  z-index: 3000;
+  /* Above all */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.elite-content {
+  background: linear-gradient(145deg, #111, #1a1a2b);
+  border: 2px solid var(--gold);
+  border-radius: 20px;
+  width: 95%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 0 60px rgba(212, 175, 55, 0.25), 0 20px 40px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+}
+
+.elite-header {
+  padding: 25px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: rgba(20, 20, 30, 0.95);
+  z-index: 10;
+}
+
+.close-lite {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 30px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.close-lite:hover {
+  color: #fff;
+}
+
+.elite-body {
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.elite-section {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.elite-subtitle {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--gold);
+  font-weight: 800;
+}
+
+.elite-gauges-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.gauge-container {
+  text-align: center;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.gauge-container:hover {
+  transform: translateY(-5px);
+  border-color: var(--purple);
+}
+
+.gauge-value {
+  font-size: 36px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 5px;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+.gauge-label {
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.elite-matchup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 15px;
+}
+
+.elite-matchup-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+  border-left: 4px solid #444;
+}
+
+.elite-matchup-item.win {
+  border-left-color: #2ecc71;
+}
+
+.elite-matchup-item.loss {
+  border-left-color: #e74c3c;
+}
+
+.elite-matchup-item.draw {
+  border-left-color: #f1c40f;
+}
+
+.elite-highlight {
+  background: var(--gold);
+  color: #000;
+  border: none;
+}
+
+.elite-fix-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px;
+}
+
+.elite-fix-card {
+  width: 70px;
+  height: 90px;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.elite-tactical-body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #ccc;
+}
+
+.tactical-node {
+  margin-bottom: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.tactical-node .node-icon {
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.elite-footer {
+  padding: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: center;
+  position: sticky;
+  bottom: 0;
+  background: rgba(20, 20, 30, 0.95);
+}
+
+/* Value Color Overrides */
+.val-hot {
+  color: #e74c3c;
+}
+
+.val-med {
+  color: #f1c40f;
+}
+
+.val-pro {
+  color: #2ecc71;
+}
+
+@media (max-width: 600px) {
+  .elite-gauges-grid {
+    grid-template-columns: 1fr;
   }
 }

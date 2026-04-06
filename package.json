@@ -1,7 +1,26 @@
 {
-  "name": "clash-royale-deck-helper",
+  "name": "clash-royale-tester",
   "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "express": "^5.2.1",
+    "node-fetch": "^3.3.0",
+    "socket.io": "^4.8.3"
+  },
+  "description": "Short setup and run instructions.",
+  "main": "broken_script_backup.js",
   "scripts": {
-    "start": "cd backend && npm install && node server.js"
-  }
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pockie2210-dotcom/crdeckai.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pockie2210-dotcom/crdeckai/issues"
+  },
+  "homepage": "https://github.com/pockie2210-dotcom/crdeckai#readme"
 }

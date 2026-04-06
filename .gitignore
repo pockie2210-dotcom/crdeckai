@@ -3,4 +3,5 @@ backend/node_modules/
 .env
 *.zip
 *.log
+StudyAI_Backup/
 clash-royale-site-backup-*.zip

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Car Soccer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container"></div>
+    
+    <div id="hud">
+        <div id="goal-message">GOAL!</div>
+        <div class="top-bar">
+            <div class="score-container">
+                <span id="blue-score">0</span>
+                <span class="timer" id="timer">5:00</span>
+                <span id="orange-score">0</span>
+            </div>
+        </div>
+        
+        <div class="bottom-right">
+            <div class="boost-meter">
+                <svg viewBox="0 0 100 100">
+                    <circle class="bg" cx="50" cy="50" r="45"></circle>
+                    <circle class="fill" id="boost-fill" cx="50" cy="50" r="45"></circle>
+                </svg>
+                <div class="boost-text"><span id="boost-value">100</span>%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Map for Modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+            "cannon-es": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"
+        }
+    }
+    </script>
+    
+    <script type="module" src="main.js"></script>
+</body>
+</html>

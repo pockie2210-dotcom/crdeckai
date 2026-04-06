@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cricket Shootout | Premium Practice Session</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="hud">
+            <div class="header">
+                <div class="title-container">
+                    <h1 class="title">CRICKET GAME</h1>
+                    <h2 class="subtitle">PRACTICE SESSION</h2>
+                </div>
+                <div class="bat-ball-icon">
+                    <img src="assets/bat_icon.png" id="bat-icon">
+                </div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-box">
+                    <span class="value" id="runs">0</span>
+                    <span class="label">RUNS</span>
+                </div>
+                <div class="stat-box">
+                    <span class="value" id="srate">0</span>
+                    <span class="label">S/RATE</span>
+                </div>
+                <div class="stat-box">
+                    <span class="value" id="best">29</span>
+                    <span class="label">BEST</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="menu" class="overlay">
+            <div class="content">
+                <h2 class="menu-title">READY FOR SESSION?</h2>
+                <button id="start-btn">START PRACTICE</button>
+            </div>
+        </div>
+
+        <div id="game-over" class="overlay hidden">
+            <div class="content">
+                <h2 class="menu-title">SESSION COMPLETE</h2>
+                <div class="final-score">TOTAL RUNS: <span id="final-runs">0</span></div>
+                <button id="restart-btn">RETRY SESSION</button>
+            </div>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

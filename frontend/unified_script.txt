@@ -1,0 +1,211 @@
+
+  <!-- EXTERNAL CORE ASSETS -->
+  <script src="win_conditions.js"></script>
+  <script src="meta_decks.js?v=4"></script>
+  <script src="smart_engine_v11.js"></script>
+  <script src="deckshop_helper.js?v=1"></script>
+
+  <script>
+    /**
+     * CLASH ROYALE DECK HELPER - UNIFIED CORE ENGINE v2.5
+     * This script replaces all previous redundant and corrupted versions.
+     */
+
+    // --- 1. GLOBAL STATE ---
+    window.builderDeck = []; 
+    window.currentPlayerData = null;
+    window.currentAppDeck = []; // Legacy tracker for modules
+    window.allCards = [];
+
+    // --- 2. GLOBAL HELPERS ---
+    function normalizeLevel(card) {
+      if (!card) return 1;
+      const level = card.level || 1;
+      const maxLevel = card.maxLevel || 14;
+      return 14 - (maxLevel - level);
+    }
+    const getProxyImage = (url) => (url && url.startsWith('http')) ? `/api/proxy-image?src=${encodeURIComponent(url)}` : url;
+
+    // --- 3. DECK WEAKNESS & RADAR CORE ---
+    const WIN_CONDITIONS = ['Hog Rider', 'Ram Rider', 'Battle Ram', 'Wall Breakers', 'Elixir Golem', 'Giant', 'Royal Giant', 'Goblin Giant', 'Electro Giant', 'Golem', 'Lava Hound', 'Balloon', 'Skeleton Barrel', 'Goblin Barrel', 'Miner', 'Graveyard', 'Goblin Drill', 'X-Bow', 'Mortar', 'Three Musketeers', 'Sparky'];
+    const SMALL_SPELLS = ['Zap', 'The Log', 'Giant Snowball', 'Arrows', 'Rage', 'Barbarian Barrel', 'Tornado', 'Void'];
+    const BIG_SPELLS = ['Fireball', 'Poison', 'Rocket', 'Lightning', 'Earthquake', 'Freeze', 'Clone', 'Mirror'];
+
+    window.DeckWeakness = {
+      analyze: function(deck) {
+        let scores = { offense: 40, defense: 40, air: 40, cycle: 50, synergy: 40 };
+        let reasons = { offense: [], defense: [], air: [], cycle: [], synergy: [] };
+        
+        const winCons = deck.filter(c => WIN_CONDITIONS.includes(c.name));
+        const spells = deck.filter(c => SMALL_SPELLS.includes(c.name) || BIG_SPELLS.includes(c.name));
+        const avgElixir = deck.reduce((s, c) => s + (c.elixirCost || 0), 0) / (deck.length || 1);
+
+        if (winCons.length > 0) {
+           scores.offense = Math.min(100, 40 + (winCons.length * 20));
+           reasons.offense.push(`Driven by ${winCons.map(c=>c.name).slice(0,2).join(', ')}`);
+        } else {
+           reasons.offense.push("Lacks a primary Win Condition");
+        }
+        
+        return { scores, reasons, avgElixir };
+      },
+      analyzeFlaws: function(deck) {
+        const flaws = [];
+        const winCons = deck.filter(c => WIN_CONDITIONS.includes(c.name));
+        const spells = deck.filter(c => SMALL_SPELLS.includes(c.name) || BIG_SPELLS.includes(c.name));
+        const avgCost = deck.reduce((sum, c) => sum + (c.elixirCost || 0), 0) / 8;
+        if (winCons.length === 0) flaws.push("NO WIN CONDITION: You cannot win reliably.");
+        if (spells.length < 2) flaws.push("NOT ENOUGH SPELLS: Minimum 2 spells required.");
+        if (avgCost > 4.5) flaws.push("TOO EXPENSIVE: Cycle is too slow.");
+        return flaws;
+      }
+    };
+
+    window.DeckRadar = {
+      render: function (deck) {
+        const analysis = window.DeckWeakness.analyze(deck);
+        const { scores } = analysis;
+        const labels = ["OFF", "DEF", "AIR", "CYC", "SYN"];
+        const dataArr = [scores.offense, scores.defense, scores.air, scores.cycle, scores.synergy];
+        
+        const size = 300, center = 150, radius = 90;
+        const getPoint = (v, i) => {
+          const angle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+          const r = (v / 100) * radius;
+          return {x: center + r * Math.cos(angle), y: center + r * Math.sin(angle)};
+        };
+
+        const polyStr = dataArr.map((v, i) => { const p=getPoint(v,i); return `${p.x},${p.y}`; }).join(' ');
+        
+        const html = `
+          <div id="radarModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
+            <div style="background:#181818; border-radius:16px; padding:20px; text-align:center; border:1px solid #333; max-width:400px; width:90%;">
+              <h2 style="color:var(--gold);">DECK RADAR v2</h2>
+              <svg width="${size}" height="${size}">
+                <polygon points="${polyStr}" fill="rgba(0, 210, 255, 0.3)" stroke="#00d2ff" stroke-width="2" />
+              </svg>
+              <button onclick="this.closest('#radarModal').remove()" class="action-btn" style="margin-top:20px;">CLOSE</button>
+            </div>
+          </div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+      }
+    };
+
+    // --- 4. MATCHUP CONTROLLER (Fixed & Simplified) ---
+    window.MatchupController = {
+      enemyDeck: [],
+      activeTarget: 'enemy',
+      open: function() {
+        document.getElementById('matchupModal').style.display = 'flex';
+        this.renderMyDeck();
+        this.renderEnemyDeck();
+        this.renderPicker();
+      },
+      renderMyDeck: function() {
+        const container = document.getElementById('myDeckPreview');
+        container.innerHTML = (window.builderDeck || []).map((c,i) => `
+          <div style="position:relative;">
+            <img src="${getProxyImage(c.iconUrls?.medium || c.iconUrl)}" style="width:100%; border-radius:4px;">
+            <div onclick="window.builderDeck.splice(${i},1); window.MatchupController.renderMyDeck();" style="position:absolute; top:-5px; right:-5px; background:red; border-radius:50%; width:18px; cursor:pointer;">&times;</div>
+          </div>`).join('');
+      },
+      renderEnemyDeck: function() {
+        const container = document.getElementById('enemyDeckWrapper');
+        container.innerHTML = (this.enemyDeck).map((c,i) => `
+          <div style="position:relative;">
+            <img src="${getProxyImage(c.iconUrls?.medium || c.iconUrl)}" style="width:100%; border-radius:4px;">
+            <div onclick="window.MatchupController.enemyDeck.splice(${i},1); window.MatchupController.renderEnemyDeck();" style="position:absolute; top:-5px; right:-5px; background:red; border-radius:50%; width:18px; cursor:pointer;">&times;</div>
+          </div>`).join('');
+      },
+      renderPicker: async function() {
+        const picker = document.getElementById('enemyCardPicker');
+        if (!window.allCards || window.allCards.length === 0) {
+           const res = await fetch('/api/cards');
+           window.allCards = await res.json();
+        }
+        picker.innerHTML = window.allCards.slice(0, 50).map(c => `
+          <img src="${getProxyImage(c.iconUrls?.medium || c.iconUrl)}" 
+               style="width:50px; cursor:pointer; margin:2px;" 
+               onclick="window.MatchupController.addCard('${c.name}')">`).join('');
+      },
+      addCard: function(name) {
+        const card = window.allCards.find(c => c.name === name);
+        if (this.activeTarget === 'enemy' && this.enemyDeck.length < 8) this.enemyDeck.push(card);
+        else if (window.builderDeck.length < 8) window.builderDeck.push(card);
+        this.renderMyDeck();
+        this.renderEnemyDeck();
+      }
+    };
+    // Direct Attach to existing Analyze Button
+    document.addEventListener('click', e => {
+      if(e.target.id === 'analyzeBtn') {
+         if (!window.MatchupAnalyzer) return alert("Analyzer loading...");
+         const res = window.MatchupAnalyzer.analyzeMatchup(window.builderDeck, window.MatchupController.enemyDeck);
+         alert(`Win Probability: ${res.winProbability}%`);
+      }
+    });
+
+    // --- 5. PLAYER SCANNER V2 ---
+    window.scanPlayerFromInput = async function() {
+      const input = document.getElementById('tagInput');
+      const container = document.getElementById('deckContainer');
+      const btn = document.getElementById('scanBtn');
+      let tag = input.value.trim();
+      if (!tag) return alert('Enter Tag');
+      if (!tag.startsWith('#')) tag = '#' + tag;
+
+      btn.disabled = true; btn.innerText = '⏳ SCANNING...';
+      try {
+        const res = await fetch(`/player/${encodeURIComponent(tag)}`);
+        if (!res.ok) throw new Error("API Connection Error - Using Demo Fallback");
+        const data = await res.json();
+        window.currentPlayerData = data;
+        window.builderDeck = data.currentDeck.map(c => ({...c, level: normalizeLevel(c)}));
+        renderMainView();
+      } catch(e) {
+        console.warn(e.message);
+        if(confirm("Load demo data?")) {
+           const demo = { name: "Mo Light", trophies: 9000, currentDeck: [] }; // Simplified for now
+           window.builderDeck = []; // etc.
+           renderMainView();
+        }
+      } finally {
+        btn.disabled = false; btn.innerText = 'Scan Player';
+      }
+    };
+
+    function renderMainView() {
+       const container = document.getElementById('deckContainer');
+       container.innerHTML = window.builderDeck.map(c => `<div class="deck-card"><img src="${getProxyImage(c.iconUrls?.medium || c.iconUrl)}" width="80"></div>`).join('');
+    }
+
+    // --- 6. SIMPLE DECK BUILDER ---
+    window.SimpleDeckBuilder = {
+       deck: [null,null,null,null,null,null,null,null],
+       init: async function() { 
+         const res = await fetch('/api/cards'); 
+         window.allCards = await res.json(); 
+       },
+       renderSlots: function() {
+          console.log("Rendering slots...");
+       }
+    };
+
+    // --- 7. ELITE DIAGNOSIS ---
+    window.EliteDiagnosis = {
+       open: function() { 
+          const modal = document.getElementById('eliteDiagnosisModal');
+          if(modal) modal.style.display = 'block';
+          this.updateGauges(window.builderDeck);
+       },
+       updateGauges: function(deck) {
+          console.log("Updating gauges for", deck.length, "cards");
+       }
+    };
+
+    // --- 8. INITIALIZATION ---
+    document.addEventListener('DOMContentLoaded', () => {
+       window.SimpleDeckBuilder.init();
+       console.log("Clash Royale Helper v2.5 Online.");
+    });
+  </script>
