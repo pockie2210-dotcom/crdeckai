@@ -116,7 +116,10 @@ export async function analyzeText(text, length) {
  * Fetch YouTube transcript via the local server bridge and analyze it.
  */
 export async function analyzeYouTube(url, length) {
-  const response = await fetch('/api/transcript', {
+  const isProd = !window.location.hostname.includes('localhost');
+  const endpoint = isProd ? '/.netlify/functions/transcript' : '/api/transcript';
+
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url })
