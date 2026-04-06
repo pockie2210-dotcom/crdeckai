@@ -10,6 +10,7 @@
   "description": "Short setup and run instructions.",
   "main": "broken_script_backup.js",
   "scripts": {
+    "build": "cd StudyAI && npm install && npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
