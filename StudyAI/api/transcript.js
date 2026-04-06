@@ -6,23 +6,26 @@ function extractVideoId(url) {
   return match ? match[1] : null;
 }
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+export const handler = async (event, context) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
   try {
-    const { url } = req.body;
+    const body = JSON.parse(event.body || '{}');
+    const { url } = body;
     const videoId = extractVideoId(url);
-    if (!videoId) return res.status(400).json({ error: 'Invalid YouTube URL' });
+    if (!videoId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid YouTube URL' }) };
 
     let captions;
     try {
@@ -32,13 +35,13 @@ export default async function handler(req, res) {
     }
 
     if (!captions || !captions.length) {
-      return res.status(404).json({ error: 'No transcript found for this video. Try another one.' });
+      return { statusCode: 404, headers, body: JSON.stringify({ error: 'No transcript found for this video. Try another one.' }) };
     }
 
     const text = captions.map(c => c.text).join(' ');
-    return res.status(200).json({ text });
+    return { statusCode: 200, headers, body: JSON.stringify({ text }) };
   } catch (error) {
     console.error('Transcript error:', error.message);
-    return res.status(500).json({ error: 'Could not fetch transcript. English captions may not be enabled.' });
+    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Could not fetch transcript. English captions may not be enabled.' }) };
   }
-}
+};
