@@ -16,15 +16,28 @@ const FocusZone = () => {
   const [isActive, setIsActive] = useState(false);
   const totalSeconds = duration * 60;
 
-  useEffect(() => {
-    let interval = null;
-    if (isActive && timeLeft > 0) {
-      interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
-    } else if (isActive && timeLeft === 0) {
-      handleComplete();
-    }
     return () => clearInterval(interval);
   }, [isActive, timeLeft]);
+
+  // Inject breathing animation styles safely inside useEffect
+  useEffect(() => {
+    const styleId = 'focus-zone-breathing-styles';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.innerHTML = `
+        @keyframes breathe {
+          0% { stroke-width: 12px; opacity: 1; }
+          50% { stroke-width: 16px; opacity: 0.8; }
+          100% { stroke-width: 12px; opacity: 1; }
+        }
+        .breathing-stroke {
+          animation: breathe 3s ease-in-out infinite;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
 
   const handleStart = async () => {
     if (!goal.trim()) { setError('Please enter a goal for this session.'); return; }
@@ -290,16 +303,3 @@ You MUST respond strictly with a JSON object in this format:
 };
 
 export default FocusZone;
-
-const style = document.createElement('style');
-style.innerHTML = `
-  @keyframes breathe {
-    0% { stroke-width: 12px; opacity: 1; }
-    50% { stroke-width: 16px; opacity: 0.8; }
-    100% { stroke-width: 12px; opacity: 1; }
-  }
-  .breathing-stroke {
-    animation: breathe 3s ease-in-out infinite;
-  }
-`;
-document.head.appendChild(style);
