@@ -39,6 +39,25 @@ const Layout = ({ children, theme, toggleTheme }) => {
       setXp(newStats.xp);
     };
     updateStats();
+
+    // Inject styles only once on mount
+    const styleId = 'studyai-layout-styles';
+    if (!document.getElementById(styleId)) {
+      const styleTag = document.createElement('style');
+      styleTag.id = styleId;
+      styleTag.innerHTML = `
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.8); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-scale-in {
+          animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .active-nav .active-marker { opacity: 1 !important; }
+      `;
+      document.head.appendChild(styleTag);
+    }
+
     window.addEventListener('studyai_stats_updated', updateStats);
     return () => window.removeEventListener('studyai_stats_updated', updateStats);
   }, [xp]);
@@ -129,17 +148,3 @@ const Layout = ({ children, theme, toggleTheme }) => {
 };
 
 export default Layout;
-
-// Additional styles for the marker logic
-const styleTag = document.createElement('style');
-styleTag.innerHTML = `
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
-}
-.animate-scale-in {
-  animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-  .active-nav .active-marker { opacity: 1 !important; }
-`;
-document.head.appendChild(styleTag);
