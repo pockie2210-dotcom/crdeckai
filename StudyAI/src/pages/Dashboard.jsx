@@ -1,7 +1,5 @@
-// Force Rebuild: 2026-04-07
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BookOpen, Target, Clock, Zap, Layers, BookMarked, BrainCircuit, Timer, Trophy, X, Search, MessageSquare, FileText } from 'lucide-react';
+// Force Rebuild: 2026-04-07 V2
+import { BookOpen, Target, Clock, Zap, Layers, BookMarked, BrainCircuit, Timer, Trophy, X, Search, MessageSquare, FileText, CheckCircle } from 'lucide-react';
 import { getStats } from '../utils/stats';
 
 const TROPHY_CATEGORIES = [
