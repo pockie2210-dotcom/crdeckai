@@ -27,21 +27,20 @@ const FlipCard = ({ card, isFlipped, onClick }) => (
   <div
     className="card-flip-container"
     onClick={onClick}
-    title="Click to flip"
-    role="button"
-    aria-label={isFlipped ? 'Show front' : 'Reveal answer'}
+    style={{ height: '320px' }}
   >
-    <div className={`card-inner ${isFlipped ? 'is-flipped' : ''}`}>
+    <div className={`card-inner ${isFlipped ? 'is-flipped' : ''}`} style={{ height: '100%' }}>
       {/* Front */}
-      <div className="card-face card-front glass-panel">
+      <div className="card-face card-front glass-panel" style={{ borderBottom: isFlipped ? 'none' : '2px solid var(--accent-primary)' }}>
         <span className="card-label">Question</span>
-        <p className="card-text">{card.front}</p>
-        <span className="card-hint">Click to reveal answer ↓</span>
+        <p className="card-text" style={{ fontSize: '1.5rem', lineHeight: '1.4' }}>{card.front}</p>
+        <span className="card-hint" style={{ bottom: '2rem' }}>Click or Press Space to Flip</span>
       </div>
       {/* Back */}
-      <div className="card-face card-back glass-panel">
+      <div className="card-face card-back glass-panel" style={{ borderBottom: isFlipped ? '2px solid var(--success)' : 'none' }}>
         <span className="card-label" style={{ color: 'var(--success)' }}>Answer</span>
-        <p className="card-text">{card.back}</p>
+        <p className="card-text" style={{ fontSize: '1.4rem', fontWeight: 400 }}>{card.back}</p>
+        <span className="card-hint" style={{ bottom: '2rem' }}>Click or Press Space to Flip back</span>
       </div>
     </div>
   </div>
@@ -310,15 +309,17 @@ const Flashcards = () => {
       </div>
 
       {/* Progress bar */}
-      <div style={{ background: 'var(--border-color)', borderRadius: 99, height: 6, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${((currentIdx + 1) / deck.length) * 100}%`, background: 'linear-gradient(90deg, var(--accent-primary), #a855f7)', borderRadius: 99, transition: 'width 0.3s ease' }} />
+      <div style={{ background: 'var(--border-color)', borderRadius: 99, height: 8, overflow: 'hidden', position: 'relative' }}>
+        <div style={{ position: 'absolute', left: 0, height: '100%', width: `${(known.size / deck.length) * 100}%`, background: 'var(--success)', zIndex: 3, transition: 'width 0.4s ease' }} />
+        <div style={{ position: 'absolute', left: 0, height: '100%', width: `${((known.size + unknown.size) / deck.length) * 100}%`, background: 'var(--danger)', zIndex: 2, transition: 'width 0.4s ease', opacity: 0.5 }} />
+        <div style={{ position: 'absolute', left: 0, height: '100%', width: `${((currentIdx + 1) / deck.length) * 100}%`, background: 'var(--accent-primary)', zIndex: 1, transition: 'width 0.3s ease', opacity: 0.3 }} />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '-0.75rem' }}>
-        <span>Card {currentIdx + 1} of {deck.length}</span>
-        <span style={{ display: 'flex', gap: '1rem' }}>
-          <span style={{ color: 'var(--success)' }}>✓ {known.size} known</span>
-          <span style={{ color: 'var(--danger)' }}>✗ {unknown.size} learning</span>
-        </span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '-1rem' }}>
+        <span style={{ fontWeight: 600 }}>Card {currentIdx + 1} of {deck.length}</span>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><CheckCircle2 size={14} /> {known.size} Known</span>
+          <span style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><XCircle size={14} /> {unknown.size} Learning</span>
+        </div>
       </div>
 
       {/* Flip card */}
@@ -333,27 +334,25 @@ const Flashcards = () => {
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button
             onClick={markUnknown}
+            className="btn-secondary"
             style={{
-              background: unknown.has(currentIdx) ? 'rgba(239,68,68,0.15)' : 'transparent',
-              border: `1px solid ${unknown.has(currentIdx) ? 'var(--danger)' : 'var(--border-color)'}`,
+              borderColor: unknown.has(currentIdx) ? 'var(--danger)' : 'var(--border-color)',
               color: unknown.has(currentIdx) ? 'var(--danger)' : 'var(--text-primary)',
-              padding: '0.75rem 1.5rem', borderRadius: 12, fontFamily: 'inherit',
-              fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s'
+              padding: '0.875rem 1.5rem'
             }}
           >
-            <XCircle size={18} /> Still Learning
+            <XCircle size={20} /> Skip
           </button>
           <button
             onClick={markKnown}
+            className="btn-primary"
             style={{
-              background: known.has(currentIdx) ? 'rgba(16,185,129,0.15)' : 'transparent',
-              border: `1px solid ${known.has(currentIdx) ? 'var(--success)' : 'var(--border-color)'}`,
-              color: known.has(currentIdx) ? 'var(--success)' : 'var(--text-primary)',
-              padding: '0.75rem 1.5rem', borderRadius: 12, fontFamily: 'inherit',
-              fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s'
+              background: 'var(--success)',
+              borderColor: 'var(--success)',
+              padding: '0.875rem 2rem'
             }}
           >
-            <CheckCircle2 size={18} /> Know It!
+            <CheckCircle2 size={20} /> I Know This!
           </button>
         </div>
 

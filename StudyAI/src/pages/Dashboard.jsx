@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Target, Clock, Zap, Layers, BookMarked, BrainCircuit, Timer, Trophy, X, Search } from 'lucide-react';
+import { BookOpen, Target, Clock, Zap, Layers, BookMarked, BrainCircuit, Timer, Trophy, X, Search, MessageSquare, FileText } from 'lucide-react';
 import { getStats } from '../utils/stats';
 
 const BADGES = [
@@ -12,13 +12,23 @@ const BADGES = [
 ];
 
 const StatCard = ({ title, value, icon, color }) => (
-  <div style={{ padding: '1.5rem', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: '200px' }}>
-    <div style={{ background: color, padding: '1rem', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+  <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem', flex: '1 1 200px' }}>
+    <div style={{ 
+      background: `linear-gradient(135deg, ${color} 0%, rgba(255,255,255,0.1) 100%)`, 
+      width: '48px', 
+      height: '48px', 
+      borderRadius: '12px', 
+      color: 'white', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      boxShadow: `0 8px 16px -4px ${color}40`
+    }}>
       {icon}
     </div>
     <div>
-      <h3 style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{title}</h3>
-      <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{value}</p>
+      <h3 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</h3>
+      <p style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'Outfit' }}>{value}</p>
     </div>
   </div>
 );
@@ -61,13 +71,13 @@ const Dashboard = () => {
         Quick Actions 
         {srsCount > 0 && <span style={{ background: 'var(--danger)', color: 'white', fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: 99 }}>{srsCount} Flashcards Due</span>}
       </h3>
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-         <button onClick={() => navigate('/flashcards')} className={srsCount > 0 ? "btn-primary" : "btn-secondary"} style={{ padding: '1rem 2rem', fontSize: '1.1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: srsCount > 0 ? 'var(--danger)' : undefined, borderColor: srsCount > 0 ? 'var(--danger)' : undefined }}><Layers size={20} /> {srsCount > 0 ? 'Review Due Cards' : 'Make Flashcards'}</button>
-         <button onClick={() => navigate('/chat')} className="btn-primary" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>Talk to AI Tutor</button>
-         <button onClick={() => navigate('/focus')} className="btn-secondary" style={{ padding: '1rem 2rem', fontSize: '1.1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', borderColor: '#f59e0b', color: '#f59e0b' }}><Timer size={20} /> Enter Focus Zone</button>
-         <button onClick={() => navigate('/analyzer')} className="btn-secondary" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>Analyze New Content</button>
-         <button onClick={() => navigate('/memory')} className="btn-secondary" style={{ padding: '1rem 2rem', fontSize: '1.1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', borderColor: '#ec4899', color: '#ec4899' }}><BrainCircuit size={20} /> Memory Test</button>
-         <button onClick={() => navigate('/assessments')} className="btn-secondary" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>Take Assessment</button>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+         <button onClick={() => navigate('/flashcards')} className={srsCount > 0 ? "btn-primary" : "btn-secondary"} style={{ padding: '1.25rem', fontSize: '1rem', background: srsCount > 0 ? 'var(--danger)' : undefined, borderColor: srsCount > 0 ? 'var(--danger)' : undefined }} title={srsCount > 0 ? 'You have cards due for review!' : 'Create new flashcards'}><Layers size={20} /> {srsCount > 0 ? 'Review Due Cards' : 'Make Flashcards'}</button>
+         <button onClick={() => navigate('/chat')} className="btn-primary" style={{ padding: '1.25rem', fontSize: '1rem' }}><MessageSquare size={20} /> Talk to AI Tutor</button>
+         <button onClick={() => navigate('/focus')} className="btn-secondary" style={{ padding: '1.25rem', fontSize: '1rem', borderColor: '#f59e0b', color: '#f59e0b' }}><Timer size={20} /> Enter Focus Zone</button>
+         <button onClick={() => navigate('/analyzer')} className="btn-secondary" style={{ padding: '1.25rem', fontSize: '1rem' }}><Search size={20} /> Analyze Content</button>
+         <button onClick={() => navigate('/memory')} className="btn-secondary" style={{ padding: '1.25rem', fontSize: '1rem', borderColor: '#ec4899', color: '#ec4899' }}><BrainCircuit size={20} /> Memory Test</button>
+         <button onClick={() => navigate('/assessments')} className="btn-secondary" style={{ padding: '1.25rem', fontSize: '1rem' }}><FileText size={20} /> Take Assessment</button>
       </div>
 
       {showTrophies && (

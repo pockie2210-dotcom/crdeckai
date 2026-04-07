@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Timer, CheckCircle2, Play, CircleDashed, Flame } from 'lucide-react';
 import { getApiKey, callAI } from '../utils/openai';
 import { incrementFocus } from '../utils/stats';
+import confetti from 'canvas-confetti';
+import { playSuccess, playClick } from '../utils/audio';
 
 const FocusZone = () => {
   const [step, setStep] = useState('setup'); // setup | loading | active | complete
@@ -65,6 +65,8 @@ You MUST respond strictly with a JSON object in this format:
   };
 
   const toggleTask = (idx) => {
+    const isChecking = !completedTasks.includes(idx);
+    if (isChecking) playClick();
     setCompletedTasks(prev => 
       prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
     );
@@ -73,6 +75,11 @@ You MUST respond strictly with a JSON object in this format:
   const handleComplete = () => {
     setIsActive(false);
     incrementFocus();
+    confetti({
+      particleCount: 150, spread: 70, origin: { y: 0.6 },
+      colors: ['#f59e0b', '#ef4444', '#ffffff']
+    });
+    playSuccess();
     setStep('complete');
   };
 
@@ -182,7 +189,7 @@ You MUST respond strictly with a JSON object in this format:
           
           <div style={{ position: 'relative', width: 280, height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-              <circle cx="140" cy="140" r={radius} fill="transparent" stroke="var(--bg-primary)" strokeWidth="12" />
+              <circle cx="140" cy="140" r={radius} fill="transparent" stroke="var(--border-color)" strokeWidth="12" opacity="0.3" />
               <circle 
                 cx="140" cy="140" r={radius} 
                 fill="transparent" 
@@ -191,7 +198,11 @@ You MUST respond strictly with a JSON object in this format:
                 strokeDasharray={circumference} 
                 strokeDashoffset={strokeDashoffset} 
                 strokeLinecap="round"
-                style={{ transition: 'stroke-dashoffset 1s linear' }}
+                style={{ 
+                  transition: 'stroke-dashoffset 1s linear',
+                  filter: isActive ? 'drop-shadow(0 0 8px #f59e0b40)' : 'none'
+                }}
+                className={isActive ? 'breathing-stroke' : ''}
               />
               <defs>
                 <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -279,3 +290,16 @@ You MUST respond strictly with a JSON object in this format:
 };
 
 export default FocusZone;
+
+const style = document.createElement('style');
+style.innerHTML = `
+  @keyframes breathe {
+    0% { stroke-width: 12px; opacity: 1; }
+    50% { stroke-width: 16px; opacity: 0.8; }
+    100% { stroke-width: 12px; opacity: 1; }
+  }
+  .breathing-stroke {
+    animation: breathe 3s ease-in-out infinite;
+  }
+`;
+document.head.appendChild(style);

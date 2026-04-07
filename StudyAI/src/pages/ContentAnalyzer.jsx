@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Target, FileText, Globe, ArrowRight } from 'lucide-react';
+import { Target, FileText, Globe, ArrowRight, CheckCircle } from 'lucide-react';
 import { analyzeText, analyzeWebLink, getApiKey } from '../utils/openai';
 import { incrementTopics } from '../utils/stats';
 
@@ -61,39 +61,46 @@ const ContentAnalyzer = () => {
 
         {error && <div style={{ color: 'var(--danger)', background: 'rgba(239,68,68,0.08)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(239,68,68,0.2)' }}>{error}</div>}
 
-        <button onClick={handleAnalyze} disabled={isAnalyzing || !content.trim()} className="btn-primary" style={{ width: '100%', padding: '1rem' }}>
+        <button 
+          onClick={handleAnalyze} 
+          disabled={isAnalyzing || !content.trim()} 
+          className={`btn-primary ${isAnalyzing ? 'shimmer-bg' : ''}`} 
+          style={{ width: '100%', padding: '1rem', position: 'relative', overflow: 'hidden' }}
+        >
           {isAnalyzing ? (
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: '16px', height: '16px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-              {inputType === 'link' ? 'Scraping & Analyzing Site...' : 'Analyzing Content...'}
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 600 }}>
+              <div style={{ width: '18px', height: '18px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              {inputType === 'link' ? 'Deep Scraping & Analyzing Site...' : 'Intelligent AI Analysis...'}
             </span>
           ) : <>Analyze Content <ArrowRight size={18} /></>}
         </button>
       </div>
 
       {results && (
-        <div className="animate-fade-in glass-panel" style={{ padding: '2rem', marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--accent-primary)' }}><Target size={20} /> Executive Summary</h3>
-            <p style={{ lineHeight: '1.6', fontSize: '1.05rem' }}>{results.summary}</p>
+        <div className="animate-slide-up" style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem', color: 'var(--accent-primary)', fontSize: '1.25rem' }}><Target size={22} /> Executive Summary</h3>
+            <p style={{ lineHeight: '1.7', fontSize: '1.1rem', opacity: 0.9 }}>{results.summary}</p>
           </div>
-          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
             {results.keyPoints?.length > 0 && (
-              <div style={{ flex: 1, minWidth: '250px' }}>
-                <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Key Ideas</h3>
-                <ul style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', lineHeight: '1.5' }}>
-                  {results.keyPoints.map((pt, i) => <li key={i}>{pt}</li>)}
+              <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <h3 style={{ marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={18} /> Major Key Insights</h3>
+                <ul style={{ paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', lineHeight: '1.6' }}>
+                  {results.keyPoints.map((pt, i) => <li key={i} style={{ paddingLeft: '0.5rem' }}>{pt}</li>)}
                 </ul>
               </div>
             )}
+            
             {results.definitions?.length > 0 && (
-              <div style={{ flex: 1, minWidth: '250px' }}>
-                <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Important Definitions</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <h3 style={{ marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Globe size={18} /> Core Definitions</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {results.definitions.map((def, i) => (
-                    <div key={i} style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                      <strong style={{ display: 'block', color: 'var(--accent-primary)', marginBottom: '0.35rem' }}>{def.term}</strong>
-                      <span style={{ fontSize: '0.95rem', lineHeight: '1.4', display: 'block' }}>{def.definition}</span>
+                    <div key={i} style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border-color)', transition: 'transform 0.2s ease' }} className="hover-lift">
+                      <strong style={{ display: 'block', color: 'var(--accent-primary)', marginBottom: '0.4rem', fontSize: '1rem' }}>{def.term}</strong>
+                      <span style={{ fontSize: '0.95rem', lineHeight: '1.5', opacity: 0.85 }}>{def.definition}</span>
                     </div>
                   ))}
                 </div>

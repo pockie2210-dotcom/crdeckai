@@ -13,24 +13,24 @@ const Assessments = () => {
         <p style={{ color: 'var(--text-secondary)' }}>Evaluate your knowledge with dynamic quizzes or generate detailed exam guides.</p>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="glass-panel" style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', padding: '0.5rem', background: 'rgba(0,0,0,0.05)' }}>
         <button
           onClick={() => setActiveTab('quiz')}
-          className={`btn-${activeTab === 'quiz' ? 'primary' : 'secondary'}`}
-          style={{ flex: 1, padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', fontSize: '1.1rem' }}
+          className={activeTab === 'quiz' ? 'btn-primary' : 'btn-secondary'}
+          style={{ flex: 1, padding: '0.875rem', border: 'none', boxShadow: activeTab === 'quiz' ? '0 4px 12px rgba(99, 102, 241, 0.3)' : 'none' }}
         >
-          <Target size={24} /> Interactive Quiz
+          <Target size={20} /> Interactive Quiz
         </button>
         <button
           onClick={() => setActiveTab('guide')}
-          className={`btn-${activeTab === 'guide' ? 'primary' : 'secondary'}`}
-          style={{ flex: 1, padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', fontSize: '1.1rem' }}
+          className={activeTab === 'guide' ? 'btn-primary' : 'btn-secondary'}
+          style={{ flex: 1, padding: '0.875rem', border: 'none', boxShadow: activeTab === 'guide' ? '0 4px 12px rgba(99, 102, 241, 0.3)' : 'none' }}
         >
-          <BookOpenCheck size={24} /> Exam Study Guide
+          <BookOpenCheck size={20} /> Exam Study Guide
         </button>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ flex: 1, overflowY: 'auto' }} className="animate-slide-up">
         {activeTab === 'quiz' ? <QuizGenerator /> : <StudyGuide />}
       </div>
     </div>
