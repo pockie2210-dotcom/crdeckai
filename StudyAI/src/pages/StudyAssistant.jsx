@@ -1,3 +1,4 @@
+// Force Rebuild: 2026-04-07
 import React, { useState, useEffect, useRef } from 'react';
 import { chatWithAI, getApiKey, callAI } from '../utils/openai';
 import { Plus, MessageSquare, Trash2, Bot, User, Mic, MicOff, Volume2, VolumeX, Send, ChevronLeft, ChevronRight } from 'lucide-react';

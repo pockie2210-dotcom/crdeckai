@@ -1,3 +1,4 @@
+// Force Rebuild: 2026-04-07
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Moon, Sun, LayoutDashboard, MessageSquare, Search, FileText, CheckCircle, Settings, Layers, BookMarked, BrainCircuit, Timer, Trophy } from 'lucide-react';
