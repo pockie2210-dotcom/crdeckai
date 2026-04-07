@@ -1,0 +1,130 @@
+import React, { useState } from 'react';
+import { ShieldAlert, AlertTriangle, Fingerprint, Target, CheckCircle } from 'lucide-react';
+import { checkAIContent, getApiKey } from '../utils/openai';
+
+const AIChecker = () => {
+  const [text, setText] = useState('');
+  const [isChecking, setIsChecking] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const handleCheck = async () => {
+    if (!text.trim()) return;
+    if (!getApiKey()) {
+       setResult({ error: '⚠️ No API key set. Go to Settings first.' });
+       return;
+    }
+    
+    setIsChecking(true);
+    setResult(null);
+
+    try {
+      const resultText = await checkAIContent(text);
+      const parsed = JSON.parse(resultText);
+      setResult({ ...parsed, highlightedText: text });
+    } catch (err) {
+      setResult({ error: 'Integrity scan failed. Please check your API key.' });
+    }
+    setIsChecking(false);
+  };
+
+  return (
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '1.5rem', overflowY: 'auto' }}>
+      <div>
+        <h2 className="text-gradient">AI Content Checker</h2>
+        <p style={{ color: 'var(--text-secondary)' }}>Advanced detection system designed to minimize false accusations.</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', padding: '1rem 1.25rem', borderRadius: '12px', marginTop: '1.5rem', border: '1px solid rgba(245, 158, 11, 0.3)', fontSize: '0.95rem' }}>
+          <AlertTriangle size={20} style={{ flexShrink: 0 }} />
+          <span><strong>Disclaimer:</strong> Results are not 100% certain and should be used as guidance only. Do not use this as sole proof of academic dishonesty.</span>
+        </div>
+      </div>
+
+      <div className="glass-panel" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <textarea 
+          placeholder="Paste essay or assignment text here to check for AI generation..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          style={{ width: '100%', minHeight: '220px', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-color)', color: 'var(--text-primary)', fontFamily: 'inherit', resize: 'vertical', fontSize: '1.05rem', lineHeight: '1.6' }}
+        />
+
+        <button onClick={handleCheck} disabled={isChecking || !text.trim()} className="btn-primary" style={{ alignSelf: 'flex-start', padding: '1rem 2rem', fontSize: '1.05rem' }}>
+          {isChecking ? (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ width: '18px', height: '18px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              Scanning Patterns...
+            </span>
+          ) : (
+            <>
+              <Fingerprint size={18} /> Run AI Integrity Check
+            </>
+          )}
+        </button>
+      </div>
+
+      {result && result.error && <div style={{ color: 'var(--danger)', padding: '1rem', background: 'rgba(239,68,68,0.1)', borderRadius: 12, border: '1px solid var(--danger)' }}>{result.error}</div>}
+
+      {result && !result.error && (
+        <div className="animate-fade-in glass-panel" style={{ padding: '2.5rem', marginTop: '1rem', display: 'flex', gap: '3rem', flexWrap: 'wrap' }}>
+          
+          <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ 
+              position: 'relative', width: '220px', height: '110px', overflow: 'hidden', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', marginBottom: '1rem'
+            }}>
+              <div style={{
+                position: 'absolute', top: 0, left: 0, width: '220px', height: '220px', borderRadius: '50%',
+                border: '25px solid var(--border-color)', borderBottomColor: 'transparent', borderLeftColor: 'transparent',
+                transform: `rotate(${ -45 + (180 * (result.aiProbability / 100)) }deg)`, transition: 'transform 1.5s cubic-bezier(0.22, 1, 0.36, 1)'
+              }}></div>
+              <div style={{
+                 position: 'absolute', top: '10px', left: '10px', width: '200px', height: '200px', borderRadius: '50%', border: `15px solid ${result.aiProbability > 50 ? 'var(--danger)' : 'var(--success)'}`, borderBottomColor: 'transparent', borderLeftColor: 'transparent', transform: 'rotate(-45deg)', opacity: 0.2
+              }}></div>
+              <div style={{ paddingBottom: '0.5rem', textAlign: 'center', zIndex: 10 }}>
+                <span style={{ fontSize: '3rem', fontWeight: 'bold', color: result.aiProbability > 50 ? 'var(--danger)' : 'var(--success)', textShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+                  {result.aiProbability}%
+                </span>
+                <span style={{ display: 'block', fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: 500 }}>AI Generated</span>
+              </div>
+            </div>
+            
+            <div style={{ background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: '12px', marginTop: '2rem', border: '1px solid var(--border-color)', width: '100%', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+              <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
+                <ShieldAlert size={20} color={result.aiProbability > 50 ? 'var(--danger)' : 'var(--success)'} /> Analysis Breakdown
+              </h4>
+              <p style={{ fontSize: '0.95rem', lineHeight: '1.6', color: 'var(--text-secondary)' }}>{result.explanation}</p>
+            </div>
+          </div>
+
+          <div style={{ flex: '1.5', minWidth: '350px' }}>
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Target size={20} color="var(--accent-primary)" /> Content Scan
+            </h3>
+            <div style={{ background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', height: '100%', minHeight: '300px', overflowY: 'auto', maxHeight: '500px' }}>
+              <p style={{ lineHeight: '1.8', fontSize: '1rem' }}>
+                {result.highlightedText.split('. ').map((sentence, i) => {
+                  const isFlagged = result.flaggedSentences?.some(fs => sentence.includes(fs));
+                  return (
+                    <span key={i} style={{ 
+                      background: isFlagged ? 'rgba(239, 68, 68, 0.12)' : 'transparent',
+                      borderBottom: isFlagged ? '2px dashed rgba(239, 68, 68, 0.3)' : 'none',
+                      padding: '0.1rem 0.2rem',
+                      borderRadius: '2px',
+                      display: 'inline'
+                    }}>
+                      {sentence}.{' '}
+                    </span>
+                  );
+                })}
+              </p>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+      `}} />
+    </div>
+  );
+};
+
+export default AIChecker;
