@@ -126,3 +126,25 @@ export async function analyzeWebLink(url, length) {
   
   return analyzeText(text, length);
 }
+
+/**
+ * Perform a linguistic analysis on text to detect AI generation.
+ */
+export async function checkAIContent(text) {
+  const systemPrompt = `You are a world-class linguistic forensics expert specializing in Large Language Model (LLM) detection. 
+Your goal is to analyze the provided text for "Perplexity" (complexity of word choice) and "Burstiness" (variation in sentence structure). 
+Common LLM traits include: 
+- Highly uniform sentence lengths.
+- Predictable word sequences.
+- Lack of personal anecdotes/unique voice.
+
+You MUST respond strictly with a JSON object in this format:
+{
+  "aiProbability": number (0-100),
+  "humanProbability": number (0-100),
+  "explanation": "Brief paragraph explaining the reasoning.",
+  "flaggedSentences": ["Sentence 1", "Sentence 2"]
+}`;
+
+  return callAI([{ role: 'user', content: text }], 'json_object', systemPrompt);
+}

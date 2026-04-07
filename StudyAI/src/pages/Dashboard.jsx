@@ -3,12 +3,52 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Target, Clock, Zap, Layers, BookMarked, BrainCircuit, Timer, Trophy, X, Search, MessageSquare, FileText } from 'lucide-react';
 import { getStats } from '../utils/stats';
 
-const BADGES = [
-  { id: 'first_topic', title: 'Curious Mind', icon: <Search size={32} />, requirement: s => s.topics >= 1, desc: 'Analyze your first content' },
-  { id: 'quiz_master', title: 'Quiz Master', icon: <Target size={32} />, requirement: s => s.quizzes >= 5, desc: 'Complete 5 quizzes' },
-  { id: 'zen', title: 'Zen State', icon: <Timer size={32} />, requirement: s => s.focus >= 5, desc: 'Finish 5 Focus Sessions' },
-  { id: 'streak_3', title: 'Consistency', icon: <Zap size={32} />, requirement: s => s.streak >= 3, desc: 'Hit a 3-day Streak' },
-  { id: 'architect', title: 'Architect', icon: <Layers size={32} />, requirement: s => s.decks >= 3, desc: 'Build 3 Flashcard decks' }
+const TROPHY_CATEGORIES = [
+  { 
+    id: 'quiz', title: 'Quiz Master', icon: <Target size={32} />, 
+    tiers: [
+      { level: 'I', label: 'Bronze', req: 3, color: '#cd7f32' },
+      { level: 'II', label: 'Silver', req: 10, color: '#c0c0c0' },
+      { level: 'III', label: 'Gold', req: 25, color: '#ffd700' }
+    ],
+    getStat: s => s.quizzes
+  },
+  { 
+    id: 'focus', title: 'Focus Ninja', icon: <Timer size={32} />, 
+    tiers: [
+      { level: 'I', label: 'Bronze', req: 5, color: '#cd7f32' },
+      { level: 'II', label: 'Silver', req: 15, color: '#c0c0c0' },
+      { level: 'III', label: 'Gold', req: 50, color: '#ffd700' }
+    ],
+    getStat: s => s.focus
+  },
+  { 
+    id: 'topics', title: 'Concept Crusher', icon: <Search size={32} />, 
+    tiers: [
+      { level: 'I', label: 'Bronze', req: 5, color: '#cd7f32' },
+      { level: 'II', label: 'Silver', req: 20, color: '#c0c0c0' },
+      { level: 'III', label: 'Gold', req: 100, color: '#ffd700' }
+    ],
+    getStat: s => s.topics
+  },
+  { 
+    id: 'streak', title: 'Daily Warrior', icon: <Zap size={32} />, 
+    tiers: [
+      { level: 'I', label: 'Bronze', req: 3, color: '#cd7f32' },
+      { level: 'II', label: 'Silver', req: 7, color: '#c0c0c0' },
+      { level: 'III', label: 'Gold', req: 30, color: '#ffd700' }
+    ],
+    getStat: s => s.streak
+  },
+  { 
+    id: 'memory', title: 'Memory Maestro', icon: <BrainCircuit size={32} />, 
+    tiers: [
+      { level: 'I', label: 'Bronze', req: 3, color: '#cd7f32' },
+      { level: 'II', label: 'Silver', req: 10, color: '#c0c0c0' },
+      { level: 'III', label: 'Gold', req: 25, color: '#ffd700' }
+    ],
+    getStat: s => s.memory
+  }
 ];
 
 const StatCard = ({ title, value, icon, color }) => (
@@ -46,13 +86,23 @@ const Dashboard = () => {
 
   return (
     <div className="animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '2.5rem' }}>
-        <div>
-          <h2 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Welcome back, Student!</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Here's an overview of your recent study activities.</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '2rem', marginBottom: '3rem' }}>
+        <div style={{ flex: 1, minWidth: '350px' }}>
+          <h2 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>Welcome, Scholar!</h2>
+          <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--accent-primary)' }}>LEVEL {Math.floor(stats.xp / 100) + 1}</span>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{stats.xp} Total XP</span>
+            </div>
+            <div style={{ width: '100%', height: '12px', background: 'var(--border-color)', borderRadius: '99px', overflow: 'hidden', position: 'relative' }}>
+              <div style={{ width: `${stats.xp % 100}%`, height: '100%', background: 'linear-gradient(90deg, var(--accent-primary), #a855f7)', borderRadius: '99px', transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)' }} />
+              <div className="shimmer-bg" style={{ position: 'absolute', inset: 0, opacity: 0.3 }} />
+            </div>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>{100 - (stats.xp % 100)} XP needed to reach Level {Math.floor(stats.xp / 100) + 2}</p>
+          </div>
         </div>
-        <button onClick={() => setShowTrophies(true)} className="btn-secondary" style={{ padding: '0.75rem 1.5rem', borderColor: 'var(--warning)', color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.05)', boxShadow: '0 4px 12px rgba(245, 158, 11, 0.15)' }}>
-          <Trophy size={20} /> View Trophy Room
+        <button onClick={() => setShowTrophies(true)} className="btn-secondary" style={{ padding: '1rem 2rem', borderColor: 'var(--warning)', color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.05)', boxShadow: '0 8px 24px rgba(245, 158, 11, 0.15)', fontSize: '1.1rem' }}>
+          <Trophy size={24} /> Trophy Room
         </button>
       </div>
       
@@ -90,23 +140,49 @@ const Dashboard = () => {
               </div>
               <button onClick={() => setShowTrophies(false)} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.5rem', borderRadius: '50%' }}><X size={24} /></button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem' }}>
-              {BADGES.map(b => {
-                const unlocked = b.requirement(stats);
-                return (
-                  <div key={b.id} style={{ 
-                    background: unlocked ? 'var(--bg-secondary)' : 'rgba(0,0,0,0.1)', 
-                    border: `1px solid ${unlocked ? 'var(--warning)' : 'var(--border-color)'}`,
-                    borderRadius: 16, padding: '1.5rem', textAlign: 'center', 
-                    opacity: unlocked ? 1 : 0.5, filter: unlocked ? 'none' : 'grayscale(1)',
-                    boxShadow: unlocked ? '0 8px 32px rgba(245, 158, 11, 0.15)' : 'none'
-                  }}>
-                    <div style={{ color: unlocked ? 'var(--warning)' : 'var(--text-secondary)', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>{b.icon}</div>
-                    <h4 style={{ marginBottom: '0.5rem', color: unlocked ? 'var(--warning)' : 'var(--text-secondary)', fontSize: '1.1rem' }}>{b.title}</h4>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{b.desc}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+              {TROPHY_CATEGORIES.map(cat => (
+                <div key={cat.id} style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '2.5rem' }}>
+                  <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    {cat.icon} {cat.title}
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+                    {cat.tiers.map(tier => {
+                      const current = cat.getStat(stats);
+                      const unlocked = current >= tier.req;
+                      const progress = Math.min(100, (current / tier.req) * 100);
+                      
+                      return (
+                        <div key={tier.level} style={{ 
+                          background: unlocked ? 'var(--bg-secondary)' : 'rgba(0,0,0,0.1)', 
+                          border: `1px solid ${unlocked ? tier.color : 'var(--border-color)'}`,
+                          borderRadius: 16, padding: '1.5rem', textAlign: 'center', 
+                          opacity: unlocked ? 1 : 0.6, filter: unlocked ? 'none' : 'grayscale(0.8)',
+                          boxShadow: unlocked ? `0 8px 32px ${tier.color}20` : 'none',
+                          position: 'relative', overflow: 'hidden'
+                        }}>
+                          <div style={{ color: unlocked ? tier.color : 'var(--text-secondary)', marginBottom: '0.5rem', display: 'flex', justifyContent: 'center' }}>
+                            <Trophy size={32} />
+                          </div>
+                          <h4 style={{ marginBottom: '0.25rem', color: unlocked ? tier.color : 'var(--text-secondary)', fontSize: '1.1rem', fontWeight: 800 }}>{cat.title} {tier.level}</h4>
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem', fontWeight: 600 }}>{tier.label} Tier</p>
+                          
+                          <div style={{ width: '100%', height: '4px', background: 'var(--border-color)', borderRadius: '99px', overflow: 'hidden', marginBottom: '0.5rem' }}>
+                            <div style={{ width: `${progress}%`, height: '100%', background: unlocked ? tier.color : 'var(--text-secondary)', borderRadius: '99px' }} />
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{current} / {tier.req} achieved</span>
+                          
+                          {unlocked && (
+                             <div style={{ position: 'absolute', top: '10px', right: '10px', color: 'var(--success)' }}>
+                               <CheckCircle size={16} />
+                             </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </div>
         </div>
