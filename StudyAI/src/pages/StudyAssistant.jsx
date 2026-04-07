@@ -23,9 +23,13 @@ const StudyAssistant = () => {
   const recognitionRef = useRef(null);
 
   // Sync to localStorage
-  React.useEffect(() => {
-    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-    localStorage.setItem(ACTIVE_KEY, activeId);
+  useEffect(() => {
+    try {
+      localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+      localStorage.setItem(ACTIVE_KEY, activeId);
+    } catch (e) {
+      console.error('Storage sync failed', e);
+    }
   }, [sessions, activeId]);
 
   const createNewChat = () => {
@@ -58,7 +62,7 @@ const StudyAssistant = () => {
     } catch (e) { console.error('Naming failed', e); }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
