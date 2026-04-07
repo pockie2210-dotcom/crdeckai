@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useRef } from 'react';
 import { chatWithAI, getApiKey, callAI } from '../utils/openai';
 import { Plus, MessageSquare, Trash2, Bot, User, Mic, MicOff, Volume2, VolumeX, Send, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -11,15 +12,15 @@ const StudyAssistant = () => {
   });
 
   const [activeId, setActiveId] = useState(() => localStorage.getItem(ACTIVE_KEY) || 'default');
-  const activeSession = sessions.find(s => s.id === activeId) || sessions[0];
-  const messages = activeSession.messages;
+  const activeSession = sessions.find(s => s.id === activeId) || sessions[0] || { messages: [] };
+  const messages = activeSession.messages || [];
 
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const recognitionRef = React.useRef(null);
+  const recognitionRef = useRef(null);
 
   // Sync to localStorage
   React.useEffect(() => {
