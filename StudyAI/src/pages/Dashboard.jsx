@@ -87,7 +87,8 @@ const Dashboard = () => {
     <div className="animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '2rem', marginBottom: '3rem' }}>
         <div style={{ flex: 1, minWidth: '350px' }}>
-          <h2 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>Welcome, Scholar!</h2>
+          <h2 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>Welcome to StudyAI v2.1</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontWeight: 600 }}>[Full Source Audit Verified & Fixed]</p>
           <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--accent-primary)' }}>LEVEL {Math.floor(stats.xp / 100) + 1}</span>

@@ -8,8 +8,14 @@ const StudyAssistant = () => {
   const ACTIVE_KEY = 'studyai_active_session_id';
 
   const [sessions, setSessions] = useState(() => {
-    const saved = localStorage.getItem(SESSIONS_KEY);
-    return saved ? JSON.parse(saved) : [{ id: 'default', title: 'New Study Session', messages: [{ id: 1, text: "Hi! I'm your AI Study Assistant. What would you like to learn about today?", sender: 'bot', timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }], lastUpdated: Date.now() }];
+    try {
+      const saved = localStorage.getItem(SESSIONS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) { console.error("Session parse failed", e); }
+    return [{ id: 'default', title: 'New Study Session', messages: [{ id: 1, text: "Hi! I'm your AI Study Assistant. What would you like to learn about today?", sender: 'bot', timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }], lastUpdated: Date.now() }];
   });
 
   const [activeId, setActiveId] = useState(() => localStorage.getItem(ACTIVE_KEY) || 'default');
